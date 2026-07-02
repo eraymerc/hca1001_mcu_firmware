@@ -496,7 +496,7 @@ static inline void Execute_HCA_Control(uint16_t adc_raw, uint8_t update)
     /* Push synchronously to both rings when update_dac is 1 (20kHz rate) */
     if ((update & 0x1) == 0) {
       //update section
-      USPWM(&htim8, hca_out, ARR_VAL, 0.85);
+      USPWM(htim8.Instance, hca_out, ARR_VAL, 0.85);
       
     }
 }

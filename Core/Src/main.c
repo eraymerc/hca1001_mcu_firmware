@@ -91,7 +91,10 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  const float fundamental_freq = 50.0f;     // your output AC frequency, Hz
+  const float switching_freq   = 20000.0f;  // matches TIM8 PWM rate
+  const uint8_t oversample_ratio = 2;       // 20kHz * 2 = 40kHz control loop
+  const float output_limit = 1.0f;          // matches USPWM's ±1.0 saturation
 
   HCA_Init(&hca,
           fundamental_freq,
@@ -493,7 +496,7 @@ static inline void Execute_HCA_Control(uint16_t adc_raw, uint8_t update)
     /* Push synchronously to both rings when update_dac is 1 (20kHz rate) */
     if ((update & 0x1) == 0) {
       //update section
-      USPWM(&tim8, hca_out,ARR_VAL,0.85);
+      USPWM(&htim8, hca_out, ARR_VAL, 0.85);
       
     }
 }

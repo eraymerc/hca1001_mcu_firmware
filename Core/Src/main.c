@@ -21,7 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "hca_lib.h"
+#include "unipolar_spwm_controller.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,7 +32,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define ARR_VAL 4199
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -50,7 +51,10 @@ DMA_HandleTypeDef hdma_adc3;
 TIM_HandleTypeDef htim8;
 
 /* USER CODE BEGIN PV */
-
+volatile uint16_t adc1_raw; // voltage
+volatile uint16_t adc2_raw; // current
+volatile uint16_t adc3_raw; // encoder
+volatile HCA_Handle_t hca;  // HCA Handler type
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -88,6 +92,21 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
+
+  HCA_Init(&hca,
+          fundamental_freq,
+          switching_freq,
+          oversample_ratio,
+          output_limit);
+
+  Complex_t kp1 = {0.5f, 0.0f}; //real, complex 
+  Complex_t ki1 = {0.0f, 0.0f}; //real, complex
+
+  Complex_t kp3 = {0.5f, 0.0f}; //real, complex
+  Complex_t ki3 = {0.0f, 0.0f}; //real, complex
+
+  HCA_Add_Channel(&hca, 1, kp1, ki1);  // Fundamental
+  HCA_Add_Channel(&hca, 3, kp3, ki3);  // 3rd harmonic
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -105,7 +124,14 @@ int main(void)
   MX_ADC3_Init();
   MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&adc1_raw, 1);
+  HAL_ADC_Start_DMA(&hadc2, (uint32_t*)&adc2_raw, 1);
+  HAL_ADC_Start_DMA(&hadc3, (uint32_t*)&adc3_raw, 1);
 
+  HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_1);
+  HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -298,8 +324,8 @@ static void MX_ADC3_Init(void)
   hadc3.Init.ScanConvMode = DISABLE;
   hadc3.Init.ContinuousConvMode = DISABLE;
   hadc3.Init.DiscontinuousConvMode = DISABLE;
-  hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc3.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
+  hadc3.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T8_TRGO;
   hadc3.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc3.Init.NbrOfConversion = 1;
   hadc3.Init.DMAContinuousRequests = ENABLE;
@@ -448,6 +474,44 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+static inline void Execute_HCA_Control(uint16_t adc_raw, uint8_t update)
+{
+    static uint32_t step_fundamental = (uint32_t)((50.0f / 40000.0f) * 4294967296.0f);
+    static uint32_t angle_fundamental = 0;
+    
+    uint32_t theta = angle_fundamental;
+    float r_t = HCA_fastSin(theta);
+
+    //float feedback = (float)adc_raw - 2048.0f;
+    //float error    = ref_scaled - feedback;
+    float error = r_t;  //currently hca parameters defined as unit function
+    float hca_out  = HCA_Process(&hca, error);
+    
+    angle_fundamental += step_fundamental;
+
+    /* Push synchronously to both rings when update_dac is 1 (20kHz rate) */
+    if ((update & 0x1) == 0) {
+      //update section
+      USPWM(&tim8, hca_out,ARR_VAL,0.85);
+      
+    }
+}
+
+// Manages the HCA loop 40kHz sample rate and 20kHz write
+volatile uint32_t tick_counter = 0;
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
+    if (hadc->Instance == ADC1)
+    {
+        uint16_t v_bus   = adc1_raw; //voltage
+        uint16_t i_sense = adc2_raw; //current
+        uint16_t enc_raw = adc3_raw; //encoder
+
+        tick_counter++;
+        Execute_HCA_Control(v_bus, tick_counter);
+    }
+}
 
 /* USER CODE END 4 */
 

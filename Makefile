@@ -202,9 +202,9 @@ flash: all
 	        -c "program $(BUILD_DIR)/$(TARGET).elf verify reset exit"
 
 #######################################
-# release packaging / GitHub release
+# release packaging (committed to repo)
 #######################################
-# Hardware identity baked into every released artifact's filename.
+# Hardware identity baked into every packaged artifact's filename.
 MCU_NAME   = stm32f429zit6
 BOARD_NAME = stm32f429i-disc1
 
@@ -220,13 +220,19 @@ RELEASE_HEX = $(RELEASE_DIR)/$(RELEASE_BASE).hex
 RELEASE_BIN = $(RELEASE_DIR)/$(RELEASE_BASE).bin
 RELEASE_SUM = $(RELEASE_DIR)/$(RELEASE_BASE).sha256
 
-# Just build + rename/copy artifacts into release/ with MCU/board/version in
-# the filename. Does not touch git or GitHub — useful to sanity-check the
-# artifact names before actually publishing a release.
-.PHONY: package
-package: all
+# Build and copy artifacts into release/ with MCU/board/version in the
+# filename. This folder is meant to be committed to the repo (not
+# gitignored) so compiled binaries live alongside the source history.
+#
+# Usage:
+#   make release VERSION=v1.0.0
+#   git add release/
+#   git commit -m "Release v1.0.0"
+#   git push
+.PHONY: release
+release: all
 ifeq ($(VERSION),)
-	$(error VERSION is required, e.g. 'make package VERSION=v1.0.0')
+	$(error VERSION is required, e.g. 'make release VERSION=v1.0.0')
 endif
 	mkdir -p $(RELEASE_DIR)
 	cp $(BUILD_DIR)/$(TARGET).elf $(RELEASE_ELF)
@@ -235,26 +241,8 @@ endif
 	cd $(RELEASE_DIR) && sha256sum $(notdir $(RELEASE_ELF)) $(notdir $(RELEASE_HEX)) $(notdir $(RELEASE_BIN)) > $(notdir $(RELEASE_SUM))
 	@echo "Packaged release artifacts in $(RELEASE_DIR)/:"
 	@ls -1 $(RELEASE_DIR)
-
-# Build, package, tag, and publish a GitHub release with the .elf/.hex/.bin
-# and checksum file attached. Requires the GitHub CLI ('gh') installed and
-# authenticated (gh auth login), and a git remote pointing at the repo.
-#
-# Usage:
-#   make release VERSION=v1.0.0
-.PHONY: release
-release: package
-ifeq ($(VERSION),)
-	$(error VERSION is required, e.g. 'make release VERSION=v1.0.0')
-endif
-	@command -v gh >/dev/null 2>&1 || { echo "ERROR: GitHub CLI 'gh' not found. Install it and run 'gh auth login' first."; exit 1; }
-	git tag -a $(VERSION) -m "Release $(VERSION) ($(MCU_NAME) / $(BOARD_NAME))" || true
-	git push origin $(VERSION)
-	gh release create $(VERSION) \
-		$(RELEASE_ELF) $(RELEASE_HEX) $(RELEASE_BIN) $(RELEASE_SUM) \
-		--title "$(TARGET) $(VERSION) ($(BOARD_NAME))" \
-		--notes "MCU: $(MCU_NAME)  |  Board: $(BOARD_NAME)  |  Version: $(VERSION)"
-	@echo "Published GitHub release $(VERSION) with artifacts from $(RELEASE_DIR)/"
+	@echo ""
+	@echo "Next: git add $(RELEASE_DIR)/ && git commit -m \"Release $(VERSION)\" && git push"
 
 #######################################
 # dependencies

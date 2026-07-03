@@ -375,7 +375,7 @@ static void MX_TIM8_Init(void)
   /* USER CODE END TIM8_Init 1 */
   htim8.Instance = TIM8;
   htim8.Init.Prescaler = 0;
-  htim8.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED1;
+  htim8.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED3;
   htim8.Init.Period = 4199;
   htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim8.Init.RepetitionCounter = 0;
@@ -507,13 +507,18 @@ static inline void Execute_HCA_Control(uint16_t adc_raw, uint8_t update)
     //float error    = ref_scaled - feedback;
     float error = r_t;  //currently hca parameters defined as unit function
     float hca_out  = HCA_Process(&hca, error);
+
+    // after computing hca_out, before USPWM:
+    const float DT_COMP = 2.0f * 1.25e-6f * 20000.0f;  // = 0.05 normalized
+    float comp_signal = hca_out + ((r_t >= 0.0f) ? DT_COMP : -DT_COMP);
     
     angle_fundamental += step_fundamental;
 
     /* Push synchronously to both rings when update_dac is 1 (20kHz rate) */
     if ((update & 0x1) == 0) {
       //update section
-      USPWM(htim8.Instance, hca_out, ARR_VAL, 0.85);
+      
+      USPWM(htim8.Instance, comp_signal, ARR_VAL, 0.85);
       
     }
 }

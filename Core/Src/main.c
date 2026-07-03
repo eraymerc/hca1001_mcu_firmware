@@ -105,11 +105,11 @@ int main(void)
   Complex_t kp1 = {0.5f, 0.0f}; //real, complex 
   Complex_t ki1 = {0.0f, 0.0f}; //real, complex
 
-  Complex_t kp3 = {0.5f, 0.0f}; //real, complex
-  Complex_t ki3 = {0.0f, 0.0f}; //real, complex
+  //Complex_t kp3 = {0.5f, 0.0f}; //real, complex
+  //Complex_t ki3 = {0.0f, 0.0f}; //real, complex
 
   HCA_Add_Channel(&hca, 1, kp1, ki1);  // Fundamental
-  HCA_Add_Channel(&hca, 3, kp3, ki3);  // 3rd harmonic
+  //HCA_Add_Channel(&hca, 3, kp3, ki3);  // 3rd harmonic
   /* USER CODE END Init */
 
   /* Configure the system clock */

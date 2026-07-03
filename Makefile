@@ -212,21 +212,22 @@ BOARD_NAME = stm32f429i-disc1
 #   make release VERSION=v1.0.0
 VERSION ?=
 
-RELEASE_DIR  = release
-RELEASE_BASE = $(TARGET)_$(MCU_NAME)_$(BOARD_NAME)_$(VERSION)
+RELEASE_DIR    = release
+RELEASE_SUBDIR = $(RELEASE_DIR)/$(VERSION)
+RELEASE_BASE   = $(TARGET)_$(MCU_NAME)_$(BOARD_NAME)_$(VERSION)
 
-RELEASE_ELF = $(RELEASE_DIR)/$(RELEASE_BASE).elf
-RELEASE_HEX = $(RELEASE_DIR)/$(RELEASE_BASE).hex
-RELEASE_BIN = $(RELEASE_DIR)/$(RELEASE_BASE).bin
-RELEASE_SUM = $(RELEASE_DIR)/$(RELEASE_BASE).sha256
+RELEASE_ELF = $(RELEASE_SUBDIR)/$(RELEASE_BASE).elf
+RELEASE_HEX = $(RELEASE_SUBDIR)/$(RELEASE_BASE).hex
+RELEASE_BIN = $(RELEASE_SUBDIR)/$(RELEASE_BASE).bin
+RELEASE_SUM = $(RELEASE_SUBDIR)/$(RELEASE_BASE).sha256
 
-# Build and copy artifacts into release/ with MCU/board/version in the
-# filename. This folder is meant to be committed to the repo (not
+# Build and copy artifacts into release/<VERSION>/ with MCU/board/version in
+# the filename. This folder is meant to be committed to the repo (not
 # gitignored) so compiled binaries live alongside the source history.
 #
 # Usage:
 #   make release VERSION=v1.0.0
-#   git add release/
+#   git add release/v1.0.0/
 #   git commit -m "Release v1.0.0"
 #   git push
 .PHONY: release
@@ -234,15 +235,15 @@ release: all
 ifeq ($(VERSION),)
 	$(error VERSION is required, e.g. 'make release VERSION=v1.0.0')
 endif
-	mkdir -p $(RELEASE_DIR)
+	mkdir -p $(RELEASE_SUBDIR)
 	cp $(BUILD_DIR)/$(TARGET).elf $(RELEASE_ELF)
 	cp $(BUILD_DIR)/$(TARGET).hex $(RELEASE_HEX)
 	cp $(BUILD_DIR)/$(TARGET).bin $(RELEASE_BIN)
-	cd $(RELEASE_DIR) && sha256sum $(notdir $(RELEASE_ELF)) $(notdir $(RELEASE_HEX)) $(notdir $(RELEASE_BIN)) > $(notdir $(RELEASE_SUM))
-	@echo "Packaged release artifacts in $(RELEASE_DIR)/:"
-	@ls -1 $(RELEASE_DIR)
+	cd $(RELEASE_SUBDIR) && sha256sum $(notdir $(RELEASE_ELF)) $(notdir $(RELEASE_HEX)) $(notdir $(RELEASE_BIN)) > $(notdir $(RELEASE_SUM))
+	@echo "Packaged release artifacts in $(RELEASE_SUBDIR)/:"
+	@ls -1 $(RELEASE_SUBDIR)
 	@echo ""
-	@echo "Next: git add $(RELEASE_DIR)/ && git commit -m \"Release $(VERSION)\" && git push"
+	@echo "Next: git add $(RELEASE_SUBDIR)/ && git commit -m \"Release $(VERSION)\" && git push"
 
 #######################################
 # dependencies

@@ -478,6 +478,23 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+// Stops switching when Clock Security System (CSS) detects a clock failure.
+volatile uint8_t clock_fault_flag = 0;
+void HAL_RCC_CSSCallback(void)
+{
+    // Force PWM outputs off immediately — this is the critical line
+    __HAL_TIM_MOE_DISABLE(&htim8);
+
+    // Optional but recommended: fully stop timer channels too
+    HAL_TIMEx_PWMN_Stop(&htim8, TIM_CHANNEL_1);
+    HAL_TIMEx_PWMN_Stop(&htim8, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Stop(&htim8, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Stop(&htim8, TIM_CHANNEL_2);
+
+    clock_fault_flag = 1;
+}
+
+
 static inline void Execute_HCA_Control(uint16_t adc_raw, uint8_t update)
 {
     static uint32_t step_fundamental = (uint32_t)((50.0f / 40000.0f) * 4294967296.0f);

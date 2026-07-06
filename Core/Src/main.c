@@ -32,7 +32,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define ARR_VAL 4199
+#define ARR_VAL 13125
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -92,7 +92,7 @@ int main(void)
 
   /* USER CODE BEGIN Init */
   const float fundamental_freq = 50.0f;     // your output AC frequency, Hz
-  const float switching_freq   = 20000.0f;  // matches TIM8 PWM rate
+  const float switching_freq   = 6400.0f;  // matches TIM8 PWM rate
   const uint8_t oversample_ratio = 2;       // 20kHz * 2 = 40kHz control loop
   const float output_limit = 1.0f;          // matches USPWM's ±1.0 saturation
 
@@ -376,7 +376,7 @@ static void MX_TIM8_Init(void)
   htim8.Instance = TIM8;
   htim8.Init.Prescaler = 0;
   htim8.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED3;
-  htim8.Init.Period = 4199;
+  htim8.Init.Period = 13125;
   htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim8.Init.RepetitionCounter = 0;
   htim8.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
@@ -417,7 +417,7 @@ static void MX_TIM8_Init(void)
   sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_ENABLE;
   sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_ENABLE;
   sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
-  sBreakDeadTimeConfig.DeadTime = 190;
+  sBreakDeadTimeConfig.DeadTime = 67;
   sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
   sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
   sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
@@ -536,14 +536,7 @@ static inline void Execute_HCA_Control(uint16_t adc_raw, uint8_t update)
     angle_fundamental += step_fundamental;
 
     if ((update & 0x1) == 0) {
-        const float MOD_INDEX = 0.85f;
-        const float DT_COMP   = 4.0f * 1.50e-6f * 20000.0f;  // = 0.12, two-leg, correct factor
-
-        float raw = MOD_INDEX * hca_out + ((r_t >= 0.0f) ? DT_COMP : -DT_COMP);
-        if (raw > 1.0f) raw = 1.0f;
-        if (raw < -1.0f) raw = -1.0f;
-
-        USPWM(htim8.Instance, raw, ARR_VAL, 1.0f);  // modulation_index=1.0, already applied above
+      USPWM(htim8.Instance, hca_out, ARR_VAL, 1.0f);  // modulation_index=1.0, already applied above
     }
 }
 

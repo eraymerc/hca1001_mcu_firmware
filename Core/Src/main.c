@@ -376,7 +376,7 @@ static void MX_TIM8_Init(void)
   /* USER CODE END TIM8_Init 1 */
   htim8.Instance = TIM8;
   htim8.Init.Prescaler = 0;
-  htim8.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED3;
+  htim8.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED1;
   htim8.Init.Period = 13125;
   htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim8.Init.RepetitionCounter = 0;
@@ -495,33 +495,6 @@ void HAL_RCC_CSSCallback(void)
     clock_fault_flag = 1;
 }
 
-/*
-static inline void Execute_HCA_Control(uint16_t adc_raw, uint8_t update)
-{
-    static uint32_t step_fundamental = (uint32_t)((50.0f / 40000.0f) * 4294967296.0f);
-    static uint32_t angle_fundamental = 0;
-    
-    uint32_t theta = angle_fundamental;
-    float r_t = HCA_fastSin(theta);
-
-    //float feedback = (float)adc_raw - 2048.0f;
-    //float error    = ref_scaled - feedback;
-    float error = r_t;  //currently hca parameters defined as unit function
-    float hca_out  = HCA_Process(&hca, error);
-      
-    // after computing hca_out, before USPWM:
-  const float DT_COMP = 2.0f * 1.50e-6f * 20000.0f;  // = 0.05 normalized
-  float comp_signal = hca_out + ((r_t >= 0.0f) ? DT_COMP : -DT_COMP);
-
-    angle_fundamental += step_fundamental;
-
-    /* Push synchronously to both rings when update_dac is 1 (20kHz rate) 
-    if ((update & 0x1) == 0) {
-      //update section
-      USPWM(htim8.Instance, comp_signal, ARR_VAL, 0.85);
-      
-    }
-}*/
 
 static inline void Execute_HCA_Control(uint16_t adc_raw, uint8_t update)
 {

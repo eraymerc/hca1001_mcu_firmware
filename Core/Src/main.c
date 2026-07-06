@@ -524,7 +524,7 @@ static inline void Execute_HCA_Control(uint16_t adc_raw, uint8_t update)
 
 static inline void Execute_HCA_Control(uint16_t adc_raw, uint8_t update)
 {
-    static uint32_t step_fundamental = (uint32_t)((50.0f / 40000.0f) * 4294967296.0f);
+    static uint32_t step_fundamental = (uint32_t)((50.0f / (2.0f*6400.0f)) * 4294967296.0f);
     static uint32_t angle_fundamental = 0;
 
     uint32_t theta = angle_fundamental;

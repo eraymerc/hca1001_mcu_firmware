@@ -32,8 +32,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define ARR_VAL 13125
-#define SWITCH_RATE 6400.0f // Hz
+#define ARR_VAL 4200
+#define SWITCH_RATE 20000.0f // Hz
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -496,6 +496,10 @@ void HAL_RCC_CSSCallback(void)
 }
 
 
+static inline uint16_t normaliseVoltage(uint16_t adc_raw){
+  return (((adc_raw-1.65)/1.8)*(220/94000))/153;
+}
+
 static inline void Execute_HCA_Control(uint16_t adc_raw, uint8_t update)
 {
     static uint32_t step_fundamental = (uint32_t)((50.0f / (2.0f*SWITCH_RATE)) * 4294967296.0f);
@@ -504,7 +508,7 @@ static inline void Execute_HCA_Control(uint16_t adc_raw, uint8_t update)
     uint32_t theta = angle_fundamental;
     float r_t = HCA_fastSin(theta);
 
-    float error = r_t;
+    float error = r_t - (float)normaliseVoltage(adc_raw);
     float hca_out = HCA_Process(&hca, error);
 
     angle_fundamental += step_fundamental;
@@ -520,12 +524,12 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
     if (hadc->Instance == ADC1)
     {
-        uint16_t v_bus   = adc1_raw; //voltage
+        uint16_t v_adc   = adc1_raw; //voltage
         uint16_t i_sense = adc2_raw; //current
         uint16_t enc_raw = adc3_raw; //encoder
 
         tick_counter++;
-        Execute_HCA_Control(v_bus, tick_counter);
+        Execute_HCA_Control(v_adc, tick_counter);
     }
 }
 

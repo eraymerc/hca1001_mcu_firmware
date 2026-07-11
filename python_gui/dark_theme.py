@@ -83,4 +83,7 @@ def apply_dark_theme(app):
     app.setStyleSheet(DARK_QSS)
     pg.setConfigOption("background", "#1e1e1e")
     pg.setConfigOption("foreground", "#c8c8c8")
-    pg.setConfigOption("antialias", True)
+    # Off: antialiasing real-time curves with thousands of points redraw
+    # noticeably slower per frame, which is exactly the budget the GUI
+    # update timer (main.GUI_UPDATE_INTERVAL_MS) depends on staying cheap.
+    pg.setConfigOption("antialias", False)

@@ -1,7 +1,7 @@
 """Background thread that owns the serial port exclusively: it is the only
 thread that ever calls read()/write() on it. Connects, resyncs on the
-0xA5 0x5A frame marker, validates checksums, and emits parsed frames back
-to the GUI thread in small batches.
+0xA5 0x5A frame marker, validates checksums, and buffers parsed frames for
+the GUI thread to pull.
 
 Commands from the GUI thread (start/stop/ping) are handed over through a
 thread-safe queue.Queue instead of calling _ser.write() directly - a plain
@@ -9,10 +9,18 @@ method call from the GUI thread would run write() on the GUI thread's own
 stack (Python threading doesn't move it onto this QThread), and a write()
 that ever blocks (e.g. USB hiccup, full OS buffer) would freeze the whole
 UI. Draining the queue here keeps all serial I/O off the GUI thread.
+
+Parsed frames go into a plain thread-safe queue.Queue too, *not* a Qt
+signal emitted on a fixed timer. Emitting a signal every N ms regardless
+of whether the GUI has finished handling the previous one lets Qt's
+cross-thread event queue grow without bound the moment rendering falls
+behind arrival rate - exactly the "freezes more and more over time"
+symptom. Instead, MainWindow pulls with drain_frames() on its own GUI
+timer, so redraw cost is decoupled from how fast data arrives: a slow
+render just means fewer, larger pulls, never a growing backlog.
 """
 
 import queue
-import time
 
 from PyQt5.QtCore import QThread, pyqtSignal
 import serial
@@ -31,11 +39,9 @@ from protocol import (
 BAUDRATE = 115200  # ignored by the USB CDC-ACM link itself, pyserial still wants a value
 READ_CHUNK = 4096
 WRITE_TIMEOUT_S = 1.0  # bound worst-case write() blocking time, belt-and-braces
-EMIT_BATCH_INTERVAL_MS = 20  # ~50 GUI updates/sec
 
 
 class SerialWorker(QThread):
-    frames_received = pyqtSignal(list)   # list[AdcFrame]
     connected = pyqtSignal(str)          # port name
     disconnected = pyqtSignal()
     error = pyqtSignal(str)
@@ -48,6 +54,7 @@ class SerialWorker(QThread):
         self._running = False
         self._streaming = False
         self._cmd_queue: "queue.Queue[bytes]" = queue.Queue()
+        self._frame_queue: "queue.Queue" = queue.Queue()  # AdcFrame items, GUI-thread pulls
 
     # --- public control API, safe to call from the GUI thread ---
     # These only enqueue; the actual serial.write() happens inside run(),
@@ -65,6 +72,17 @@ class SerialWorker(QThread):
 
     def stop(self):
         self._running = False
+
+    def drain_frames(self):
+        """Non-blocking pull of every AdcFrame parsed since the last call.
+        Call this from a GUI-thread timer, not from run()."""
+        frames = []
+        while True:
+            try:
+                frames.append(self._frame_queue.get_nowait())
+            except queue.Empty:
+                break
+        return frames
 
     # --- internal, only ever runs on this thread ---
     def _drain_command_queue(self):
@@ -90,8 +108,6 @@ class SerialWorker(QThread):
         self.connected.emit(self._port_name)
         self._running = True
         buf = bytearray()
-        pending_frames = []
-        last_emit = time.monotonic()
 
         while self._running:
             self._drain_command_queue()
@@ -130,16 +146,7 @@ class SerialWorker(QThread):
                         continue
 
                     del buf[:FRAME_SIZE]
-                    pending_frames.append(frame)
-
-            now = time.monotonic()
-            if pending_frames and (now - last_emit) * 1000 >= EMIT_BATCH_INTERVAL_MS:
-                self.frames_received.emit(pending_frames)
-                pending_frames = []
-                last_emit = now
-
-        if pending_frames:
-            self.frames_received.emit(pending_frames)
+                    self._frame_queue.put(frame)
 
         if self._ser is not None:
             try:

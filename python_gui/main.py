@@ -45,6 +45,13 @@ LIVE_WINDOW_SECONDS = 5
 LIVE_SAMPLES = int(LIVE_WINDOW_SECONDS * STREAM_RATE_HZ)
 MAX_SESSION_SAMPLES = 2_000_000  # ~33 min at 1kHz, bounds RAM use for CSV export
 
+# GUI redraw cadence. Deliberately decoupled from the 1kHz data rate: the
+# worker thread just buffers parsed frames (see serial_worker.drain_frames),
+# and this timer pulls+redraws on its own schedule. If a redraw ever takes
+# longer than this interval, the next pull just picks up a bigger batch -
+# there is no per-sample signal backlog that can pile up.
+GUI_UPDATE_INTERVAL_MS = 50  # 20 Hz
+
 
 class SignalRow(QWidget):
     """One monitored signal: checkbox, live plot, FFT button."""
@@ -105,6 +112,9 @@ class MainWindow(QMainWindow):
         self._ping_timer.setSingleShot(True)
         self._ping_timer.timeout.connect(self._on_ping_timeout)
         self._ping_pending = False
+
+        self._gui_update_timer = QTimer(self)
+        self._gui_update_timer.timeout.connect(self._pull_and_update)
 
     # ------------------------------------------------------------------ UI
     def _build_ui(self):
@@ -195,7 +205,6 @@ class MainWindow(QMainWindow):
         self.worker = SerialWorker(port_name)
         self.worker.connected.connect(self._on_connected)
         self.worker.disconnected.connect(self._on_disconnected)
-        self.worker.frames_received.connect(self._on_frames)
         self.worker.error.connect(self._on_error)
         self.worker.ping_ok.connect(self._on_ping_ok)
         self.worker.start()
@@ -217,8 +226,10 @@ class MainWindow(QMainWindow):
         self.ping_btn.setEnabled(True)
         self.stream_btn.setEnabled(True)
         self.statusBar().showMessage(f"Connected to {port_name}.")
+        self._gui_update_timer.start(GUI_UPDATE_INTERVAL_MS)
 
     def _on_disconnected(self):
+        self._gui_update_timer.stop()
         self.status_label.setText("Disconnected")
         self.status_label.setObjectName("statusLabel")
         self.status_label.setStyle(self.status_label.style())
@@ -271,6 +282,13 @@ class MainWindow(QMainWindow):
             self.stream_btn.setText("Start Streaming")
 
     # -------------------------------------------------------------- Data
+    def _pull_and_update(self):
+        if self.worker is None:
+            return
+        frames = self.worker.drain_frames()
+        if frames:
+            self._on_frames(frames)
+
     def _on_frames(self, frames):
         if not frames:
             return

@@ -93,7 +93,7 @@ int main(void)
 
   /* USER CODE BEGIN Init */
   const float fundamental_freq = 50.0f;     // your output AC frequency, Hz
-  const float switching_freq   = 6400.0f;  // matches TIM8 PWM rate
+  const float switching_freq   = 20000.0f;  // matches TIM8 PWM rate
   const uint8_t oversample_ratio = 2;       // 20kHz * 2 = 40kHz control loop
   const float output_limit = 1.0f;          // matches USPWM's ±1.0 saturation
 
@@ -104,7 +104,7 @@ int main(void)
           output_limit);
 
   Complex_t kp1 = {0.5f, 0.0f}; //real, complex 
-  Complex_t ki1 = {0.0f, 0.0f}; //real, complex
+  Complex_t ki1 = {1.0f, 0.0f}; //real, complex
 
   //Complex_t kp3 = {0.5f, 0.0f}; //real, complex
   //Complex_t ki3 = {0.0f, 0.0f}; //real, complex
@@ -377,7 +377,7 @@ static void MX_TIM8_Init(void)
   htim8.Instance = TIM8;
   htim8.Init.Prescaler = 0;
   htim8.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED1;
-  htim8.Init.Period = 13125;
+  htim8.Init.Period = 4200;
   htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim8.Init.RepetitionCounter = 0;
   htim8.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
@@ -496,8 +496,18 @@ void HAL_RCC_CSSCallback(void)
 }
 
 
-static inline uint16_t normaliseVoltage(uint16_t adc_raw){
-  return (((adc_raw-1.65)/1.8)*(220/94000))/153;
+#define VDIV_RATIO   (94220.0f / 220.0f)   // <-- confirm actual sense-divider ratio
+#define ADC_VREF     3.3f
+#define ADC_MAX      4095.0f
+#define ADC_MID      (ADC_VREF / 2.0f)     // 1.65V bias point
+#define OPAMP_GAIN   1.8f                  // confirm this is really a gain, not another divider
+#define V_PEAK_NOM   170.0f
+
+static inline float normaliseVoltage(uint16_t adc_raw){
+    float v_adc = (float)adc_raw / ADC_MAX * ADC_VREF;     // 0..3.3V, all float
+    float v_sense = (v_adc - ADC_MID) / OPAMP_GAIN;        // remove bias, undo op-amp scaling
+    float v_actual = v_sense * VDIV_RATIO;                 // scale back up to real HV output
+    return v_actual / V_PEAK_NOM;                          // normalize to ±1.0 like r_t
 }
 
 static inline void Execute_HCA_Control(uint16_t adc_raw, uint8_t update)

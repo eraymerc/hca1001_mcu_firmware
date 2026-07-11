@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "hca_lib.h"
 #include "unipolar_spwm_controller.h"
+#include "usbd_cdc_if.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -35,6 +36,13 @@
 /* USER CODE BEGIN PD */
 #define ARR_VAL 4200
 #define SWITCH_RATE 20000.0f // Hz
+
+/** ADC ISR runs at 40kHz; only push every Nth sample -> 40kHz/40 = 1kHz USB stream rate */
+#define ADC_STREAM_DECIMATION 40U
+
+/** Streaming frame ring buffer depth (must be a power of two) */
+#define STREAM_FIFO_LEN  64U
+#define STREAM_FIFO_MASK (STREAM_FIFO_LEN - 1U)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -57,6 +65,15 @@ volatile uint16_t adc1_raw; // voltage
 volatile uint16_t adc2_raw; // current
 volatile uint16_t adc3_raw; // encoder
 volatile HCA_Handle_t hca;  // HCA Handler type
+
+/** Set/cleared by USB CDC 'S'/'X' commands (see usbd_cdc_if.c CDC_Receive_HS) */
+volatile uint8_t streaming_enabled = 0;
+
+/* Single-producer (ADC ISR) / single-consumer (main loop) ring buffer of frames */
+static AdcStreamFrame_t  stream_fifo[STREAM_FIFO_LEN];
+static volatile uint16_t stream_fifo_head = 0;
+static volatile uint16_t stream_fifo_tail = 0;
+static volatile uint32_t stream_seq = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -147,6 +164,14 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    if (stream_fifo_tail != stream_fifo_head)
+    {
+      AdcStreamFrame_t *frame = &stream_fifo[stream_fifo_tail];
+      if (CDC_Transmit_HS((uint8_t*)frame, (uint16_t)sizeof(AdcStreamFrame_t)) == USBD_OK)
+      {
+        stream_fifo_tail = (uint16_t)((stream_fifo_tail + 1U) & STREAM_FIFO_MASK);
+      }
+    }
   }
   /* USER CODE END 3 */
 }
@@ -505,14 +530,17 @@ void HAL_RCC_CSSCallback(void)
 #define OPAMP_GAIN   1.8f                  // confirm this is really a gain, not another divider
 #define V_PEAK_NOM   170.0f
 
-static inline float normaliseVoltage(uint16_t adc_raw){
+static inline float adcToVoltsActual(uint16_t adc_raw){
     float v_adc = (float)adc_raw / ADC_MAX * ADC_VREF;     // 0..3.3V, all float
     float v_sense = (v_adc - ADC_MID) / OPAMP_GAIN;        // remove bias, undo op-amp scaling
-    float v_actual = v_sense * VDIV_RATIO;                 // scale back up to real HV output
-    return v_actual / V_PEAK_NOM;                          // normalize to ±1.0 like r_t
+    return v_sense * VDIV_RATIO;                           // scale back up to real HV output
 }
 
-static inline void Execute_HCA_Control(uint16_t adc_raw, uint8_t update)
+static inline float normaliseVoltage(uint16_t adc_raw){
+    return adcToVoltsActual(adc_raw) / V_PEAK_NOM;          // normalize to ±1.0 like r_t
+}
+
+static inline float Execute_HCA_Control(uint16_t adc_raw, uint8_t update)
 {
     static uint32_t step_fundamental = (uint32_t)((50.0f / (2.0f*SWITCH_RATE)) * 4294967296.0f);
     static uint32_t angle_fundamental = 0;
@@ -528,6 +556,42 @@ static inline void Execute_HCA_Control(uint16_t adc_raw, uint8_t update)
     if ((update & 0x1) == 0) {
       USPWM(htim8.Instance, hca_out, ARR_VAL, 1.0f);  // modulation_index=1.0, already applied above
     }
+
+    return error;
+}
+
+static uint8_t StreamChecksum(const AdcStreamFrame_t *f)
+{
+    const uint8_t *p = (const uint8_t*)&f->seq;
+    const uint16_t len = (uint16_t)(sizeof(AdcStreamFrame_t) - sizeof(f->sync0)
+                                     - sizeof(f->sync1) - sizeof(f->checksum));
+    uint8_t sum = 0;
+    for (uint16_t i = 0; i < len; i++) {
+        sum += p[i];
+    }
+    return sum;
+}
+
+/** Producer side (called from ADC ISR). Drops the sample if the FIFO is full. */
+static inline void PushStreamFrame(float voltage, float current, float encoder, float error)
+{
+    uint16_t next_head = (uint16_t)((stream_fifo_head + 1U) & STREAM_FIFO_MASK);
+    if (next_head == stream_fifo_tail) {
+        return; // consumer (USB) can't keep up, drop this sample
+    }
+
+    AdcStreamFrame_t *f = &stream_fifo[stream_fifo_head];
+    f->sync0        = STREAM_SYNC0;
+    f->sync1        = STREAM_SYNC1;
+    f->seq          = stream_seq++;
+    f->timestamp_ms = HAL_GetTick();
+    f->voltage      = voltage;
+    f->current      = current;
+    f->encoder      = encoder;
+    f->error        = error;
+    f->checksum     = StreamChecksum(f);
+
+    stream_fifo_head = next_head;
 }
 
 // Manages the HCA loop 40kHz sample rate and 20kHz write
@@ -541,7 +605,15 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
         uint16_t enc_raw = adc3_raw; //encoder
 
         tick_counter++;
-        Execute_HCA_Control(v_adc, tick_counter);
+        float error = Execute_HCA_Control(v_adc, tick_counter);
+
+        if (streaming_enabled && ((tick_counter % ADC_STREAM_DECIMATION) == 0U))
+        {
+            float voltage_v = adcToVoltsActual(v_adc);
+            float current_v = (float)i_sense / ADC_MAX * ADC_VREF;
+            float encoder_v = (float)enc_raw / ADC_MAX * ADC_VREF;
+            PushStreamFrame(voltage_v, current_v, encoder_v, error);
+        }
     }
 }
 

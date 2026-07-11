@@ -22,7 +22,7 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#include "main.h"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -264,6 +264,27 @@ static int8_t CDC_Control_HS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_HS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 11 */
+  for (uint32_t i = 0; i < *Len; i++)
+  {
+    switch (Buf[i])
+    {
+      case STREAM_CMD_START:
+        streaming_enabled = 1;
+        break;
+
+      case STREAM_CMD_STOP:
+        streaming_enabled = 0;
+        break;
+
+      case STREAM_CMD_PING:
+        CDC_Transmit_HS((uint8_t*)STREAM_PING_REPLY, (uint16_t)(sizeof(STREAM_PING_REPLY) - 1U));
+        break;
+
+      default:
+        break; // ignore unknown bytes (e.g. line endings from a terminal)
+    }
+  }
+
   USBD_CDC_SetRxBuffer(&hUsbDeviceHS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceHS);
   return (USBD_OK);

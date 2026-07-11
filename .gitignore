@@ -13,3 +13,8 @@ build/
 .vscode/
 *.swp
 *.swo
+
+# Python GUI
+python_gui/__pycache__/
+python_gui/*.pyc
+python_gui/.venv/

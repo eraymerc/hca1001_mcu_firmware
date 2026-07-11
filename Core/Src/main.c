@@ -22,9 +22,11 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdbool.h>
 #include "hca_lib.h"
 #include "unipolar_spwm_controller.h"
 #include "usbd_cdc_if.h"
+#include "lpf_filter.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -36,6 +38,14 @@
 /* USER CODE BEGIN PD */
 #define ARR_VAL 4200
 #define SWITCH_RATE 20000.0f // Hz
+
+/**
+ * Master on/off switch for the 1kHz FIR low-pass filter (lpf_filter.h)
+ * applied to the ADC1 voltage measurement, ahead of both the HCA control
+ * loop's error calculation and the USB telemetry stream. Set to false to
+ * bypass the filter and use the raw ADC1 reading everywhere it's used.
+ */
+#define LFP true
 
 /** ADC ISR runs at 40kHz; only push every Nth sample -> 40kHz/40 = 1kHz USB stream rate */
 #define ADC_STREAM_DECIMATION 40U
@@ -530,17 +540,23 @@ void HAL_RCC_CSSCallback(void)
 #define OPAMP_GAIN   1.8f                  // confirm this is really a gain, not another divider
 #define V_PEAK_NOM   170.0f
 
-static inline float adcToVoltsActual(uint16_t adc_raw){
-    float v_adc = (float)adc_raw / ADC_MAX * ADC_VREF;     // 0..3.3V, all float
+static inline float adcToVoltsActual(float adc_counts){
+    float v_adc = adc_counts / ADC_MAX * ADC_VREF;         // 0..3.3V, all float
     float v_sense = (v_adc - ADC_MID) / OPAMP_GAIN;        // remove bias, undo op-amp scaling
     return v_sense * VDIV_RATIO;                           // scale back up to real HV output
 }
 
-static inline float normaliseVoltage(uint16_t adc_raw){
-    return adcToVoltsActual(adc_raw) / V_PEAK_NOM;          // normalize to ±1.0 like r_t
+static inline float normaliseVoltage(float adc_counts){
+    return adcToVoltsActual(adc_counts) / V_PEAK_NOM;       // normalize to ±1.0 like r_t
 }
 
-static inline float Execute_HCA_Control(uint16_t adc_raw, uint8_t update)
+/**
+ * @param adc_counts ADC1 reading in raw counts (0..4095), already passed
+ *        through LPF_Apply() by the caller when LFP is enabled - this
+ *        function itself is filter-agnostic, it just takes whatever
+ *        measurement value it's handed.
+ */
+static inline float Execute_HCA_Control(float adc_counts, uint8_t update)
 {
     static uint32_t step_fundamental = (uint32_t)((50.0f / (2.0f*SWITCH_RATE)) * 4294967296.0f);
     static uint32_t angle_fundamental = 0;
@@ -548,7 +564,7 @@ static inline float Execute_HCA_Control(uint16_t adc_raw, uint8_t update)
     uint32_t theta = angle_fundamental;
     float r_t = HCA_fastSin(theta);
 
-    float error = r_t - (float)normaliseVoltage(adc_raw);
+    float error = r_t - (float)normaliseVoltage(adc_counts);
     float hca_out = HCA_Process(&hca, error);
 
     angle_fundamental += step_fundamental;
@@ -605,11 +621,21 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
         uint16_t enc_raw = adc3_raw; //encoder
 
         tick_counter++;
-        float error = Execute_HCA_Control(v_adc, tick_counter);
+
+        /* Filter (if enabled) exactly once per sample here, then reuse the
+         * same filtered value for both the control loop and telemetry -
+         * LPF_Apply is stateful (it advances its own delay line each call),
+         * calling it twice per sample would corrupt that state. */
+        float v_adc_f = (float)v_adc;
+#if LFP
+        v_adc_f = LPF_Apply(v_adc_f);
+#endif
+
+        float error = Execute_HCA_Control(v_adc_f, tick_counter);
 
         if (streaming_enabled && ((tick_counter % ADC_STREAM_DECIMATION) == 0U))
         {
-            float voltage_v = adcToVoltsActual(v_adc);
+            float voltage_v = adcToVoltsActual(v_adc_f);
             float current_v = (float)i_sense / ADC_MAX * ADC_VREF;
             float encoder_v = (float)enc_raw / ADC_MAX * ADC_VREF;
             PushStreamFrame(voltage_v, current_v, encoder_v, error);

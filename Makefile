@@ -45,6 +45,7 @@ Core/Src/sysmem.c \
 Core/Src/syscalls.c \
 Core/Src/hca_lib.c \
 Core/Src/unipolar_spwm_controller.c \
+Core/Src/lpf_filter.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.c \

@@ -23,6 +23,7 @@ from PyQt5.QtWidgets import (
     QApplication,
     QCheckBox,
     QComboBox,
+    QDoubleSpinBox,
     QFileDialog,
     QGroupBox,
     QHBoxLayout,
@@ -41,8 +42,13 @@ from fft_window import FFTWindow
 from protocol import SIGNAL_LABELS, SIGNAL_NAMES, STREAM_RATE_HZ
 from serial_worker import SerialWorker
 
-LIVE_WINDOW_SECONDS = 5
-LIVE_SAMPLES = int(LIVE_WINDOW_SECONDS * STREAM_RATE_HZ)
+DEFAULT_LIVE_WINDOW_SECONDS = 5.0
+MIN_LIVE_WINDOW_SECONDS = 0.5
+MAX_LIVE_WINDOW_SECONDS = 30.0
+# Capture buffer is sized for the largest window any row could ask for;
+# each row's spinbox just controls how much of that trailing history it
+# displays, so changing a spinbox never needs to resize a deque.
+MAX_LIVE_SAMPLES = int(MAX_LIVE_WINDOW_SECONDS * STREAM_RATE_HZ)
 MAX_SESSION_SAMPLES = 2_000_000  # ~33 min at 1kHz, bounds RAM use for CSV export
 
 # GUI redraw cadence. Deliberately decoupled from the 1kHz data rate: the
@@ -70,9 +76,19 @@ class SignalRow(QWidget):
         side.addWidget(self.checkbox)
 
         fft_btn = QPushButton("FFT")
-        fft_btn.setFixedWidth(60)
+        fft_btn.setFixedWidth(90)
         fft_btn.clicked.connect(lambda: open_fft_cb(self._name, label))
         side.addWidget(fft_btn)
+
+        self.window_spin = QDoubleSpinBox()
+        self.window_spin.setDecimals(1)
+        self.window_spin.setSingleStep(0.5)
+        self.window_spin.setRange(MIN_LIVE_WINDOW_SECONDS, MAX_LIVE_WINDOW_SECONDS)
+        self.window_spin.setValue(DEFAULT_LIVE_WINDOW_SECONDS)
+        self.window_spin.setSuffix(" s")
+        self.window_spin.setFixedWidth(90)
+        self.window_spin.setToolTip("Plotted time window")
+        side.addWidget(self.window_spin)
         side.addStretch(1)
 
         side_widget = QWidget()
@@ -87,6 +103,9 @@ class SignalRow(QWidget):
         self.curve = self.plot.plot(pen=pg.mkPen("#00d0ff", width=1.2))
         outer.addWidget(self.plot, stretch=1)
 
+    def window_samples(self):
+        return max(1, int(round(self.window_spin.value() * STREAM_RATE_HZ)))
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -100,8 +119,8 @@ class MainWindow(QMainWindow):
         self._session_capped = False
         self._t0_ms = None
 
-        self.live_t = deque(maxlen=LIVE_SAMPLES)
-        self.live_buffers = {name: deque(maxlen=LIVE_SAMPLES) for name in SIGNAL_NAMES}
+        self.live_t = deque(maxlen=MAX_LIVE_SAMPLES)
+        self.live_buffers = {name: deque(maxlen=MAX_LIVE_SAMPLES) for name in SIGNAL_NAMES}
         # Full-session record for CSV export: list of (seq, timestamp_ms, v, i, enc, err)
         self.session_records = []
 
@@ -316,7 +335,11 @@ class MainWindow(QMainWindow):
         t_arr = np.fromiter(self.live_t, dtype=np.float64)
         for name, row in self.rows.items():
             y_arr = np.fromiter(self.live_buffers[name], dtype=np.float64)
-            row.curve.setData(t_arr, y_arr)
+            n = min(len(t_arr), row.window_samples())
+            if n < len(t_arr):
+                row.curve.setData(t_arr[-n:], y_arr[-n:])
+            else:
+                row.curve.setData(t_arr, y_arr)
 
         self.samples_label.setText(f"{len(self.session_records):,} samples captured")
 

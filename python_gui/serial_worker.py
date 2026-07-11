@@ -1,7 +1,18 @@
-"""Background thread that owns the serial port: connects, sends start/stop
-commands, resyncs on the 0xA5 0x5A frame marker, validates checksums, and
-emits parsed frames back to the GUI thread in small batches.
+"""Background thread that owns the serial port exclusively: it is the only
+thread that ever calls read()/write() on it. Connects, resyncs on the
+0xA5 0x5A frame marker, validates checksums, and emits parsed frames back
+to the GUI thread in small batches.
+
+Commands from the GUI thread (start/stop/ping) are handed over through a
+thread-safe queue.Queue instead of calling _ser.write() directly - a plain
+method call from the GUI thread would run write() on the GUI thread's own
+stack (Python threading doesn't move it onto this QThread), and a write()
+that ever blocks (e.g. USB hiccup, full OS buffer) would freeze the whole
+UI. Draining the queue here keeps all serial I/O off the GUI thread.
 """
+
+import queue
+import time
 
 from PyQt5.QtCore import QThread, pyqtSignal
 import serial
@@ -19,6 +30,7 @@ from protocol import (
 
 BAUDRATE = 115200  # ignored by the USB CDC-ACM link itself, pyserial still wants a value
 READ_CHUNK = 4096
+WRITE_TIMEOUT_S = 1.0  # bound worst-case write() blocking time, belt-and-braces
 EMIT_BATCH_INTERVAL_MS = 20  # ~50 GUI updates/sec
 
 
@@ -35,33 +47,42 @@ class SerialWorker(QThread):
         self._ser: serial.Serial | None = None
         self._running = False
         self._streaming = False
+        self._cmd_queue: "queue.Queue[bytes]" = queue.Queue()
 
     # --- public control API, safe to call from the GUI thread ---
+    # These only enqueue; the actual serial.write() happens inside run(),
+    # on this worker thread.
     def start_streaming(self):
         self._streaming = True
-        self._send(CMD_START)
+        self._cmd_queue.put(CMD_START)
 
     def stop_streaming(self):
         self._streaming = False
-        self._send(CMD_STOP)
+        self._cmd_queue.put(CMD_STOP)
 
     def ping(self):
-        self._send(CMD_PING)
+        self._cmd_queue.put(CMD_PING)
 
     def stop(self):
         self._running = False
 
-    # --- internal ---
-    def _send(self, data: bytes):
-        if self._ser is not None and self._ser.is_open:
+    # --- internal, only ever runs on this thread ---
+    def _drain_command_queue(self):
+        while True:
             try:
-                self._ser.write(data)
+                cmd = self._cmd_queue.get_nowait()
+            except queue.Empty:
+                return
+            try:
+                self._ser.write(cmd)
             except serial.SerialException as exc:
                 self.error.emit(str(exc))
 
     def run(self):
         try:
-            self._ser = serial.Serial(self._port_name, BAUDRATE, timeout=0.05)
+            self._ser = serial.Serial(
+                self._port_name, BAUDRATE, timeout=0.05, write_timeout=WRITE_TIMEOUT_S
+            )
         except serial.SerialException as exc:
             self.error.emit(f"Could not open {self._port_name}: {exc}")
             return
@@ -70,10 +91,11 @@ class SerialWorker(QThread):
         self._running = True
         buf = bytearray()
         pending_frames = []
-        import time
         last_emit = time.monotonic()
 
         while self._running:
+            self._drain_command_queue()
+
             try:
                 chunk = self._ser.read(READ_CHUNK)
             except serial.SerialException as exc:

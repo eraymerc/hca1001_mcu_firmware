@@ -11,7 +11,6 @@ Run:
     python main.py
 """
 
-import csv
 import sys
 import time
 from collections import deque
@@ -37,6 +36,7 @@ from PyQt5.QtWidgets import (
 from serial.tools import list_ports
 
 from dark_theme import apply_dark_theme
+from export_worker import CsvExportWorker
 from fft_window import FFTWindow
 from protocol import SIGNAL_LABELS, SIGNAL_NAMES, STREAM_RATE_HZ
 from serial_worker import SerialWorker
@@ -88,6 +88,7 @@ class MainWindow(QMainWindow):
         self.resize(1150, 800)
 
         self.worker: SerialWorker | None = None
+        self._csv_worker: CsvExportWorker | None = None
         self._fft_windows = []
         self._session_capped = False
         self._t0_ms = None
@@ -159,9 +160,9 @@ class MainWindow(QMainWindow):
         # --- export bar ---
         export_box = QGroupBox("Export")
         export_layout = QHBoxLayout(export_box)
-        save_csv_btn = QPushButton("Save Selected as CSV")
-        save_csv_btn.clicked.connect(self._save_csv)
-        export_layout.addWidget(save_csv_btn)
+        self.save_csv_btn = QPushButton("Save Selected as CSV")
+        self.save_csv_btn.clicked.connect(self._save_csv)
+        export_layout.addWidget(self.save_csv_btn)
 
         save_png_btn = QPushButton("Save Selected as PNG")
         save_png_btn.clicked.connect(self._save_png)
@@ -319,6 +320,10 @@ class MainWindow(QMainWindow):
         return [name for name, row in self.rows.items() if row.checkbox.isChecked()]
 
     def _save_csv(self):
+        if self._csv_worker is not None:
+            QMessageBox.information(self, "Export in progress", "A CSV export is already running.")
+            return
+
         selected = self._selected_signals()
         if not selected:
             QMessageBox.information(self, "Nothing selected", "Check at least one signal to export.")
@@ -333,19 +338,29 @@ class MainWindow(QMainWindow):
 
         col_index = {"voltage": 2, "current": 3, "encoder": 4, "error": 5}
         header = ["seq", "timestamp_ms"] + [SIGNAL_LABELS[n] for n in selected]
+        col_indices = [col_index[n] for n in selected]
 
-        try:
-            with open(path, "w", newline="") as f:
-                writer = csv.writer(f)
-                writer.writerow(header)
-                for rec in self.session_records:
-                    row = [rec[0], rec[1]] + [rec[col_index[n]] for n in selected]
-                    writer.writerow(row)
-        except OSError as exc:
-            QMessageBox.critical(self, "Save failed", str(exc))
-            return
+        # Snapshot now (GUI thread) so the export thread never iterates a list
+        # that _on_frames() is concurrently appending to.
+        snapshot = list(self.session_records)
 
-        self.statusBar().showMessage(f"Saved {len(self.session_records):,} rows to {path}")
+        self.save_csv_btn.setEnabled(False)
+        self.statusBar().showMessage(f"Saving {len(snapshot):,} rows to {path} ...")
+
+        self._csv_worker = CsvExportWorker(path, header, snapshot, col_indices)
+        self._csv_worker.finished_ok.connect(self._on_csv_saved)
+        self._csv_worker.failed.connect(self._on_csv_failed)
+        self._csv_worker.start()
+
+    def _on_csv_saved(self, path, row_count):
+        self.save_csv_btn.setEnabled(True)
+        self._csv_worker = None
+        self.statusBar().showMessage(f"Saved {row_count:,} rows to {path}")
+
+    def _on_csv_failed(self, message):
+        self.save_csv_btn.setEnabled(True)
+        self._csv_worker = None
+        QMessageBox.critical(self, "Save failed", message)
 
     def _save_png(self):
         selected = self._selected_signals()
@@ -371,6 +386,8 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         if self.worker is not None:
             self._disconnect()
+        if self._csv_worker is not None:
+            self._csv_worker.wait(3000)
         super().closeEvent(event)
 
 

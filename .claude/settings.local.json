@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /home/eray/Desktop/projeler/HCA/stm32f429zit6/hca1001-stm32g474re-1faz -iname \"*.py\" -o -iname \"*gui*\" 2>/dev/null; echo \"---\"; find /home/eray/Desktop/projeler/HCA -maxdepth 2 -type d)",
+      "Read(//home/eray/Desktop/projeler/HCA/**)",
+      "WebFetch(domain:github.com)",
+      "Bash(curl -s \"https://api.github.com/repos/eraymerc/hca1001_mcu_firmware/git/trees/stm32f429zit6-disc1-1faz?recursive=1\")",
+      "Bash(python3 -c ' *)",
+      "Bash(diff /home/eray/Desktop/projeler/HCA/stm32f429zit6/hca1001-stm32g474re-1faz/Core/Src/hca_lib.c /tmp/claude-1000/-home-eray-Desktop-projeler-HCA-stm32f429zit6-hca1001-stm32g474re-1faz/e09c671c-86f9-4877-85e4-fe19a9e9120e/scratchpad/ref/../../../../../../../../home/eray/Desktop/projeler/HCA/stm32f429zit6/hca1001-stm32g474re-1faz/Core/Src/hca_lib.c 2>&1 | head -5 *)",
+      "Read(//home/eray/Desktop/projeler/HCA/stm32f429zit6/hca1001-stm32g474re-1faz/Core/Src/**)",
+      "Bash(curl -s __TRACKED_VAR__/Core/Src/hca_lib.c -o /tmp/ref_hca_lib.c)",
+      "Bash(curl -s __TRACKED_VAR__/Core/Src/unipolar_spwm_controller.c -o /tmp/ref_uspwm.c)",
+      "Read(//tmp/**)",
+      "WebSearch"
+    ]
+  }
+}

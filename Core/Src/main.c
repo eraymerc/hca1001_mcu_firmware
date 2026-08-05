@@ -42,6 +42,7 @@
 /** Streaming frame ring buffer depth (must be a power of two) */
 #define STREAM_FIFO_LEN  64U
 #define STREAM_FIFO_MASK (STREAM_FIFO_LEN - 1U)
+#define MODULATION_INDEX 0.85f
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -118,6 +119,9 @@ int main(void)
 
   Complex_t kp1 = {0.5f, 0.0f}; //real, complex
   Complex_t ki1 = {50.0f, 0.0f}; //real, complex
+  
+  Complex_t kp3 = {3.0f, 0.3f}; //real, complex
+  Complex_t ki3 = {30.0f, 0.0f}; //real, complex
 
   HCA_Add_Channel(&hca, 1, kp1, ki1);  // Fundamental
   /* USER CODE END Init */
@@ -469,7 +473,7 @@ void HAL_RCC_CSSCallback(void)
 
 #define ADC_VREF              3.3f
 #define ADC_FULL_SCALE_CODES  2048.0f  // ADC1 is differential; signed code -2048..2047 spans -VREF..+VREF
-#define V_PEAK_NOM            200.0f*0.85f
+#define V_PEAK_NOM            250.0f
 
 /**
  * Sensor transfer function (measured/derived from the actual circuit):
@@ -482,7 +486,9 @@ void HAL_RCC_CSSCallback(void)
  * where SENSOR_GAIN = 2 * (250/22000) * 0.43. The 1.65V bias on each pin
  * cancels out in the subtraction -- no bias removal needed in software.
  */
-#define SENSOR_GAIN (2.0f * (250.0f / 22000.0f) * 0.43f)
+#define SENSOR_GAIN (2.0f * (250.0f / 44000.0f) * 0.4779f)
+#define DC_CAL 21.5f
+#define GAIN_CAL 172.0f/159.0f
 
 /**
  * ADC1 in differential mode reports Vinp-Vinn as a 12-bit *straight offset
@@ -497,7 +503,7 @@ static inline int16_t DifferentialCode(uint16_t raw12)
 
 static inline float adcToVoltsActual(int16_t adc_signed){
     float v_adc = (float)adc_signed * (ADC_VREF / ADC_FULL_SCALE_CODES); // differential volts at the ADC pins
-    return v_adc / SENSOR_GAIN;                                          // invert sensor formula -> HV line volts
+    return (v_adc / SENSOR_GAIN)*GAIN_CAL + DC_CAL;                                          // invert sensor formula -> HV line volts
 }
 
 static inline float normaliseVoltage(int16_t adc_signed){
@@ -511,9 +517,9 @@ static inline float Execute_HCA_Control(int16_t adc_signed, uint8_t update)
 {
     static uint32_t step_fundamental = (uint32_t)((50.0f / (2.0f*SWITCH_RATE)) * 4294967296.0f);
     static uint32_t angle_fundamental = 0;
-s
+
     uint32_t theta = angle_fundamental;
-    float r_t = HCA_fastSin(theta)*0.5f;
+    float r_t = HCA_fastSin(theta)*0.8f;
 
     float error = r_t - (float)normaliseVoltage(adc_signed);
     float hca_out = HCA_Process(&hca, error);
@@ -521,7 +527,7 @@ s
     angle_fundamental += step_fundamental;
 
     if ((update & 0x1) == 0) {
-      USPWM(htim8.Instance, r_t, ARR_VAL, 1.0f);  // modulation_index=1.0, already applied above
+      USPWM(htim8.Instance, hca_out, ARR_VAL, MODULATION_INDEX);  // modulation_index=1.0, already applied above
     }
 
     return error;

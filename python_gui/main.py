@@ -44,7 +44,7 @@ from protocol import SIGNAL_LABELS, SIGNAL_NAMES, STREAM_RATE_HZ
 from serial_worker import SerialWorker
 
 DEFAULT_LIVE_WINDOW_SECONDS = 5.0
-MIN_LIVE_WINDOW_SECONDS = 0.5
+MIN_LIVE_WINDOW_SECONDS = 0.005
 MAX_LIVE_WINDOW_SECONDS = 30.0
 # Capture buffer is sized for the largest window any row could ask for;
 # each row's spinbox just controls how much of that trailing history it
@@ -82,8 +82,8 @@ class SignalRow(QWidget):
         side.addWidget(fft_btn)
 
         self.window_spin = QDoubleSpinBox()
-        self.window_spin.setDecimals(1)
-        self.window_spin.setSingleStep(0.5)
+        self.window_spin.setDecimals(3)
+        self.window_spin.setSingleStep(0.01)
         self.window_spin.setRange(MIN_LIVE_WINDOW_SECONDS, MAX_LIVE_WINDOW_SECONDS)
         self.window_spin.setValue(DEFAULT_LIVE_WINDOW_SECONDS)
         self.window_spin.setSuffix(" s")
@@ -109,6 +109,11 @@ class SignalRow(QWidget):
         self.plot.setLabel("left", label)
         self.plot.setLabel("bottom", "Time", units="s")
         self.curve = self.plot.plot(pen=pg.mkPen("#00d0ff", width=1.2))
+
+        self.trigger_line = pg.InfiniteLine(angle=90, pen=pg.mkPen("#ffd400", width=1.5))
+        self.trigger_line.setVisible(False)
+        self.plot.addItem(self.trigger_line)
+
         plot_col.addWidget(self.plot, stretch=1)
 
         plot_widget = QWidget()
@@ -120,6 +125,13 @@ class SignalRow(QWidget):
 
     def set_stats(self, mean: float, peak_to_peak: float):
         self.stats_label.setText(f"Mean: {mean:.4g}   Pk-Pk: {peak_to_peak:.4g}")
+
+    def set_trigger_marker(self, x: float | None):
+        if x is None:
+            self.trigger_line.setVisible(False)
+        else:
+            self.trigger_line.setPos(x)
+            self.trigger_line.setVisible(True)
 
 
 class MainWindow(QMainWindow):
@@ -190,6 +202,39 @@ class MainWindow(QMainWindow):
         conn_layout.addWidget(self.status_label)
 
         root.addWidget(conn_box)
+
+        # --- trigger bar ---
+        trig_box = QGroupBox("Trigger")
+        trig_layout = QHBoxLayout(trig_box)
+
+        self.trigger_enable = QCheckBox("Enable")
+        trig_layout.addWidget(self.trigger_enable)
+
+        trig_layout.addWidget(QLabel("Source:"))
+        self.trigger_source = QComboBox()
+        for name in SIGNAL_NAMES:
+            self.trigger_source.addItem(SIGNAL_LABELS[name], name)
+        trig_layout.addWidget(self.trigger_source)
+
+        trig_layout.addWidget(QLabel("Edge:"))
+        self.trigger_edge = QComboBox()
+        self.trigger_edge.addItems(["Rising", "Falling"])
+        trig_layout.addWidget(self.trigger_edge)
+
+        trig_layout.addWidget(QLabel("Level:"))
+        self.trigger_level = QDoubleSpinBox()
+        self.trigger_level.setDecimals(4)
+        self.trigger_level.setRange(-1_000_000.0, 1_000_000.0)
+        self.trigger_level.setSingleStep(0.1)
+        self.trigger_level.setValue(0.0)
+        trig_layout.addWidget(self.trigger_level)
+
+        trig_layout.addStretch(1)
+        self.trigger_status_label = QLabel("")
+        self.trigger_status_label.setObjectName("statsLabel")
+        trig_layout.addWidget(self.trigger_status_label)
+
+        root.addWidget(trig_box)
 
         # --- signal rows ---
         self.rows = {}
@@ -344,19 +389,62 @@ class MainWindow(QMainWindow):
                     )
 
         t_arr = np.fromiter(self.live_t, dtype=np.float64)
+
+        # Trigger: find the most recent edge crossing that still leaves a
+        # full window's worth of samples after it, so every row -- each of
+        # which may have a different window length -- can be sliced from
+        # the exact same point in time and stay aligned with one another.
+        trig_idx = None
+        if self.trigger_enable.isChecked() and len(t_arr) > 1:
+            source_name = self.trigger_source.currentData()
+            source_y = np.fromiter(self.live_buffers[source_name], dtype=np.float64)
+            max_window = max(row.window_samples() for row in self.rows.values())
+            trig_idx = self._find_trigger_index(
+                source_y, self.trigger_edge.currentText(), self.trigger_level.value(), max_window
+            )
+            self.trigger_status_label.setText("Triggered" if trig_idx is not None else "Waiting for trigger...")
+        else:
+            self.trigger_status_label.setText("")
+
         for name, row in self.rows.items():
             y_arr = np.fromiter(self.live_buffers[name], dtype=np.float64)
             n = min(len(t_arr), row.window_samples())
-            y_window = y_arr[-n:] if n < len(y_arr) else y_arr
-            if n < len(t_arr):
-                row.curve.setData(t_arr[-n:], y_window)
+
+            if trig_idx is not None:
+                end = min(trig_idx + n, len(y_arr))
+                y_window = y_arr[trig_idx:end]
+                t_window = t_arr[trig_idx:end] - t_arr[trig_idx]
             else:
-                row.curve.setData(t_arr, y_window)
+                y_window = y_arr[-n:] if n < len(y_arr) else y_arr
+                t_window = t_arr[-n:] if n < len(t_arr) else t_arr
+
+            row.curve.setData(t_window, y_window)
+            row.set_trigger_marker(0.0 if trig_idx is not None else None)
 
             if y_window.size:
                 row.set_stats(float(y_window.mean()), float(y_window.max() - y_window.min()))
 
         self.samples_label.setText(f"{len(self.session_records):,} samples captured")
+
+    @staticmethod
+    def _find_trigger_index(y: np.ndarray, edge: str, level: float, min_post: int):
+        """Search backward for the most recent edge crossing that still
+        leaves at least `min_post` samples after it. Returns None if no
+        qualifying crossing exists yet (e.g. just connected, or the signal
+        never crosses `level`)."""
+        n = len(y)
+        search_end = n - min_post
+        if search_end < 1:
+            return None
+        if edge == "Rising":
+            for i in range(search_end - 1, 0, -1):
+                if y[i - 1] < level <= y[i]:
+                    return i
+        else:
+            for i in range(search_end - 1, 0, -1):
+                if y[i - 1] > level >= y[i]:
+                    return i
+        return None
 
     def _get_live_buffer(self, name: str, n: int):
         buf = self.live_buffers.get(name)

@@ -55,7 +55,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern DMA_HandleTypeDef hdma_adc1;
+
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -199,20 +199,17 @@ void SysTick_Handler(void)
 /* please refer to the startup file (startup_stm32g4xx.s).                    */
 /******************************************************************************/
 
-/**
-  * @brief This function handles DMA1 channel1 global interrupt.
-  */
-void DMA1_Channel1_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
-
-  /* USER CODE END DMA1_Channel1_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_adc1);
-  /* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
-
-  /* USER CODE END DMA1_Channel1_IRQn 1 */
-}
-
 /* USER CODE BEGIN 1 */
+
+extern TIM_HandleTypeDef htim8;
+
+/**
+  * @brief This function handles TIM8 update interrupt -- the open-loop
+  *        control tick (see execute_open_loop_control in main.c).
+  */
+void TIM8_UP_IRQHandler(void)
+{
+  HAL_TIM_IRQHandler(&htim8);
+}
 
 /* USER CODE END 1 */

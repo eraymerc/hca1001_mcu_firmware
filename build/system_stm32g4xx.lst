@@ -1,4 +1,4 @@
-ARM GAS  /tmp/ccVQIe5r.s 			page 1
+ARM GAS  /tmp/ccz9tKED.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -27,7 +27,7 @@ ARM GAS  /tmp/ccVQIe5r.s 			page 1
   24              		.thumb
   25              		.thumb_func
   27              	SystemInit:
-  28              	.LFB329:
+  28              	.LFB132:
    1:Core/Src/system_stm32g4xx.c **** /**
    2:Core/Src/system_stm32g4xx.c ****   ******************************************************************************
    3:Core/Src/system_stm32g4xx.c ****   * @file    system_stm32g4xx.c
@@ -58,7 +58,7 @@ ARM GAS  /tmp/ccVQIe5r.s 			page 1
   28:Core/Src/system_stm32g4xx.c ****   *        System Clock source                    | HSI
   29:Core/Src/system_stm32g4xx.c ****   *-----------------------------------------------------------------------------
   30:Core/Src/system_stm32g4xx.c ****   *        SYSCLK(Hz)                             | 16000000
-ARM GAS  /tmp/ccVQIe5r.s 			page 2
+ARM GAS  /tmp/ccz9tKED.s 			page 2
 
 
   31:Core/Src/system_stm32g4xx.c ****   *-----------------------------------------------------------------------------
@@ -118,7 +118,7 @@ ARM GAS  /tmp/ccVQIe5r.s 			page 1
   85:Core/Src/system_stm32g4xx.c ****   #define HSI_VALUE    16000000U /*!< Value of the Internal oscillator in Hz*/
   86:Core/Src/system_stm32g4xx.c **** #endif /* HSI_VALUE */
   87:Core/Src/system_stm32g4xx.c **** 
-ARM GAS  /tmp/ccVQIe5r.s 			page 3
+ARM GAS  /tmp/ccz9tKED.s 			page 3
 
 
   88:Core/Src/system_stm32g4xx.c **** /**
@@ -178,7 +178,7 @@ ARM GAS  /tmp/ccVQIe5r.s 			page 1
  142:Core/Src/system_stm32g4xx.c **** 
  143:Core/Src/system_stm32g4xx.c **** /** @addtogroup STM32G4xx_System_Private_Variables
  144:Core/Src/system_stm32g4xx.c ****   * @{
-ARM GAS  /tmp/ccVQIe5r.s 			page 4
+ARM GAS  /tmp/ccz9tKED.s 			page 4
 
 
  145:Core/Src/system_stm32g4xx.c ****   */
@@ -238,7 +238,7 @@ ARM GAS  /tmp/ccVQIe5r.s 			page 1
  187:Core/Src/system_stm32g4xx.c **** 
  188:Core/Src/system_stm32g4xx.c ****   /* Configure the Vector Table location add offset address ------------------*/
  189:Core/Src/system_stm32g4xx.c **** #if defined(USER_VECT_TAB_ADDRESS)
-ARM GAS  /tmp/ccVQIe5r.s 			page 5
+ARM GAS  /tmp/ccz9tKED.s 			page 5
 
 
  190:Core/Src/system_stm32g4xx.c ****   SCB->VTOR = VECT_TAB_BASE_ADDRESS | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal SRAM 
@@ -251,7 +251,7 @@ ARM GAS  /tmp/ccVQIe5r.s 			page 1
   45              	.L2:
   46 0010 00ED00E0 		.word	-536810240
   47              		.cfi_endproc
-  48              	.LFE329:
+  48              	.LFE132:
   50              		.section	.text.SystemCoreClockUpdate,"ax",%progbits
   51              		.align	1
   52              		.global	SystemCoreClockUpdate
@@ -259,7 +259,7 @@ ARM GAS  /tmp/ccVQIe5r.s 			page 1
   54              		.thumb
   55              		.thumb_func
   57              	SystemCoreClockUpdate:
-  58              	.LFB330:
+  58              	.LFB133:
  193:Core/Src/system_stm32g4xx.c **** 
  194:Core/Src/system_stm32g4xx.c **** /**
  195:Core/Src/system_stm32g4xx.c ****   * @brief  Update SystemCoreClock variable according to Clock Register Values.
@@ -298,7 +298,7 @@ ARM GAS  /tmp/ccVQIe5r.s 			page 1
  228:Core/Src/system_stm32g4xx.c ****   * @retval None
  229:Core/Src/system_stm32g4xx.c ****   */
  230:Core/Src/system_stm32g4xx.c **** void SystemCoreClockUpdate(void)
-ARM GAS  /tmp/ccVQIe5r.s 			page 6
+ARM GAS  /tmp/ccz9tKED.s 			page 6
 
 
  231:Core/Src/system_stm32g4xx.c **** {
@@ -358,7 +358,7 @@ ARM GAS  /tmp/ccVQIe5r.s 			page 1
  259:Core/Src/system_stm32g4xx.c ****       pllvco = pllvco * ((RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> 8);
  260:Core/Src/system_stm32g4xx.c ****       pllr = (((RCC->PLLCFGR & RCC_PLLCFGR_PLLR) >> 25) + 1U) * 2U;
  261:Core/Src/system_stm32g4xx.c ****       SystemCoreClock = pllvco/pllr;
-ARM GAS  /tmp/ccVQIe5r.s 			page 7
+ARM GAS  /tmp/ccz9tKED.s 			page 7
 
 
  262:Core/Src/system_stm32g4xx.c ****       break;
@@ -418,7 +418,7 @@ ARM GAS  /tmp/ccVQIe5r.s 			page 1
  250:Core/Src/system_stm32g4xx.c ****       if (pllsource == 0x02UL) /* HSI used as PLL clock source */
  121              		.loc 1 250 19 is_stmt 0 view .LVU28
  122 0040 D268     		ldr	r2, [r2, #12]
-ARM GAS  /tmp/ccVQIe5r.s 			page 8
+ARM GAS  /tmp/ccz9tKED.s 			page 8
 
 
  250:Core/Src/system_stm32g4xx.c ****       if (pllsource == 0x02UL) /* HSI used as PLL clock source */
@@ -478,7 +478,7 @@ ARM GAS  /tmp/ccVQIe5r.s 			page 1
  261:Core/Src/system_stm32g4xx.c ****       break;
  160              		.loc 1 261 31 is_stmt 0 view .LVU46
  161 0068 B3FBF2F3 		udiv	r3, r3, r2
-ARM GAS  /tmp/ccVQIe5r.s 			page 9
+ARM GAS  /tmp/ccz9tKED.s 			page 9
 
 
  162              	.LVL8:
@@ -516,7 +516,7 @@ ARM GAS  /tmp/ccVQIe5r.s 			page 1
  187 0088 00000000 		.word	AHBPrescTable
  188 008c 00366E01 		.word	24000000
  189              		.cfi_endproc
- 190              	.LFE330:
+ 190              	.LFE133:
  192              		.global	APBPrescTable
  193              		.section	.rodata.APBPrescTable,"a"
  194              		.align	2
@@ -538,7 +538,7 @@ ARM GAS  /tmp/ccVQIe5r.s 			page 1
  212              	SystemCoreClock:
  213 0000 0024F400 		.word	16000000
  214              		.text
-ARM GAS  /tmp/ccVQIe5r.s 			page 10
+ARM GAS  /tmp/ccz9tKED.s 			page 10
 
 
  215              	.Letext0:
@@ -547,22 +547,22 @@ ARM GAS  /tmp/ccVQIe5r.s 			page 1
  218              		.file 4 "Drivers/CMSIS/Include/core_cm4.h"
  219              		.file 5 "Drivers/CMSIS/Device/ST/STM32G4xx/Include/system_stm32g4xx.h"
  220              		.file 6 "Drivers/CMSIS/Device/ST/STM32G4xx/Include/stm32g474xx.h"
-ARM GAS  /tmp/ccVQIe5r.s 			page 11
+ARM GAS  /tmp/ccz9tKED.s 			page 11
 
 
 DEFINED SYMBOLS
                             *ABS*:00000000 system_stm32g4xx.c
-     /tmp/ccVQIe5r.s:21     .text.SystemInit:00000000 $t
-     /tmp/ccVQIe5r.s:27     .text.SystemInit:00000000 SystemInit
-     /tmp/ccVQIe5r.s:46     .text.SystemInit:00000010 $d
-     /tmp/ccVQIe5r.s:51     .text.SystemCoreClockUpdate:00000000 $t
-     /tmp/ccVQIe5r.s:57     .text.SystemCoreClockUpdate:00000000 SystemCoreClockUpdate
-     /tmp/ccVQIe5r.s:184    .text.SystemCoreClockUpdate:0000007c $d
-     /tmp/ccVQIe5r.s:212    .data.SystemCoreClock:00000000 SystemCoreClock
-     /tmp/ccVQIe5r.s:204    .rodata.AHBPrescTable:00000000 AHBPrescTable
-     /tmp/ccVQIe5r.s:197    .rodata.APBPrescTable:00000000 APBPrescTable
-     /tmp/ccVQIe5r.s:194    .rodata.APBPrescTable:00000000 $d
-     /tmp/ccVQIe5r.s:201    .rodata.AHBPrescTable:00000000 $d
-     /tmp/ccVQIe5r.s:209    .data.SystemCoreClock:00000000 $d
+     /tmp/ccz9tKED.s:21     .text.SystemInit:00000000 $t
+     /tmp/ccz9tKED.s:27     .text.SystemInit:00000000 SystemInit
+     /tmp/ccz9tKED.s:46     .text.SystemInit:00000010 $d
+     /tmp/ccz9tKED.s:51     .text.SystemCoreClockUpdate:00000000 $t
+     /tmp/ccz9tKED.s:57     .text.SystemCoreClockUpdate:00000000 SystemCoreClockUpdate
+     /tmp/ccz9tKED.s:184    .text.SystemCoreClockUpdate:0000007c $d
+     /tmp/ccz9tKED.s:212    .data.SystemCoreClock:00000000 SystemCoreClock
+     /tmp/ccz9tKED.s:204    .rodata.AHBPrescTable:00000000 AHBPrescTable
+     /tmp/ccz9tKED.s:197    .rodata.APBPrescTable:00000000 APBPrescTable
+     /tmp/ccz9tKED.s:194    .rodata.APBPrescTable:00000000 $d
+     /tmp/ccz9tKED.s:201    .rodata.AHBPrescTable:00000000 $d
+     /tmp/ccz9tKED.s:209    .data.SystemCoreClock:00000000 $d
 
 NO UNDEFINED SYMBOLS

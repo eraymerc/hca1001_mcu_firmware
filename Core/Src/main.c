@@ -117,13 +117,28 @@ int main(void)
           oversample_ratio,
           output_limit);
 
-  Complex_t kp1 = {0.5f, 0.0f}; //real, complex
-  Complex_t ki1 = {50.0f, 0.0f}; //real, complex
+  Complex_t kp1 = {0.5f, -0.03f}; //real, complex
+  Complex_t ki1 = {0.8407f, 0.0657f}; //real, complex
   
-  Complex_t kp3 = {3.0f, 0.3f}; //real, complex
-  Complex_t ki3 = {30.0f, 0.0f}; //real, complex
+  Complex_t kp3 = {0.001f, -0.4f}; //real, complex
+  Complex_t ki3 = {0.0508f, -0.8f}; //real, complex
+
+  Complex_t kp5 = {0.001f, 0.01f}; //real, complex
+  Complex_t ki5 = {0.01f, 0.02f}; //real, complex
+
+  Complex_t kp7 = {0.001f, 0.001f}; //real, complex
+  Complex_t ki7 = {0.25f, 3.005f}; //real, complex
+
+  Complex_t kp9 = {0.001f, 0.01f}; //real, complex
+  Complex_t ki9 = {0.5f, 3.0025f}; //real, complex
+
 
   HCA_Add_Channel(&hca, 1, kp1, ki1);  // Fundamental
+  HCA_Add_Channel(&hca, 3, kp3, ki3);  // Fundamental
+  HCA_Add_Channel(&hca, 5, kp5, ki5);  // Fundamental
+  HCA_Add_Channel(&hca, 7, kp7, ki7);  // Fundamental
+  HCA_Add_Channel(&hca, 9, kp9, ki9);  // Fundamental
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -473,7 +488,7 @@ void HAL_RCC_CSSCallback(void)
 
 #define ADC_VREF              3.3f
 #define ADC_FULL_SCALE_CODES  2048.0f  // ADC1 is differential; signed code -2048..2047 spans -VREF..+VREF
-#define V_PEAK_NOM            250.0f
+#define V_PEAK_NOM            200.0f
 
 /**
  * Sensor transfer function (measured/derived from the actual circuit):

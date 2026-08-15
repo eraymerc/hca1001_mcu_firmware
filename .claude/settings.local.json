@@ -11,7 +11,8 @@
       "Bash(curl -s __TRACKED_VAR__/Core/Src/hca_lib.c -o /tmp/ref_hca_lib.c)",
       "Bash(curl -s __TRACKED_VAR__/Core/Src/unipolar_spwm_controller.c -o /tmp/ref_uspwm.c)",
       "Read(//tmp/**)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(.venv/bin/python /tmp/claude-1000/-home-eray-Desktop-projeler-HCA-mcu-firmware-hca1001-stm32g474re-1faz/80be4af2-1447-45a5-9df2-7a5acb960f9b/scratchpad/check_fft.py)"
     ]
   }
 }

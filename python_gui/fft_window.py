@@ -24,6 +24,7 @@ UPDATE_INTERVAL_MS = 250
 DB_FLOOR = 1e-12              # clamp before log10 so a true-zero bin doesn't give -inf
 
 HARMONIC_ORDERS = (1, 3, 5, 7, 9)
+THD_MIN_ORDER = 2             # H1 is the reference; the THD sum starts at H2
 F0_SEARCH_LO_HZ = 30.0
 F0_SEARCH_HI_HZ = 90.0
 DEFAULT_F0_HZ = 50.0
@@ -97,6 +98,16 @@ class FFTWindow(QMainWindow):
         self.f0_spin.setToolTip("Fundamental frequency the harmonics are derived from")
         self.f0_spin.valueChanged.connect(self._refresh)
         controls.addWidget(self.f0_spin)
+
+        controls.addSpacing(16)
+        self.thd_label = QLabel("THD: -")
+        self.thd_label.setObjectName("statsLabel")
+        self.thd_label.setToolTip(
+            "THD-F: sqrt(sum of squared harmonic amplitudes, orders 2..N) / fundamental.\n"
+            f"N is capped by the {STREAM_RATE_HZ / 2:.0f} Hz Nyquist of the "
+            f"{STREAM_RATE_HZ / 1000:.0f} kHz stream, so at 50 Hz nothing above H10 is measured."
+        )
+        controls.addWidget(self.thd_label)
 
         controls.addStretch(1)
         layout.addLayout(controls)
@@ -177,24 +188,65 @@ class FFTWindow(QMainWindow):
         acc = np.sum(data * window * np.exp(-2j * np.pi * f_hz * t))
         return acc * 2.0 / np.sum(window)
 
-    @staticmethod
-    def _detect_f0(freqs, amplitude):
-        """Largest peak inside the fundamental search band, refined by
-        parabolic interpolation over its two neighbours. None if the band is
-        empty or the peak sits on its edge (no neighbours to interpolate)."""
+    @classmethod
+    def _compute_thd(cls, data, window, f0, fundamental_amp, nyquist, bin_width):
+        """THD-F in percent from every integer harmonic that fits below Nyquist
+        -- even orders included, since they flag DC offset or half-cycle
+        asymmetry. Returns (percent, h_max); percent is None when the
+        fundamental is too small to divide by.
+
+        Computed from linear peak amplitudes, so the figure is invariant to
+        the dB and RMS toggles (both would scale numerator and denominator
+        alike). At 1 kHz the sum truncates around H10 for a 50 Hz
+        fundamental -- h_max is reported so the readout can say so."""
+        h_max = int(nyquist // f0)
+        squares = 0.0
+        highest = 0
+        for h in range(THD_MIN_ORDER, h_max + 1):
+            f_h = h * f0
+            if f_h >= nyquist - bin_width:
+                break
+            squares += float(np.abs(cls._harmonic_component(data, window, f_h))) ** 2
+            highest = h
+        if fundamental_amp is None or fundamental_amp <= DB_FLOOR:
+            return None, highest
+        return 100.0 * np.sqrt(squares) / fundamental_amp, highest
+
+    @classmethod
+    def _detect_f0(cls, data, window, freqs, amplitude):
+        """Largest peak inside the fundamental search band, refined to well
+        below the ~0.49 Hz bin spacing. None if the band is empty or the peak
+        sits on its edge.
+
+        The coarse bin index is refined by maximising the projection magnitude
+        over +/-1 bin (golden section), not by parabolic interpolation on the
+        magnitude spectrum: the parabolic estimate carries a bias of a few
+        hundredths of a hertz, which is harmless for the fundamental itself but
+        multiplies by the harmonic order and drags every harmonic amplitude --
+        and therefore THD -- roughly a percent low."""
         idx = np.flatnonzero((freqs >= F0_SEARCH_LO_HZ) & (freqs <= F0_SEARCH_HI_HZ))
         if idx.size == 0:
             return None
         k = int(idx[np.argmax(amplitude[idx])])
         if k <= 0 or k >= len(amplitude) - 1:
             return None
-        y0, y1, y2 = amplitude[k - 1], amplitude[k], amplitude[k + 1]
-        denom = y0 - 2.0 * y1 + y2
-        delta = 0.0 if denom == 0 else 0.5 * (y0 - y2) / denom
-        if not np.isfinite(delta) or abs(delta) > 1.0:
-            delta = 0.0
-        bin_width = freqs[1] - freqs[0]
-        return float(freqs[k] + delta * bin_width)
+
+        bin_width = float(freqs[1] - freqs[0])
+        lo, hi = freqs[k] - bin_width, freqs[k] + bin_width
+        inv_phi = (np.sqrt(5.0) - 1.0) / 2.0
+        c, d = hi - inv_phi * (hi - lo), lo + inv_phi * (hi - lo)
+        mag_c = np.abs(cls._harmonic_component(data, window, c))
+        mag_d = np.abs(cls._harmonic_component(data, window, d))
+        for _ in range(25):  # ~2.5 ms total; the refresh period is 250 ms
+            if mag_c > mag_d:
+                hi, d, mag_d = d, c, mag_c
+                c = hi - inv_phi * (hi - lo)
+                mag_c = np.abs(cls._harmonic_component(data, window, c))
+            else:
+                lo, c, mag_c = c, d, mag_d
+                d = lo + inv_phi * (hi - lo)
+                mag_d = np.abs(cls._harmonic_component(data, window, d))
+        return float((lo + hi) / 2.0)
 
     @staticmethod
     def _wrap180(degrees):
@@ -261,7 +313,7 @@ class FFTWindow(QMainWindow):
         # f0 comes from the reference signal: the error signal may carry very
         # little energy at the line frequency, but the voltage always does.
         if self.auto_f0_checkbox.isChecked():
-            detected = self._detect_f0(ref_freqs, ref_amplitude)
+            detected = self._detect_f0(ref_data, ref_window, ref_freqs, ref_amplitude)
             if detected is not None:
                 self.f0_spin.blockSignals(True)
                 self.f0_spin.setValue(detected)
@@ -317,6 +369,17 @@ class FFTWindow(QMainWindow):
             text.setVisible(True)
 
         self.harmonic_markers.setData(marker_points)
+
+        # `data`/`window` are the trimmed arrays in the cross-signal case,
+        # which is what we want: THD is a property of the plotted signal.
+        bin_width = STREAM_RATE_HZ / len(data)  # `freqs` may predate the trim
+        thd, h_max = self._compute_thd(
+            data, window, f0, fundamental_amp, nyquist, bin_width
+        )
+        if thd is None:
+            self.thd_label.setText("THD: -")
+        else:
+            self.thd_label.setText(f"THD: {thd:.2f} %  (to H{h_max})")
 
     def closeEvent(self, event):
         self._timer.stop()

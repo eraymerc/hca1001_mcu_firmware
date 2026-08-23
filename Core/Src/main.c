@@ -175,8 +175,8 @@ int main(void)
   Complex_t kp15 = {0.001f, 0.01f}; //real, complex
   Complex_t ki15 = {0.05f, 1.0025f}; //real, complex
 
-  Complex_t kp17 = {0.001f, 0.01f}; //real, complex
-  Complex_t ki17 = {0.05f, 1.0025f}; //real, complex
+  //Complex_t kp17 = {0.001f, 0.01f}; //real, complex
+  //Complex_t ki17 = {0.05f, 1.0025f}; //real, complex
 
   HCA_Add_Channel(&hca, 1, kp1, ki1);  // Fundamental
   HCA_Add_Channel(&hca, 3, kp3, ki3);  
@@ -186,7 +186,7 @@ int main(void)
   HCA_Add_Channel(&hca, 11, kp11, ki11);  
   HCA_Add_Channel(&hca, 13, kp13, ki13);
   HCA_Add_Channel(&hca, 15, kp15, ki15);
-  HCA_Add_Channel(&hca, 17, kp17, ki17);    
+  //HCA_Add_Channel(&hca, 17, kp17, ki17);    
   
   /* USER CODE END Init */
 

@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdbool.h>
+#include <string.h>
 #include "hca_lib.h"
 #include "unipolar_spwm_controller.h"
 /* USER CODE END Includes */
@@ -36,12 +37,32 @@
 #define ARR_VAL 4249
 #define SWITCH_RATE 20000.0f // Hz, TIM8 carrier frequency (170MHz / (2*(ARR_VAL+1)))
 
-/** ADC ISR runs at 40kHz; only push every Nth sample -> 40kHz/40 = 1kHz stream rate */
-#define ADC_STREAM_DECIMATION 40U
+/** ADC ISR runs at 40kHz; only push every Nth sample -> 40kHz/8 = 5kHz stream rate.
+ *  5kHz puts Nyquist at 2.5kHz, so the host FFT resolves harmonics up to H50 of a
+ *  50Hz fundamental. Costs 19 bytes * 5000 Hz = 95,000 B/s on a link good for
+ *  209,700 B/s (2,097,000 baud, 8N1), i.e. about 45% of the wire. */
+#define ADC_STREAM_DECIMATION 8U
 
 /** Streaming frame ring buffer depth (must be a power of two) */
+/* Each frame now carries STREAM_BATCH_SAMPLES samples, so 64 frames is 512
+ * samples -- ~102ms of slack at the 5kHz stream rate, more than the 256
+ * single-sample frames it replaces, for 4.8KB of RAM. */
 #define STREAM_FIFO_LEN  64U
 #define STREAM_FIFO_MASK (STREAM_FIFO_LEN - 1U)
+
+/** LPUART1 RX ring filled by DMA, drained in the main loop (must be a power of two).
+ *
+ *  Polling HAL_UART_Receive() a byte at a time cannot keep up here: one byte is
+ *  4.77us at 2,097,000 baud, while the main loop can sit inside a blocking
+ *  HAL_UART_Transmit for ~90us per stream frame and is preempted by the 40kHz
+ *  ADC ISR every 25us. A single-byte command survives that (it just waits in
+ *  RDR), but every byte after the first in a multi-byte command is overrun and
+ *  lost -- which is why SET_COEFF payloads never completed. DMA takes the CPU
+ *  out of the capture path entirely, so main-loop latency no longer matters.
+ *
+ *  64 bytes is over three SET_COEFF commands' worth of slack. */
+#define UART_RX_DMA_LEN  64U
+#define UART_RX_DMA_MASK (UART_RX_DMA_LEN - 1U)
 #define MODULATION_INDEX 0.85f
 /* USER CODE END PD */
 
@@ -56,6 +77,8 @@ ADC_HandleTypeDef hadc1;
 DMA_HandleTypeDef hdma_adc1;
 
 UART_HandleTypeDef hlpuart1;
+DMA_HandleTypeDef hdma_lpuart1_rx;
+DMA_HandleTypeDef hdma_lpuart1_tx;
 
 TIM_HandleTypeDef htim8;
 
@@ -66,11 +89,22 @@ volatile HCA_Handle_t hca;   // HCA Handler type
 /** Set/cleared by 'S'/'X' commands received over LPUART1 (see HandleStreamCommand) */
 volatile uint8_t streaming_enabled = 0;
 
+/* LPUART1 receive path: DMA writes here continuously, the main loop follows it.
+ * hdma_lpuart1_rx itself is CubeMX-generated (LPUART1 -> DMA Settings in the
+ * .ioc: DMA1 Channel2, circular, byte-wide). */
+static uint8_t    uart_rx_dma[UART_RX_DMA_LEN];
+static uint16_t   uart_rx_tail = 0;
+
 /* Single-producer (ADC ISR) / single-consumer (main loop) ring buffer of frames */
 static AdcStreamFrame_t  stream_fifo[STREAM_FIFO_LEN];
 static volatile uint16_t stream_fifo_head = 0;
 static volatile uint16_t stream_fifo_tail = 0;
 static volatile uint32_t stream_seq = 0;
+/* Set while a stream frame is in flight on DMA1_Channel3; cleared by the
+ * transfer-complete callback, which is also where the FIFO tail advances. The
+ * slot must stay untouched until then, since the DMA is reading straight out
+ * of it. */
+static volatile uint8_t  stream_tx_busy = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -123,7 +157,7 @@ int main(void)
   Complex_t kp3 = {0.001f, -0.4f}; //real, complex
   Complex_t ki3 = {0.0508f, -0.8f}; //real, complex
 
-  Complex_t kp5 = {0.001f, 0.01f}; //real, complex
+  Complex_t kp5 = {0.010f, 0.01f}; //real, complex
   Complex_t ki5 = {0.01f, 0.02f}; //real, complex
 
   Complex_t kp7 = {0.001f, 0.001f}; //real, complex
@@ -132,13 +166,28 @@ int main(void)
   Complex_t kp9 = {0.001f, 0.01f}; //real, complex
   Complex_t ki9 = {0.5f, 3.0025f}; //real, complex
 
+  Complex_t kp11 = {0.001f, 0.01f}; //real, complex
+  Complex_t ki11 = {0.05f, 1.0025f}; //real, complex
+
+  Complex_t kp13 = {0.001f, 0.01f}; //real, complex
+  Complex_t ki13 = {0.05f, 1.0025f}; //real, complex
+
+  Complex_t kp15 = {0.001f, 0.01f}; //real, complex
+  Complex_t ki15 = {0.05f, 1.0025f}; //real, complex
+
+  Complex_t kp17 = {0.001f, 0.01f}; //real, complex
+  Complex_t ki17 = {0.05f, 1.0025f}; //real, complex
 
   HCA_Add_Channel(&hca, 1, kp1, ki1);  // Fundamental
-  HCA_Add_Channel(&hca, 3, kp3, ki3);  // Fundamental
-  HCA_Add_Channel(&hca, 5, kp5, ki5);  // Fundamental
-  HCA_Add_Channel(&hca, 7, kp7, ki7);  // Fundamental
-  HCA_Add_Channel(&hca, 9, kp9, ki9);  // Fundamental
-
+  HCA_Add_Channel(&hca, 3, kp3, ki3);  
+  HCA_Add_Channel(&hca, 5, kp5, ki5);  
+  HCA_Add_Channel(&hca, 7, kp7, ki7);  
+  HCA_Add_Channel(&hca, 9, kp9, ki9);  
+  HCA_Add_Channel(&hca, 11, kp11, ki11);  
+  HCA_Add_Channel(&hca, 13, kp13, ki13);
+  HCA_Add_Channel(&hca, 15, kp15, ki15);
+  HCA_Add_Channel(&hca, 17, kp17, ki17);    
+  
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -171,16 +220,37 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    uint8_t rx_byte;
-    if (HAL_UART_Receive(&hlpuart1, &rx_byte, 1, 0) == HAL_OK)
+    /* Everything DMA has written since the last pass. CNDTR counts down, so
+     * the write position is the buffer length minus what is left to fill. */
+    uint16_t rx_head = (uint16_t)(UART_RX_DMA_LEN
+                                  - __HAL_DMA_GET_COUNTER(&hdma_lpuart1_rx));
+    while (uart_rx_tail != rx_head)
     {
-      HandleStreamCommand(rx_byte);
+      HandleStreamCommand(uart_rx_dma[uart_rx_tail]);
+      uart_rx_tail = (uint16_t)((uart_rx_tail + 1U) & UART_RX_DMA_MASK);
     }
 
+    /* DMA transmit is wired up (HAL_UART_TxCpltCallback below) but stays off
+     * until the LPUART1 global interrupt is enabled in CubeMX: HAL signals a
+     * DMA transmit's completion from the UART's TC interrupt, not the DMA's,
+     * so without that NVIC entry gState never returns to READY and the stream
+     * stops dead after one frame. Swap these two blocks once it is enabled.
+     *
+     *   if (!stream_tx_busy && (stream_fifo_tail != stream_fifo_head))
+     *   {
+     *     AdcStreamFrame_t *frame = &stream_fifo[stream_fifo_tail];
+     *     if (HAL_UART_Transmit_DMA(&hlpuart1, (uint8_t*)frame,
+     *                               (uint16_t)sizeof(AdcStreamFrame_t)) == HAL_OK)
+     *     {
+     *       stream_tx_busy = 1;
+     *     }
+     *   }
+     */
     if (stream_fifo_tail != stream_fifo_head)
     {
       AdcStreamFrame_t *frame = &stream_fifo[stream_fifo_tail];
-      if (HAL_UART_Transmit(&hlpuart1, (uint8_t*)frame, (uint16_t)sizeof(AdcStreamFrame_t), 5) == HAL_OK)
+      if (HAL_UART_Transmit(&hlpuart1, (uint8_t*)frame,
+                            (uint16_t)sizeof(AdcStreamFrame_t), 5) == HAL_OK)
       {
         stream_fifo_tail = (uint16_t)((stream_fifo_tail + 1U) & STREAM_FIFO_MASK);
       }
@@ -348,7 +418,11 @@ static void MX_LPUART1_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN LPUART1_Init 2 */
-
+  /* Circular: this never completes and never needs restarting. */
+  if (HAL_UART_Receive_DMA(&hlpuart1, uart_rx_dma, UART_RX_DMA_LEN) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE END LPUART1_Init 2 */
 
 }
@@ -443,6 +517,12 @@ static void MX_DMA_Init(void)
   /* DMA1_Channel1_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+  /* DMA1_Channel2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 3, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
+  /* DMA1_Channel3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 3, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
 
 }
 
@@ -560,27 +640,48 @@ static uint8_t StreamChecksum(const AdcStreamFrame_t *f)
     return sum;
 }
 
-/** Producer side (called from ADC ISR). Drops the sample if the FIFO is full. */
+/* Batch under construction. Only the ISR touches it, so it needs no guarding. */
+static AdcStreamFrame_t stream_accum;
+static uint8_t          stream_accum_count = 0;
+
+/**
+ * Producer side (called from ADC ISR). Accumulates STREAM_BATCH_SAMPLES samples
+ * and pushes them as one frame; drops the whole batch if the FIFO is full.
+ *
+ * seq is advanced only on a successful push, which is what lets the host tell
+ * the two loss modes apart: a FIFO overflow here leaves seq contiguous but
+ * slower than wall-clock, while bytes lost on the wire leave holes in seq.
+ */
 static inline void PushStreamFrame(float voltage, float error)
 {
+    if (stream_accum_count == 0U) {
+        stream_accum.timestamp_ms = HAL_GetTick();
+    }
+
+    stream_accum.samples[stream_accum_count].voltage = voltage;
+    stream_accum.samples[stream_accum_count].error   = error;
+
+    if (++stream_accum_count < STREAM_BATCH_SAMPLES) {
+        return; // batch still filling
+    }
+    stream_accum_count = 0;
+
     uint16_t next_head = (uint16_t)((stream_fifo_head + 1U) & STREAM_FIFO_MASK);
     if (next_head == stream_fifo_tail) {
-        return; // consumer (UART) can't keep up, drop this sample
+        return; // consumer (UART) can't keep up, drop this batch
     }
 
     AdcStreamFrame_t *f = &stream_fifo[stream_fifo_head];
+    *f              = stream_accum;
     f->sync0        = STREAM_SYNC0;
     f->sync1        = STREAM_SYNC1;
     f->seq          = stream_seq++;
-    f->timestamp_ms = HAL_GetTick();
-    f->voltage      = voltage;
-    f->error        = error;
     f->checksum     = StreamChecksum(f);
 
     stream_fifo_head = next_head;
 }
 
-// Manages the HCA loop 40kHz sample rate and 1kHz telemetry rate
+// Manages the HCA loop 40kHz sample rate and 5kHz telemetry rate
 volatile uint32_t tick_counter = 0;
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
@@ -600,11 +701,159 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     }
 }
 
+/**
+ * Stream frame finished on the wire. Only the stream path uses DMA, so this
+ * cannot be reached by the command replies below.
+ */
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == LPUART1)
+    {
+        stream_fifo_tail = (uint16_t)((stream_fifo_tail + 1U) & STREAM_FIFO_MASK);
+        stream_tx_busy = 0;
+    }
+}
+
+/**
+ * Command replies still transmit in blocking mode -- they are rare and
+ * user-triggered. HAL refuses a transmit while gState is BUSY_TX, so wait out
+ * any stream frame first rather than letting the reply be dropped. Bounded by
+ * one frame time, ~360us at 2,097,000 baud.
+ */
+static void StreamTxWaitIdle(void)
+{
+    while (stream_tx_busy)
+    {
+        /* the DMA1_Channel3 IRQ clears this */
+    }
+}
+
+/* ---- SET_COEFF payload reassembly ----------------------------------------
+ * The main loop hands us one byte at a time, so a multi-byte command has to be
+ * collected across iterations. Doing a blocking 18-byte read instead would
+ * stall the stream pump for as long as the host took to finish the command. */
+static uint8_t  coeff_rx[COEFF_CMD_PAYLOAD_LEN];
+static uint8_t  coeff_rx_len = 0;
+static uint8_t  coeff_rx_active = 0;
+static uint32_t coeff_rx_started_ms = 0;
+
+static uint8_t CoeffChecksum(const uint8_t *p, uint16_t len)
+{
+    uint8_t sum = 0;
+    for (uint16_t i = 0; i < len; i++) {
+        sum += p[i];
+    }
+    return sum;
+}
+
+/** Emit one channel's gains. Blocking, but only ~105us at 2,097,000 baud. */
+static void SendCoeffFrame(uint8_t index, uint8_t count, const HCA_Channel_t *ch)
+{
+    HcaCoeffFrame_t f;
+    f.sync0   = STREAM_SYNC0;
+    f.sync1   = COEFF_SYNC1;
+    f.index   = index;
+    f.count   = count;
+    f.order   = ch->harmonic_order;
+    f.kp_real = ch->Kp.real;
+    f.kp_imag = ch->Kp.imag;
+    f.ki_real = ch->Ki.real;
+    f.ki_imag = ch->Ki.imag;
+    /* Covers index..ki_imag: everything but the two sync bytes and itself. */
+    f.checksum = CoeffChecksum((const uint8_t*)&f.index,
+                               (uint16_t)(sizeof(f) - 3U));
+
+    StreamTxWaitIdle();
+    HAL_UART_Transmit(&hlpuart1, (uint8_t*)&f, (uint16_t)sizeof(f), 10);
+}
+
+static void SendAllCoeffFrames(void)
+{
+    HCA_Handle_t *h = (HCA_Handle_t*)&hca;
+    uint8_t count = h->active_channel_count;
+    for (uint8_t i = 0; i < count; i++) {
+        SendCoeffFrame(i, count, &h->channels[i]);
+    }
+}
+
+/** Validate a fully received SET_COEFF payload and push it into the controller. */
+static void ApplyCoeffCommand(void)
+{
+    if (CoeffChecksum(coeff_rx, COEFF_CMD_PAYLOAD_LEN - 1U)
+            != coeff_rx[COEFF_CMD_PAYLOAD_LEN - 1U]) {
+        return; // corrupted on the wire; the host re-sends after its ack times out
+    }
+
+    uint8_t   order = coeff_rx[0];
+    Complex_t kp, ki;
+    /* memcpy rather than a cast: coeff_rx is byte-aligned and the FPU's VLDR
+     * faults on an unaligned float load. */
+    memcpy(&kp.real, &coeff_rx[1],  sizeof(float));
+    memcpy(&kp.imag, &coeff_rx[5],  sizeof(float));
+    memcpy(&ki.real, &coeff_rx[9],  sizeof(float));
+    memcpy(&ki.imag, &coeff_rx[13], sizeof(float));
+
+    /* Gains only -- this never creates a channel. The set of active channels is
+     * fixed at boot by the HCA_Add_Channel calls in main(), so the ISR's
+     * per-sample workload cannot change underneath it while running.
+     *
+     * Safe from the main loop; see the thread-safety note on HCA_UpdateChannel.
+     * An order with no channel is ignored there, and the absent echo below is
+     * what tells the host the write did not land. */
+    HCA_Handle_t *h = (HCA_Handle_t*)&hca;
+    HCA_UpdateChannel(h, order, kp, ki);
+
+    for (uint8_t i = 0; i < h->active_channel_count; i++) {
+        if (h->channels[i].harmonic_order == order) {
+            SendCoeffFrame(i, h->active_channel_count, &h->channels[i]);
+            return;
+        }
+    }
+}
+
 /** Command byte polled from LPUART1 in the main loop (see HAL_UART_Receive call in USER CODE 3). */
 static void HandleStreamCommand(uint8_t cmd)
 {
+    if (coeff_rx_active)
+    {
+        if ((HAL_GetTick() - coeff_rx_started_ms) > COEFF_CMD_TIMEOUT_MS) {
+            coeff_rx_active = 0;  // stale payload; fall through and read this byte as a command
+        } else {
+            coeff_rx[coeff_rx_len++] = cmd;
+            if (coeff_rx_len >= COEFF_CMD_PAYLOAD_LEN) {
+                coeff_rx_active = 0;
+                coeff_rx_len = 0;
+                ApplyCoeffCommand();
+            }
+            return;
+        }
+    }
+
     switch (cmd)
     {
+        case STREAM_CMD_GET_COEFF:
+            SendAllCoeffFrames();
+            break;
+
+        case STREAM_CMD_RESET_INT:
+            /* Zeroes each channel's PI integrator and disperser accumulator and
+             * clears the shared delay line. Runs from the main loop while the
+             * ISR keeps calling HCA_Process, so the controller sees the state
+             * vanish mid-sample -- that is the point of the command, but it does
+             * put a transient on the output. The ~16KB memset costs roughly one
+             * 40kHz ISR period.
+             *
+             * Gains are untouched, so echoing them back doubles as the ack. */
+            HCA_reset_accumulators((HCA_Handle_t*)&hca);
+            SendAllCoeffFrames();
+            break;
+
+        case STREAM_CMD_SET_COEFF:
+            coeff_rx_active = 1;
+            coeff_rx_len = 0;
+            coeff_rx_started_ms = HAL_GetTick();
+            break;
+
         case STREAM_CMD_START:
             streaming_enabled = 1;
             break;
@@ -614,6 +863,7 @@ static void HandleStreamCommand(uint8_t cmd)
             break;
 
         case STREAM_CMD_PING:
+            StreamTxWaitIdle();
             HAL_UART_Transmit(&hlpuart1, (uint8_t*)STREAM_PING_REPLY,
                                (uint16_t)(sizeof(STREAM_PING_REPLY) - 1U), 10);
             break;

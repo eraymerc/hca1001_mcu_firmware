@@ -1,4 +1,4 @@
-ARM GAS  /tmp/cc5BUOoY.s 			page 1
+ARM GAS  /tmp/ccpBwvj8.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -12,7 +12,7 @@ ARM GAS  /tmp/cc5BUOoY.s 			page 1
    9              		.eabi_attribute 24, 1
   10              		.eabi_attribute 25, 1
   11              		.eabi_attribute 26, 1
-  12              		.eabi_attribute 30, 1
+  12              		.eabi_attribute 30, 2
   13              		.eabi_attribute 34, 1
   14              		.eabi_attribute 18, 4
   15              		.file	"hca_lib.c"
@@ -22,12 +22,13 @@ ARM GAS  /tmp/cc5BUOoY.s 			page 1
   19              		.file 1 "Core/Src/hca_lib.c"
   20              		.section	.text.HCA_CreateLUTs,"ax",%progbits
   21              		.align	1
-  22              		.global	HCA_CreateLUTs
-  23              		.syntax unified
-  24              		.thumb
-  25              		.thumb_func
-  27              	HCA_CreateLUTs:
-  28              	.LFB3:
+  22              		.p2align 2,,3
+  23              		.global	HCA_CreateLUTs
+  24              		.syntax unified
+  25              		.thumb
+  26              		.thumb_func
+  28              	HCA_CreateLUTs:
+  29              	.LFB3:
    1:Core/Src/hca_lib.c **** /**
    2:Core/Src/hca_lib.c ****  * @file hca_lib.c
    3:Core/Src/hca_lib.c ****  *
@@ -57,10 +58,10 @@ ARM GAS  /tmp/cc5BUOoY.s 			page 1
   27:Core/Src/hca_lib.c ****  *
   28:Core/Src/hca_lib.c ****  * ---
   29:Core/Src/hca_lib.c ****  * License:
+ARM GAS  /tmp/ccpBwvj8.s 			page 2
+
+
   30:Core/Src/hca_lib.c ****  *
-ARM GAS  /tmp/cc5BUOoY.s 			page 2
-
-
   31:Core/Src/hca_lib.c ****  * This project is licensed under the MIT License.
   32:Core/Src/hca_lib.c ****  * See the LICENSE file in the repository root for full license text.
   33:Core/Src/hca_lib.c ****  *
@@ -117,10 +118,10 @@ ARM GAS  /tmp/cc5BUOoY.s 			page 1
   84:Core/Src/hca_lib.c **** }
   85:Core/Src/hca_lib.c **** 
   86:Core/Src/hca_lib.c **** /**
+ARM GAS  /tmp/ccpBwvj8.s 			page 3
+
+
   87:Core/Src/hca_lib.c ****  * @brief Scale a complex number by a real scalar
-ARM GAS  /tmp/cc5BUOoY.s 			page 3
-
-
   88:Core/Src/hca_lib.c ****  */
   89:Core/Src/hca_lib.c **** static inline Complex_t Complex_Scale(Complex_t a, float scalar) {
   90:Core/Src/hca_lib.c ****     Complex_t res;
@@ -134,260 +135,310 @@ ARM GAS  /tmp/cc5BUOoY.s 			page 1
   98:Core/Src/hca_lib.c **** // ============================================================
   99:Core/Src/hca_lib.c **** 
  100:Core/Src/hca_lib.c **** void HCA_CreateLUTs(void) {
-  29              		.loc 1 100 27 view -0
-  30              		.cfi_startproc
-  31              		@ args = 0, pretend = 0, frame = 0
-  32              		@ frame_needed = 0, uses_anonymous_args = 0
+  30              		.loc 1 100 27 view -0
+  31              		.cfi_startproc
+  32              		@ args = 0, pretend = 0, frame = 0
+  33              		@ frame_needed = 0, uses_anonymous_args = 0
  101:Core/Src/hca_lib.c **** 
  102:Core/Src/hca_lib.c ****     if (is_lut_initialized) return;
-  33              		.loc 1 102 5 view .LVU1
-  34              		.loc 1 102 9 is_stmt 0 view .LVU2
-  35 0000 0E4B     		ldr	r3, .L9
-  36 0002 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
-  37              		.loc 1 102 8 view .LVU3
-  38 0004 CBB9     		cbnz	r3, .L6
+  34              		.loc 1 102 5 view .LVU1
  100:Core/Src/hca_lib.c **** 
-  39              		.loc 1 100 27 view .LVU4
-  40 0006 10B5     		push	{r4, lr}
-  41              	.LCFI0:
-  42              		.cfi_def_cfa_offset 8
-  43              		.cfi_offset 4, -8
-  44              		.cfi_offset 14, -4
-  45              	.LBB18:
+  35              		.loc 1 100 27 is_stmt 0 view .LVU2
+  36 0000 70B5     		push	{r4, r5, r6, lr}
+  37              	.LCFI0:
+  38              		.cfi_def_cfa_offset 16
+  39              		.cfi_offset 4, -16
+  40              		.cfi_offset 5, -12
+  41              		.cfi_offset 6, -8
+  42              		.cfi_offset 14, -4
+  43 0002 2DED028B 		vpush.64	{d8}
+  44              	.LCFI1:
+  45              		.cfi_def_cfa_offset 24
+  46              		.cfi_offset 80, -24
+  47              		.cfi_offset 81, -20
+  48              		.loc 1 102 9 view .LVU3
+  49 0006 0E4E     		ldr	r6, .L7
+  50              		.loc 1 102 8 view .LVU4
+  51 0008 3378     		ldrb	r3, [r6]	@ zero_extendqisi2
+  52 000a B3B9     		cbnz	r3, .L1
+  53              	.LVL0:
+  54              	.LBB31:
+  55              	.LBB32:
+  56              	.LBB33:
+  57              	.LBB34:
  103:Core/Src/hca_lib.c **** 
  104:Core/Src/hca_lib.c ****     // Divide the full circle into equally spaced samples
  105:Core/Src/hca_lib.c ****     float step = (2.0f * M_PI) / (float)LUT_SIZE;
  106:Core/Src/hca_lib.c **** 
  107:Core/Src/hca_lib.c ****     for (int i = 0; i < LUT_SIZE; i++) {
-  46              		.loc 1 107 14 view .LVU5
-  47 0008 1C46     		mov	r4, r3
-  48 000a 0FE0     		b	.L3
-  49              	.LVL0:
-  50              	.L4:
-  51              	.LBB19:
  108:Core/Src/hca_lib.c ****         // Angle in radians corresponding to LUT index
  109:Core/Src/hca_lib.c ****         float angle = (float)i * step;
-  52              		.loc 1 109 9 is_stmt 1 view .LVU6
-  53              		.loc 1 109 23 is_stmt 0 view .LVU7
-  54 000c 07EE904A 		vmov	s15, r4	@ int
-  55 0010 B8EEE70A 		vcvt.f32.s32	s0, s15
-  56              	.LVL1:
+  58              		.loc 1 109 9 is_stmt 1 view .LVU5
  110:Core/Src/hca_lib.c **** 
  111:Core/Src/hca_lib.c ****         // Store sine value
  112:Core/Src/hca_lib.c ****         HCA_sin_table[i] = sinf(angle);
-  57              		.loc 1 112 9 is_stmt 1 view .LVU8
-  58              		.loc 1 112 28 is_stmt 0 view .LVU9
-  59 0014 DFED0A7A 		vldr.32	s15, .L9+4
-ARM GAS  /tmp/cc5BUOoY.s 			page 4
+  59              		.loc 1 112 9 view .LVU6
+ARM GAS  /tmp/ccpBwvj8.s 			page 4
 
 
-  60 0018 20EE270A 		vmul.f32	s0, s0, s15
-  61              	.LVL2:
-  62              		.loc 1 112 28 view .LVU10
-  63 001c FFF7FEFF 		bl	sinf
-  64              	.LVL3:
-  65              		.loc 1 112 26 discriminator 1 view .LVU11
-  66 0020 084B     		ldr	r3, .L9+8
-  67 0022 03EB8403 		add	r3, r3, r4, lsl #2
-  68 0026 83ED000A 		vstr.32	s0, [r3]
-  69              	.LBE19:
+  60              		.loc 1 112 26 is_stmt 0 discriminator 1 view .LVU7
+  61 000c 0D4D     		ldr	r5, .L7+4
+ 109:Core/Src/hca_lib.c **** 
+  62              		.loc 1 109 15 view .LVU8
+  63 000e 9FED0E8A 		vldr.32	s16, .L7+8
+  64              		.loc 1 112 26 discriminator 1 view .LVU9
+  65 0012 0023     		movs	r3, #0
+  66 0014 45F8043B 		str	r3, [r5], #4	@ float
+  67              	.LBE34:
  107:Core/Src/hca_lib.c ****         // Angle in radians corresponding to LUT index
-  70              		.loc 1 107 36 is_stmt 1 discriminator 1 view .LVU12
-  71 002a 0134     		adds	r4, r4, #1
-  72              	.LVL4:
-  73              	.L3:
+  68              		.loc 1 107 36 is_stmt 1 discriminator 1 view .LVU10
+  69              	.LVL1:
  107:Core/Src/hca_lib.c ****         // Angle in radians corresponding to LUT index
-  74              		.loc 1 107 23 discriminator 2 view .LVU13
-  75 002c B4F5805F 		cmp	r4, #4096
-  76 0030 ECDB     		blt	.L4
-  77              	.LBE18:
+  70              		.loc 1 107 23 discriminator 2 view .LVU11
+ 107:Core/Src/hca_lib.c ****         // Angle in radians corresponding to LUT index
+  71              		.loc 1 107 36 is_stmt 0 discriminator 1 view .LVU12
+  72 0018 0124     		movs	r4, #1
+  73              	.LVL2:
+  74              	.L3:
+  75              	.LBB35:
+ 109:Core/Src/hca_lib.c **** 
+  76              		.loc 1 109 23 view .LVU13
+  77 001a 07EE904A 		vmov	s15, r4	@ int
+  78 001e B8EEE70A 		vcvt.f32.s32	s0, s15
+  79              	.LBE35:
+ 107:Core/Src/hca_lib.c ****         // Angle in radians corresponding to LUT index
+  80              		.loc 1 107 36 discriminator 1 view .LVU14
+  81 0022 0134     		adds	r4, r4, #1
+  82              	.LVL3:
+  83              	.LBB36:
+  84              		.loc 1 112 28 view .LVU15
+  85 0024 20EE080A 		vmul.f32	s0, s0, s16
+  86 0028 FFF7FEFF 		bl	sinf
+  87              	.LVL4:
+ 109:Core/Src/hca_lib.c **** 
+  88              		.loc 1 109 9 is_stmt 1 view .LVU16
+  89              		.loc 1 112 9 view .LVU17
+  90              	.LBE36:
+ 107:Core/Src/hca_lib.c ****         // Angle in radians corresponding to LUT index
+  91              		.loc 1 107 23 is_stmt 0 discriminator 2 view .LVU18
+  92 002c B4F5805F 		cmp	r4, #4096
+  93              	.LBB37:
+  94              		.loc 1 112 26 discriminator 1 view .LVU19
+  95 0030 A5EC010A 		vstmia.32	r5!, {s0}
+  96              	.LBE37:
+ 107:Core/Src/hca_lib.c ****         // Angle in radians corresponding to LUT index
+  97              		.loc 1 107 36 is_stmt 1 discriminator 1 view .LVU20
+  98              	.LVL5:
+ 107:Core/Src/hca_lib.c ****         // Angle in radians corresponding to LUT index
+  99              		.loc 1 107 23 discriminator 2 view .LVU21
+ 100 0034 F1D1     		bne	.L3
+ 101              	.LBE33:
  113:Core/Src/hca_lib.c ****     }
  114:Core/Src/hca_lib.c **** 
  115:Core/Src/hca_lib.c ****     is_lut_initialized = 1;
-  78              		.loc 1 115 5 view .LVU14
-  79              		.loc 1 115 24 is_stmt 0 view .LVU15
-  80 0032 024B     		ldr	r3, .L9
-  81 0034 0122     		movs	r2, #1
-  82 0036 1A70     		strb	r2, [r3]
+ 102              		.loc 1 115 5 view .LVU22
+ 103              		.loc 1 115 24 is_stmt 0 view .LVU23
+ARM GAS  /tmp/ccpBwvj8.s 			page 5
+
+
+ 104 0036 0123     		movs	r3, #1
+ 105 0038 3370     		strb	r3, [r6]
+ 106              	.LVL6:
+ 107              	.L1:
+ 108              		.loc 1 115 24 view .LVU24
+ 109              	.LBE32:
+ 110              	.LBE31:
  116:Core/Src/hca_lib.c **** }
-  83              		.loc 1 116 1 view .LVU16
-  84 0038 10BD     		pop	{r4, pc}
-  85              	.LVL5:
-  86              	.L6:
-  87              	.LCFI1:
-  88              		.cfi_def_cfa_offset 0
-  89              		.cfi_restore 4
-  90              		.cfi_restore 14
-  91              		.loc 1 116 1 view .LVU17
-  92 003a 7047     		bx	lr
-  93              	.L10:
-  94              		.align	2
-  95              	.L9:
-  96 003c 00000000 		.word	is_lut_initialized
-  97 0040 DB0FC93A 		.word	986255323
-  98 0044 00000000 		.word	HCA_sin_table
-  99              		.cfi_endproc
- 100              	.LFE3:
- 102              		.section	.text.HCA_getPhasor,"ax",%progbits
- 103              		.align	1
- 104              		.global	HCA_getPhasor
- 105              		.syntax unified
- 106              		.thumb
- 107              		.thumb_func
- 109              	HCA_getPhasor:
- 110              	.LVL6:
- 111              	.LFB4:
+ 111              		.loc 1 116 1 view .LVU25
+ 112 003a BDEC028B 		vldm	sp!, {d8}
+ 113              	.LCFI2:
+ 114              		.cfi_restore 80
+ 115              		.cfi_restore 81
+ 116              		.cfi_def_cfa_offset 16
+ 117 003e 70BD     		pop	{r4, r5, r6, pc}
+ 118              	.L8:
+ 119              		.align	2
+ 120              	.L7:
+ 121 0040 00000000 		.word	is_lut_initialized
+ 122 0044 00000000 		.word	HCA_sin_table
+ 123 0048 DB0FC93A 		.word	986255323
+ 124              		.cfi_endproc
+ 125              	.LFE3:
+ 127              		.section	.text.HCA_getPhasor,"ax",%progbits
+ 128              		.align	1
+ 129              		.p2align 2,,3
+ 130              		.global	HCA_getPhasor
+ 131              		.syntax unified
+ 132              		.thumb
+ 133              		.thumb_func
+ 135              	HCA_getPhasor:
+ 136              	.LVL7:
+ 137              	.LFB4:
  117:Core/Src/hca_lib.c **** 
-ARM GAS  /tmp/cc5BUOoY.s 			page 5
-
-
  118:Core/Src/hca_lib.c **** // ============================================================
  119:Core/Src/hca_lib.c **** // DDS-based trigonometric helpers
  120:Core/Src/hca_lib.c **** // ============================================================
  121:Core/Src/hca_lib.c **** 
  122:Core/Src/hca_lib.c **** void HCA_getPhasor(uint32_t phase, Complex_t* complex) {
- 112              		.loc 1 122 56 is_stmt 1 view -0
- 113              		.cfi_startproc
- 114              		@ args = 0, pretend = 0, frame = 0
- 115              		@ frame_needed = 0, uses_anonymous_args = 0
- 116              		@ link register save eliminated.
+ 138              		.loc 1 122 56 is_stmt 1 view -0
+ 139              		.cfi_startproc
+ 140              		@ args = 0, pretend = 0, frame = 0
+ 141              		@ frame_needed = 0, uses_anonymous_args = 0
+ 142              		@ link register save eliminated.
  123:Core/Src/hca_lib.c ****     // 1. Reduce 32-bit phase accumulator to LUT index
  124:Core/Src/hca_lib.c ****     uint32_t idx_sin = phase >> (32 - LUT_BITS);
- 117              		.loc 1 124 5 view .LVU19
- 118              		.loc 1 124 14 is_stmt 0 view .LVU20
- 119 0000 000D     		lsrs	r0, r0, #20
- 120              	.LVL7:
+ 143              		.loc 1 124 5 view .LVU27
+ 144              		.loc 1 124 14 is_stmt 0 view .LVU28
+ 145 0000 000D     		lsrs	r0, r0, #20
+ 146              	.LVL8:
  125:Core/Src/hca_lib.c **** 
  126:Core/Src/hca_lib.c ****     // 2. Cosine is sine shifted by +90 degrees
  127:Core/Src/hca_lib.c ****     uint32_t idx_cos = (idx_sin + (LUT_SIZE >> 2)) & LUT_MASK;
- 121              		.loc 1 127 5 is_stmt 1 view .LVU21
- 122              		.loc 1 127 33 is_stmt 0 view .LVU22
- 123 0002 00F58063 		add	r3, r0, #1024
- 124              		.loc 1 127 14 view .LVU23
- 125 0006 C3F30B03 		ubfx	r3, r3, #0, #12
- 126              	.LVL8:
+ 147              		.loc 1 127 5 is_stmt 1 view .LVU29
  128:Core/Src/hca_lib.c **** 
  129:Core/Src/hca_lib.c ****     complex->real = HCA_sin_table[idx_cos]; // cos(theta)
- 127              		.loc 1 129 5 is_stmt 1 view .LVU24
- 128              		.loc 1 129 34 is_stmt 0 view .LVU25
- 129 000a 054A     		ldr	r2, .L12
- 130 000c 02EB8303 		add	r3, r2, r3, lsl #2
- 131              	.LVL9:
- 132              		.loc 1 129 34 view .LVU26
- 133 0010 1B68     		ldr	r3, [r3]	@ float
- 134              		.loc 1 129 19 view .LVU27
- 135 0012 0B60     		str	r3, [r1]	@ float
+ 148              		.loc 1 129 5 view .LVU30
+ARM GAS  /tmp/ccpBwvj8.s 			page 6
+
+
+ 149              		.loc 1 129 34 is_stmt 0 view .LVU31
+ 150 0002 074A     		ldr	r2, .L10
+ 127:Core/Src/hca_lib.c **** 
+ 151              		.loc 1 127 33 view .LVU32
+ 152 0004 00F58063 		add	r3, r0, #1024
+ 127:Core/Src/hca_lib.c **** 
+ 153              		.loc 1 127 14 view .LVU33
+ 154 0008 C3F30B03 		ubfx	r3, r3, #0, #12
+ 155              		.loc 1 129 34 view .LVU34
+ 156 000c 02EB8303 		add	r3, r2, r3, lsl #2
  130:Core/Src/hca_lib.c ****     complex->imag = HCA_sin_table[idx_sin]; // sin(theta)
- 136              		.loc 1 130 5 is_stmt 1 view .LVU28
- 137              		.loc 1 130 34 is_stmt 0 view .LVU29
- 138 0014 02EB8002 		add	r2, r2, r0, lsl #2
- 139 0018 1368     		ldr	r3, [r2]	@ float
- 140              		.loc 1 130 19 view .LVU30
- 141 001a 4B60     		str	r3, [r1, #4]	@ float
+ 157              		.loc 1 130 34 view .LVU35
+ 158 0010 02EB8002 		add	r2, r2, r0, lsl #2
+ 129:Core/Src/hca_lib.c ****     complex->imag = HCA_sin_table[idx_sin]; // sin(theta)
+ 159              		.loc 1 129 34 view .LVU36
+ 160 0014 1B68     		ldr	r3, [r3]	@ float
+ 129:Core/Src/hca_lib.c ****     complex->imag = HCA_sin_table[idx_sin]; // sin(theta)
+ 161              		.loc 1 129 19 view .LVU37
+ 162 0016 0B60     		str	r3, [r1]	@ float
+ 163              		.loc 1 130 5 is_stmt 1 view .LVU38
+ 164              		.loc 1 130 34 is_stmt 0 view .LVU39
+ 165 0018 1368     		ldr	r3, [r2]	@ float
+ 166              		.loc 1 130 19 view .LVU40
+ 167 001a 4B60     		str	r3, [r1, #4]	@ float
  131:Core/Src/hca_lib.c **** }
- 142              		.loc 1 131 1 view .LVU31
- 143 001c 7047     		bx	lr
- 144              	.L13:
- 145 001e 00BF     		.align	2
- 146              	.L12:
- 147 0020 00000000 		.word	HCA_sin_table
- 148              		.cfi_endproc
- 149              	.LFE4:
- 151              		.section	.text.HCA_fastSin,"ax",%progbits
- 152              		.align	1
- 153              		.global	HCA_fastSin
- 154              		.syntax unified
- 155              		.thumb
-ARM GAS  /tmp/cc5BUOoY.s 			page 6
-
-
- 156              		.thumb_func
- 158              	HCA_fastSin:
- 159              	.LVL10:
- 160              	.LFB5:
+ 168              		.loc 1 131 1 view .LVU41
+ 169 001c 7047     		bx	lr
+ 170              	.L11:
+ 171 001e 00BF     		.align	2
+ 172              	.L10:
+ 173 0020 00000000 		.word	HCA_sin_table
+ 174              		.cfi_endproc
+ 175              	.LFE4:
+ 177              		.section	.text.HCA_fastSin,"ax",%progbits
+ 178              		.align	1
+ 179              		.p2align 2,,3
+ 180              		.global	HCA_fastSin
+ 181              		.syntax unified
+ 182              		.thumb
+ 183              		.thumb_func
+ 185              	HCA_fastSin:
+ 186              	.LVL9:
+ 187              	.LFB5:
  132:Core/Src/hca_lib.c **** 
  133:Core/Src/hca_lib.c **** float HCA_fastSin(uint32_t phase) {
- 161              		.loc 1 133 35 is_stmt 1 view -0
- 162              		.cfi_startproc
- 163              		@ args = 0, pretend = 0, frame = 0
- 164              		@ frame_needed = 0, uses_anonymous_args = 0
- 165              		@ link register save eliminated.
+ 188              		.loc 1 133 35 is_stmt 1 view -0
+ 189              		.cfi_startproc
+ 190              		@ args = 0, pretend = 0, frame = 0
+ 191              		@ frame_needed = 0, uses_anonymous_args = 0
+ 192              		@ link register save eliminated.
  134:Core/Src/hca_lib.c ****     uint32_t idx_sin = phase >> (32 - LUT_BITS);
- 166              		.loc 1 134 5 view .LVU33
- 167              		.loc 1 134 14 is_stmt 0 view .LVU34
- 168 0000 000D     		lsrs	r0, r0, #20
- 169              	.LVL11:
+ 193              		.loc 1 134 5 view .LVU43
  135:Core/Src/hca_lib.c ****     return HCA_sin_table[idx_sin];
- 170              		.loc 1 135 5 is_stmt 1 view .LVU35
- 171              		.loc 1 135 25 is_stmt 0 view .LVU36
- 172 0002 034B     		ldr	r3, .L15
- 173 0004 03EB8003 		add	r3, r3, r0, lsl #2
+ 194              		.loc 1 135 25 is_stmt 0 view .LVU44
+ 195 0000 034B     		ldr	r3, .L13
+ 196              	.LVL10:
+ 197              		.loc 1 135 5 is_stmt 1 view .LVU45
+ARM GAS  /tmp/ccpBwvj8.s 			page 7
+
+
+ 134:Core/Src/hca_lib.c ****     uint32_t idx_sin = phase >> (32 - LUT_BITS);
+ 198              		.loc 1 134 14 is_stmt 0 view .LVU46
+ 199 0002 000D     		lsrs	r0, r0, #20
+ 200              	.LVL11:
+ 201              		.loc 1 135 25 view .LVU47
+ 202 0004 03EB8003 		add	r3, r3, r0, lsl #2
  136:Core/Src/hca_lib.c **** }
- 174              		.loc 1 136 1 view .LVU37
- 175 0008 93ED000A 		vldr.32	s0, [r3]
- 176 000c 7047     		bx	lr
- 177              	.L16:
- 178 000e 00BF     		.align	2
- 179              	.L15:
- 180 0010 00000000 		.word	HCA_sin_table
- 181              		.cfi_endproc
- 182              	.LFE5:
- 184              		.section	.text.HCA_fastCos,"ax",%progbits
- 185              		.align	1
- 186              		.global	HCA_fastCos
- 187              		.syntax unified
- 188              		.thumb
- 189              		.thumb_func
- 191              	HCA_fastCos:
- 192              	.LVL12:
- 193              	.LFB6:
+ 203              		.loc 1 136 1 view .LVU48
+ 204 0008 93ED000A 		vldr.32	s0, [r3]
+ 205 000c 7047     		bx	lr
+ 206              	.L14:
+ 207 000e 00BF     		.align	2
+ 208              	.L13:
+ 209 0010 00000000 		.word	HCA_sin_table
+ 210              		.cfi_endproc
+ 211              	.LFE5:
+ 213              		.section	.text.HCA_fastCos,"ax",%progbits
+ 214              		.align	1
+ 215              		.p2align 2,,3
+ 216              		.global	HCA_fastCos
+ 217              		.syntax unified
+ 218              		.thumb
+ 219              		.thumb_func
+ 221              	HCA_fastCos:
+ 222              	.LVL12:
+ 223              	.LFB6:
  137:Core/Src/hca_lib.c **** 
  138:Core/Src/hca_lib.c **** float HCA_fastCos(uint32_t phase) {
- 194              		.loc 1 138 35 is_stmt 1 view -0
- 195              		.cfi_startproc
- 196              		@ args = 0, pretend = 0, frame = 0
- 197              		@ frame_needed = 0, uses_anonymous_args = 0
- 198              		@ link register save eliminated.
+ 224              		.loc 1 138 35 is_stmt 1 view -0
+ 225              		.cfi_startproc
+ 226              		@ args = 0, pretend = 0, frame = 0
+ 227              		@ frame_needed = 0, uses_anonymous_args = 0
+ 228              		@ link register save eliminated.
  139:Core/Src/hca_lib.c ****     uint32_t idx_sin = phase >> (32 - LUT_BITS);
- 199              		.loc 1 139 5 view .LVU39
- 200              		.loc 1 139 14 is_stmt 0 view .LVU40
- 201 0000 000D     		lsrs	r0, r0, #20
- 202              	.LVL13:
+ 229              		.loc 1 139 5 view .LVU50
  140:Core/Src/hca_lib.c ****     uint32_t idx_cos = (idx_sin + (LUT_SIZE >> 2)) & LUT_MASK;
- 203              		.loc 1 140 5 is_stmt 1 view .LVU41
- 204              		.loc 1 140 33 is_stmt 0 view .LVU42
- 205 0002 00F58060 		add	r0, r0, #1024
- 206              	.LVL14:
-ARM GAS  /tmp/cc5BUOoY.s 			page 7
-
-
- 207              		.loc 1 140 14 view .LVU43
- 208 0006 C0F30B00 		ubfx	r0, r0, #0, #12
- 209              	.LVL15:
+ 230              		.loc 1 140 5 view .LVU51
  141:Core/Src/hca_lib.c ****     return HCA_sin_table[idx_cos];
- 210              		.loc 1 141 5 is_stmt 1 view .LVU44
- 211              		.loc 1 141 25 is_stmt 0 view .LVU45
- 212 000a 034B     		ldr	r3, .L18
- 213 000c 03EB8003 		add	r3, r3, r0, lsl #2
+ 231              		.loc 1 141 5 view .LVU52
+ 139:Core/Src/hca_lib.c ****     uint32_t idx_sin = phase >> (32 - LUT_BITS);
+ 232              		.loc 1 139 14 is_stmt 0 view .LVU53
+ 233 0000 000D     		lsrs	r0, r0, #20
+ 234              	.LVL13:
+ 235              		.loc 1 141 25 view .LVU54
+ 236 0002 054B     		ldr	r3, .L16
+ 140:Core/Src/hca_lib.c ****     uint32_t idx_cos = (idx_sin + (LUT_SIZE >> 2)) & LUT_MASK;
+ 237              		.loc 1 140 33 view .LVU55
+ 238 0004 00F58060 		add	r0, r0, #1024
+ 239              	.LVL14:
+ 140:Core/Src/hca_lib.c ****     uint32_t idx_cos = (idx_sin + (LUT_SIZE >> 2)) & LUT_MASK;
+ 240              		.loc 1 140 14 view .LVU56
+ 241 0008 C0F30B00 		ubfx	r0, r0, #0, #12
+ 242              	.LVL15:
+ 243              		.loc 1 141 25 view .LVU57
+ 244 000c 03EB8003 		add	r3, r3, r0, lsl #2
  142:Core/Src/hca_lib.c **** }
- 214              		.loc 1 142 1 view .LVU46
- 215 0010 93ED000A 		vldr.32	s0, [r3]
- 216 0014 7047     		bx	lr
- 217              	.L19:
- 218 0016 00BF     		.align	2
- 219              	.L18:
- 220 0018 00000000 		.word	HCA_sin_table
- 221              		.cfi_endproc
- 222              	.LFE6:
- 224              		.section	.text.HCA_Init,"ax",%progbits
- 225              		.align	1
- 226              		.global	HCA_Init
- 227              		.syntax unified
- 228              		.thumb
- 229              		.thumb_func
- 231              	HCA_Init:
- 232              	.LVL16:
- 233              	.LFB7:
+ 245              		.loc 1 142 1 view .LVU58
+ARM GAS  /tmp/ccpBwvj8.s 			page 8
+
+
+ 246 0010 93ED000A 		vldr.32	s0, [r3]
+ 247 0014 7047     		bx	lr
+ 248              	.L17:
+ 249 0016 00BF     		.align	2
+ 250              	.L16:
+ 251 0018 00000000 		.word	HCA_sin_table
+ 252              		.cfi_endproc
+ 253              	.LFE6:
+ 255              		.section	.text.HCA_Init,"ax",%progbits
+ 256              		.align	1
+ 257              		.p2align 2,,3
+ 258              		.global	HCA_Init
+ 259              		.syntax unified
+ 260              		.thumb
+ 261              		.thumb_func
+ 263              	HCA_Init:
+ 264              	.LVL16:
+ 265              	.LFB7:
  143:Core/Src/hca_lib.c **** 
  144:Core/Src/hca_lib.c **** // ============================================================
  145:Core/Src/hca_lib.c **** // HCA core functions
@@ -398,303 +449,466 @@ ARM GAS  /tmp/cc5BUOoY.s 			page 1
  150:Core/Src/hca_lib.c ****               float switch_freq,
  151:Core/Src/hca_lib.c ****               uint8_t oversample_ratio,
  152:Core/Src/hca_lib.c ****               float out_limit) {
- 234              		.loc 1 152 32 is_stmt 1 view -0
- 235              		.cfi_startproc
- 236              		@ args = 0, pretend = 0, frame = 0
- 237              		@ frame_needed = 0, uses_anonymous_args = 0
- 238              		.loc 1 152 32 is_stmt 0 view .LVU48
- 239 0000 70B5     		push	{r4, r5, r6, lr}
- 240              	.LCFI2:
- 241              		.cfi_def_cfa_offset 16
- 242              		.cfi_offset 4, -16
- 243              		.cfi_offset 5, -12
- 244              		.cfi_offset 6, -8
- 245              		.cfi_offset 14, -4
- 246 0002 2DED028B 		vpush.64	{d8}
- 247              	.LCFI3:
- 248              		.cfi_def_cfa_offset 24
- 249              		.cfi_offset 80, -24
- 250              		.cfi_offset 81, -20
- 251 0006 0546     		mov	r5, r0
- 252 0008 B0EE408A 		vmov.f32	s16, s0
- 253 000c F0EE608A 		vmov.f32	s17, s1
-ARM GAS  /tmp/cc5BUOoY.s 			page 8
-
-
- 254 0010 0C46     		mov	r4, r1
- 255 0012 11EE106A 		vmov	r6, s2
+ 266              		.loc 1 152 32 is_stmt 1 view -0
+ 267              		.cfi_startproc
+ 268              		@ args = 0, pretend = 0, frame = 0
+ 269              		@ frame_needed = 0, uses_anonymous_args = 0
  153:Core/Src/hca_lib.c **** 
  154:Core/Src/hca_lib.c ****     // Ensure sine LUT is ready
  155:Core/Src/hca_lib.c ****     HCA_CreateLUTs();
- 256              		.loc 1 155 5 is_stmt 1 view .LVU49
- 257 0016 FFF7FEFF 		bl	HCA_CreateLUTs
- 258              	.LVL17:
+ 270              		.loc 1 155 5 view .LVU60
+ 271              	.LBB45:
+ 272              	.LBI45:
+ 100:Core/Src/hca_lib.c **** 
+ 273              		.loc 1 100 6 view .LVU61
+ 274              	.LBB46:
+ 102:Core/Src/hca_lib.c **** 
+ 275              		.loc 1 102 5 view .LVU62
+ 276              	.LBE46:
+ 277              	.LBE45:
+ 152:Core/Src/hca_lib.c **** 
+ 278              		.loc 1 152 32 is_stmt 0 view .LVU63
+ 279 0000 2DE9F041 		push	{r4, r5, r6, r7, r8, lr}
+ 280              	.LCFI3:
+ 281              		.cfi_def_cfa_offset 24
+ 282              		.cfi_offset 4, -24
+ 283              		.cfi_offset 5, -20
+ 284              		.cfi_offset 6, -16
+ 285              		.cfi_offset 7, -12
+ 286              		.cfi_offset 8, -8
+ 287              		.cfi_offset 14, -4
+ 288 0004 2DED048B 		vpush.64	{d8, d9}
+ARM GAS  /tmp/ccpBwvj8.s 			page 9
+
+
+ 289              	.LCFI4:
+ 290              		.cfi_def_cfa_offset 40
+ 291              		.cfi_offset 80, -40
+ 292              		.cfi_offset 81, -36
+ 293              		.cfi_offset 82, -32
+ 294              		.cfi_offset 83, -28
+ 295              	.LBB56:
+ 296              	.LBB54:
+ 102:Core/Src/hca_lib.c **** 
+ 297              		.loc 1 102 9 view .LVU64
+ 298 0008 334F     		ldr	r7, .L25
+ 102:Core/Src/hca_lib.c **** 
+ 299              		.loc 1 102 8 view .LVU65
+ 300 000a 3B78     		ldrb	r3, [r7]	@ zero_extendqisi2
+ 301              	.LBE54:
+ 302              	.LBE56:
+ 152:Core/Src/hca_lib.c **** 
+ 303              		.loc 1 152 32 view .LVU66
+ 304 000c F0EE408A 		vmov.f32	s17, s0
+ 305 0010 B0EE609A 		vmov.f32	s18, s1
+ 306 0014 F0EE419A 		vmov.f32	s19, s2
+ 307 0018 0446     		mov	r4, r0
+ 308 001a 8846     		mov	r8, r1
+ 309              	.LBB57:
+ 310              	.LBB55:
+ 102:Core/Src/hca_lib.c **** 
+ 311              		.loc 1 102 8 view .LVU67
+ 312 001c B3B9     		cbnz	r3, .L19
+ 313              	.LVL17:
+ 314              	.LBB47:
+ 315              	.LBB48:
+ 316              	.LBB49:
+ 317              	.LBB50:
+ 109:Core/Src/hca_lib.c **** 
+ 318              		.loc 1 109 9 is_stmt 1 view .LVU68
+ 112:Core/Src/hca_lib.c ****     }
+ 319              		.loc 1 112 9 view .LVU69
+ 112:Core/Src/hca_lib.c ****     }
+ 320              		.loc 1 112 26 is_stmt 0 discriminator 1 view .LVU70
+ 321 001e 2F4E     		ldr	r6, .L25+4
+ 109:Core/Src/hca_lib.c **** 
+ 322              		.loc 1 109 15 view .LVU71
+ 323 0020 9FED2F8A 		vldr.32	s16, .L25+8
+ 112:Core/Src/hca_lib.c ****     }
+ 324              		.loc 1 112 26 discriminator 1 view .LVU72
+ 325 0024 0023     		movs	r3, #0
+ 326 0026 46F8043B 		str	r3, [r6], #4	@ float
+ 327              	.LBE50:
+ 107:Core/Src/hca_lib.c ****         // Angle in radians corresponding to LUT index
+ 328              		.loc 1 107 36 is_stmt 1 discriminator 1 view .LVU73
+ 329              	.LVL18:
+ 107:Core/Src/hca_lib.c ****         // Angle in radians corresponding to LUT index
+ 330              		.loc 1 107 23 discriminator 2 view .LVU74
+ 107:Core/Src/hca_lib.c ****         // Angle in radians corresponding to LUT index
+ 331              		.loc 1 107 36 is_stmt 0 discriminator 1 view .LVU75
+ 332 002a 0125     		movs	r5, #1
+ 333              	.LVL19:
+ARM GAS  /tmp/ccpBwvj8.s 			page 10
+
+
+ 334              	.L20:
+ 335              	.LBB51:
+ 109:Core/Src/hca_lib.c **** 
+ 336              		.loc 1 109 23 view .LVU76
+ 337 002c 07EE905A 		vmov	s15, r5	@ int
+ 338 0030 B8EEE70A 		vcvt.f32.s32	s0, s15
+ 339              	.LBE51:
+ 107:Core/Src/hca_lib.c ****         // Angle in radians corresponding to LUT index
+ 340              		.loc 1 107 36 discriminator 1 view .LVU77
+ 341 0034 0135     		adds	r5, r5, #1
+ 342              	.LVL20:
+ 343              	.LBB52:
+ 112:Core/Src/hca_lib.c ****     }
+ 344              		.loc 1 112 28 view .LVU78
+ 345 0036 20EE080A 		vmul.f32	s0, s0, s16
+ 346 003a FFF7FEFF 		bl	sinf
+ 347              	.LVL21:
+ 109:Core/Src/hca_lib.c **** 
+ 348              		.loc 1 109 9 is_stmt 1 view .LVU79
+ 112:Core/Src/hca_lib.c ****     }
+ 349              		.loc 1 112 9 view .LVU80
+ 350              	.LBE52:
+ 107:Core/Src/hca_lib.c ****         // Angle in radians corresponding to LUT index
+ 351              		.loc 1 107 23 is_stmt 0 discriminator 2 view .LVU81
+ 352 003e B5F5805F 		cmp	r5, #4096
+ 353              	.LBB53:
+ 112:Core/Src/hca_lib.c ****     }
+ 354              		.loc 1 112 26 discriminator 1 view .LVU82
+ 355 0042 A6EC010A 		vstmia.32	r6!, {s0}
+ 356              	.LBE53:
+ 107:Core/Src/hca_lib.c ****         // Angle in radians corresponding to LUT index
+ 357              		.loc 1 107 36 is_stmt 1 discriminator 1 view .LVU83
+ 358              	.LVL22:
+ 107:Core/Src/hca_lib.c ****         // Angle in radians corresponding to LUT index
+ 359              		.loc 1 107 23 discriminator 2 view .LVU84
+ 360 0046 F1D1     		bne	.L20
+ 361              	.LBE49:
+ 115:Core/Src/hca_lib.c **** }
+ 362              		.loc 1 115 5 view .LVU85
+ 115:Core/Src/hca_lib.c **** }
+ 363              		.loc 1 115 24 is_stmt 0 view .LVU86
+ 364 0048 0123     		movs	r3, #1
+ 365 004a 3B70     		strb	r3, [r7]
+ 366              	.LVL23:
+ 367              	.L19:
+ 115:Core/Src/hca_lib.c **** }
+ 368              		.loc 1 115 24 view .LVU87
+ 369              	.LBE48:
+ 370              	.LBE47:
+ 371              	.LBE55:
+ 372              	.LBE57:
  156:Core/Src/hca_lib.c **** 
  157:Core/Src/hca_lib.c ****     if (oversample_ratio < 1) oversample_ratio = 1;
- 259              		.loc 1 157 5 view .LVU50
- 260              		.loc 1 157 8 is_stmt 0 view .LVU51
- 261 001a 04B9     		cbnz	r4, .L21
- 262              		.loc 1 157 48 discriminator 1 view .LVU52
- 263 001c 0124     		movs	r4, #1
- 264              	.LVL18:
- 265              	.L21:
+ 373              		.loc 1 157 5 is_stmt 1 view .LVU88
  158:Core/Src/hca_lib.c **** 
  159:Core/Src/hca_lib.c ****     hca->fundamental_freq = fund_freq;
- 266              		.loc 1 159 5 is_stmt 1 view .LVU53
- 267              		.loc 1 159 27 is_stmt 0 view .LVU54
- 268 001e 85ED388A 		vstr.32	s16, [r5, #224]
+ 374              		.loc 1 159 5 view .LVU89
+ARM GAS  /tmp/ccpBwvj8.s 			page 11
+
+
  160:Core/Src/hca_lib.c **** 
  161:Core/Src/hca_lib.c ****     // Effective control loop frequency
  162:Core/Src/hca_lib.c ****     float loop_freq = switch_freq * (float)oversample_ratio;
- 269              		.loc 1 162 5 is_stmt 1 view .LVU55
- 270              		.loc 1 162 37 is_stmt 0 view .LVU56
- 271 0022 07EE904A 		vmov	s15, r4	@ int
- 272 0026 F8EE677A 		vcvt.f32.u32	s15, s15
- 273              		.loc 1 162 11 view .LVU57
- 274 002a 67EEA80A 		vmul.f32	s1, s15, s17
- 275              	.LVL19:
+ 375              		.loc 1 162 37 is_stmt 0 view .LVU90
+ 376 004c 4346     		mov	r3, r8
+ 377 004e 012B     		cmp	r3, #1
+ 378 0050 38BF     		it	cc
+ 379 0052 0123     		movcc	r3, #1
+ 380 0054 07EE903A 		vmov	s15, r3	@ int
+ 381 0058 F8EE677A 		vcvt.f32.u32	s15, s15
  163:Core/Src/hca_lib.c ****     hca->sampling_time = 1.0f / loop_freq;
- 276              		.loc 1 163 5 is_stmt 1 view .LVU58
- 277              		.loc 1 163 31 is_stmt 0 view .LVU59
- 278 002e B7EE007A 		vmov.f32	s14, #1.0e+0
- 279 0032 C7EE207A 		vdiv.f32	s15, s14, s1
- 280              		.loc 1 163 24 view .LVU60
- 281 0036 C5ED397A 		vstr.32	s15, [r5, #228]
+ 382              		.loc 1 163 31 view .LVU91
+ 383 005c F7EE006A 		vmov.f32	s13, #1.0e+0
+ 162:Core/Src/hca_lib.c ****     hca->sampling_time = 1.0f / loop_freq;
+ 384              		.loc 1 162 11 view .LVU92
+ 385 0060 67EE897A 		vmul.f32	s15, s15, s18
+ 159:Core/Src/hca_lib.c **** 
+ 386              		.loc 1 159 27 view .LVU93
+ 387 0064 04F69C01 		addw	r1, r4, #2204
  164:Core/Src/hca_lib.c **** 
  165:Core/Src/hca_lib.c ****     hca->active_channel_count = 0;
- 282              		.loc 1 165 5 is_stmt 1 view .LVU61
- 283              		.loc 1 165 31 is_stmt 0 view .LVU62
- 284 003a 0024     		movs	r4, #0
- 285              	.LVL20:
- 286              		.loc 1 165 31 view .LVU63
- 287 003c 85F8DC40 		strb	r4, [r5, #220]
  166:Core/Src/hca_lib.c ****     hca->output_limit = out_limit;
- 288              		.loc 1 166 5 is_stmt 1 view .LVU64
- 289              		.loc 1 166 23 is_stmt 0 view .LVU65
- 290 0040 C5F8E860 		str	r6, [r5, #232]	@ float
  167:Core/Src/hca_lib.c ****     
  168:Core/Src/hca_lib.c ****     // Disperser
  169:Core/Src/hca_lib.c ****     float N = loop_freq / fund_freq; // N = T/T_s = f_s / f 
- 291              		.loc 1 169 5 is_stmt 1 view .LVU66
- 292              		.loc 1 169 11 is_stmt 0 view .LVU67
- 293 0044 C0EE887A 		vdiv.f32	s15, s1, s16
-ARM GAS  /tmp/cc5BUOoY.s 			page 9
-
-
- 294              	.LVL21:
+ 388              		.loc 1 169 11 view .LVU94
+ 389 0068 87EEA87A 		vdiv.f32	s14, s15, s17
+ 163:Core/Src/hca_lib.c **** 
+ 390              		.loc 1 163 24 view .LVU95
+ 391 006c 04F50A62 		add	r2, r4, #2208
+ 165:Core/Src/hca_lib.c ****     hca->output_limit = out_limit;
+ 392              		.loc 1 165 31 view .LVU96
+ 393 0070 0025     		movs	r5, #0
  170:Core/Src/hca_lib.c ****     hca->window_len = N;
- 295              		.loc 1 170 5 is_stmt 1 view .LVU68
- 296              		.loc 1 170 21 is_stmt 0 view .LVU69
- 297 0048 05F58043 		add	r3, r5, #16384
- 298 004c FCEEE76A 		vcvt.u32.f32	s13, s15
- 299 0050 16EE902A 		vmov	r2, s13	@ int
- 300 0054 A3F8EE20 		strh	r2, [r3, #238]	@ movhi
+ 394              		.loc 1 170 21 view .LVU97
+ 395 0072 04F58043 		add	r3, r4, #16384
  171:Core/Src/hca_lib.c ****     hca->inv_window_len = 1.0f / (float)N;
- 301              		.loc 1 171 5 is_stmt 1 view .LVU70
- 302              		.loc 1 171 32 is_stmt 0 view .LVU71
- 303 0058 C7EE276A 		vdiv.f32	s13, s14, s15
- 304              		.loc 1 171 25 view .LVU72
- 305 005c C3ED3C6A 		vstr.32	s13, [r3, #240]
  172:Core/Src/hca_lib.c ****     hca->buf_head = 0;
- 306              		.loc 1 172 5 is_stmt 1 view .LVU73
- 307              		.loc 1 172 19 is_stmt 0 view .LVU74
- 308 0060 A3F8EC40 		strh	r4, [r3, #236]	@ movhi
  173:Core/Src/hca_lib.c **** 
  174:Core/Src/hca_lib.c ****     // Clear circular buffer
  175:Core/Src/hca_lib.c ****     memset(hca->buffer, 0, sizeof(hca->buffer));
- 309              		.loc 1 175 5 is_stmt 1 view .LVU75
- 310 0064 4FF48042 		mov	r2, #16384
- 311 0068 2146     		mov	r1, r4
- 312 006a 05F1EC00 		add	r0, r5, #236
- 313 006e FFF7FEFF 		bl	memset
- 314              	.LVL22:
+ 396              		.loc 1 175 5 view .LVU98
+ 397 0076 04F6A800 		addw	r0, r4, #2216
+ 163:Core/Src/hca_lib.c **** 
+ 398              		.loc 1 163 31 view .LVU99
+ 399 007a 86EEA76A 		vdiv.f32	s12, s13, s15
+ 171:Core/Src/hca_lib.c ****     hca->inv_window_len = 1.0f / (float)N;
+ 400              		.loc 1 171 32 view .LVU100
+ 401 007e C6EE877A 		vdiv.f32	s15, s13, s14
+ 170:Core/Src/hca_lib.c ****     hca->window_len = N;
+ 402              		.loc 1 170 21 view .LVU101
+ 403 0082 BCEEC77A 		vcvt.u32.f32	s14, s14
+ 159:Core/Src/hca_lib.c **** 
+ 404              		.loc 1 159 27 view .LVU102
+ 405 0086 C1ED008A 		vstr.32	s17, [r1]
+ 162:Core/Src/hca_lib.c ****     hca->sampling_time = 1.0f / loop_freq;
+ 406              		.loc 1 162 5 is_stmt 1 view .LVU103
+ARM GAS  /tmp/ccpBwvj8.s 			page 12
+
+
+ 407              	.LVL24:
+ 163:Core/Src/hca_lib.c **** 
+ 408              		.loc 1 163 5 view .LVU104
+ 163:Core/Src/hca_lib.c **** 
+ 409              		.loc 1 163 24 is_stmt 0 view .LVU105
+ 410 008a 82ED006A 		vstr.32	s12, [r2]
+ 165:Core/Src/hca_lib.c ****     hca->output_limit = out_limit;
+ 411              		.loc 1 165 5 is_stmt 1 view .LVU106
+ 166:Core/Src/hca_lib.c ****     
+ 412              		.loc 1 166 23 is_stmt 0 view .LVU107
+ 413 008e 04F6A402 		addw	r2, r4, #2212
+ 165:Core/Src/hca_lib.c ****     hca->output_limit = out_limit;
+ 414              		.loc 1 165 31 view .LVU108
+ 415 0092 84F89858 		strb	r5, [r4, #2200]
+ 166:Core/Src/hca_lib.c ****     
+ 416              		.loc 1 166 5 is_stmt 1 view .LVU109
+ 166:Core/Src/hca_lib.c ****     
+ 417              		.loc 1 166 23 is_stmt 0 view .LVU110
+ 418 0096 C2ED009A 		vstr.32	s19, [r2]
+ 169:Core/Src/hca_lib.c ****     hca->window_len = N;
+ 419              		.loc 1 169 5 is_stmt 1 view .LVU111
+ 420              	.LVL25:
+ 170:Core/Src/hca_lib.c ****     hca->inv_window_len = 1.0f / (float)N;
+ 421              		.loc 1 170 5 view .LVU112
+ 170:Core/Src/hca_lib.c ****     hca->inv_window_len = 1.0f / (float)N;
+ 422              		.loc 1 170 21 is_stmt 0 view .LVU113
+ 423 009a 17EE102A 		vmov	r2, s14	@ int
+ 171:Core/Src/hca_lib.c ****     hca->buf_head = 0;
+ 424              		.loc 1 171 25 view .LVU114
+ 425 009e 03F6AC01 		addw	r1, r3, #2220
+ 170:Core/Src/hca_lib.c ****     hca->inv_window_len = 1.0f / (float)N;
+ 426              		.loc 1 170 21 view .LVU115
+ 427 00a2 A3F8AA28 		strh	r2, [r3, #2218]	@ movhi
+ 171:Core/Src/hca_lib.c ****     hca->buf_head = 0;
+ 428              		.loc 1 171 5 is_stmt 1 view .LVU116
+ 171:Core/Src/hca_lib.c ****     hca->buf_head = 0;
+ 429              		.loc 1 171 25 is_stmt 0 view .LVU117
+ 430 00a6 C1ED007A 		vstr.32	s15, [r1]
+ 172:Core/Src/hca_lib.c **** 
+ 431              		.loc 1 172 5 is_stmt 1 view .LVU118
+ 432              		.loc 1 175 5 is_stmt 0 view .LVU119
+ 433 00aa 4FF48042 		mov	r2, #16384
+ 172:Core/Src/hca_lib.c **** 
+ 434              		.loc 1 172 19 view .LVU120
+ 435 00ae A3F8A858 		strh	r5, [r3, #2216]	@ movhi
+ 436              		.loc 1 175 5 is_stmt 1 view .LVU121
+ 437 00b2 2946     		mov	r1, r5
+ 438 00b4 FFF7FEFF 		bl	memset
+ 439              	.LVL26:
  176:Core/Src/hca_lib.c **** 
  177:Core/Src/hca_lib.c ****     // Reset all channels
  178:Core/Src/hca_lib.c ****     for (int i = 0; i < MAX_HARMONICS; i++) {
- 315              		.loc 1 178 5 view .LVU76
- 316              	.LBB20:
- 317              		.loc 1 178 10 view .LVU77
- 318              		.loc 1 178 14 is_stmt 0 view .LVU78
- 319 0072 2146     		mov	r1, r4
- 320              		.loc 1 178 5 view .LVU79
- 321 0074 0BE0     		b	.L22
- 322              	.LVL23:
- 323              	.L23:
+ 440              		.loc 1 178 5 view .LVU122
+ 441              	.LBB58:
+ 442              		.loc 1 178 10 view .LVU123
+ 443              		.loc 1 178 23 discriminator 2 view .LVU124
  179:Core/Src/hca_lib.c **** 
+ARM GAS  /tmp/ccpBwvj8.s 			page 13
+
+
  180:Core/Src/hca_lib.c ****         hca->channels[i].harmonic_order = 0;
- 324              		.loc 1 180 9 is_stmt 1 view .LVU80
- 325              		.loc 1 180 41 is_stmt 0 view .LVU81
- 326 0076 2C22     		movs	r2, #44
- 327 0078 01FB02F2 		mul	r2, r1, r2
- 328 007c AB18     		adds	r3, r5, r2
- 329 007e 0020     		movs	r0, #0
- 330 0080 A854     		strb	r0, [r5, r2]
  181:Core/Src/hca_lib.c **** 
  182:Core/Src/hca_lib.c ****         hca->channels[i].current_val.real = 0.0f;
- 331              		.loc 1 182 9 is_stmt 1 view .LVU82
- 332              		.loc 1 182 43 is_stmt 0 view .LVU83
- 333 0082 0022     		movs	r2, #0
- 334 0084 5A60     		str	r2, [r3, #4]	@ float
+ 444              		.loc 1 182 43 is_stmt 0 view .LVU125
+ 445 00b8 0023     		movs	r3, #0
+ 446 00ba 2046     		mov	r0, r4
+ 447 00bc 04F69802 		addw	r2, r4, #2200
+ 448              	.LVL27:
+ 449              	.L21:
+ 180:Core/Src/hca_lib.c **** 
+ 450              		.loc 1 180 9 is_stmt 1 view .LVU126
+ 180:Core/Src/hca_lib.c **** 
+ 451              		.loc 1 180 41 is_stmt 0 view .LVU127
+ 452 00c0 0570     		strb	r5, [r0]
+ 453              		.loc 1 182 9 is_stmt 1 view .LVU128
+ 454              		.loc 1 182 43 is_stmt 0 view .LVU129
+ 455 00c2 4360     		str	r3, [r0, #4]	@ float
  183:Core/Src/hca_lib.c ****         hca->channels[i].current_val.imag = 0.0f;
- 335              		.loc 1 183 9 is_stmt 1 view .LVU84
- 336              		.loc 1 183 43 is_stmt 0 view .LVU85
-ARM GAS  /tmp/cc5BUOoY.s 			page 10
-
-
- 337 0086 9A60     		str	r2, [r3, #8]	@ float
+ 456              		.loc 1 183 9 is_stmt 1 view .LVU130
+ 457              		.loc 1 183 43 is_stmt 0 view .LVU131
+ 458 00c4 8360     		str	r3, [r0, #8]	@ float
  184:Core/Src/hca_lib.c **** 
  185:Core/Src/hca_lib.c ****         // PI integrator reset
  186:Core/Src/hca_lib.c ****         hca->channels[i].integrator_state.real = 0.0f;
- 338              		.loc 1 186 9 is_stmt 1 view .LVU86
- 339              		.loc 1 186 48 is_stmt 0 view .LVU87
- 340 0088 DA61     		str	r2, [r3, #28]	@ float
+ 459              		.loc 1 186 9 is_stmt 1 view .LVU132
+ 460              		.loc 1 186 48 is_stmt 0 view .LVU133
+ 461 00c6 C361     		str	r3, [r0, #28]	@ float
  187:Core/Src/hca_lib.c ****         hca->channels[i].integrator_state.imag = 0.0f;
- 341              		.loc 1 187 9 is_stmt 1 view .LVU88
- 342              		.loc 1 187 48 is_stmt 0 view .LVU89
- 343 008a 1A62     		str	r2, [r3, #32]	@ float
+ 462              		.loc 1 187 9 is_stmt 1 view .LVU134
+ 463              		.loc 1 187 48 is_stmt 0 view .LVU135
+ 464 00c8 0362     		str	r3, [r0, #32]	@ float
  178:Core/Src/hca_lib.c **** 
- 344              		.loc 1 178 41 is_stmt 1 discriminator 1 view .LVU90
- 345 008c 0131     		adds	r1, r1, #1
- 346              	.LVL24:
- 347              	.L22:
+ 465              		.loc 1 178 41 is_stmt 1 discriminator 1 view .LVU136
  178:Core/Src/hca_lib.c **** 
- 348              		.loc 1 178 23 discriminator 2 view .LVU91
- 349 008e 0429     		cmp	r1, #4
- 350 0090 F1DD     		ble	.L23
- 351              	.LBE20:
+ 466              		.loc 1 178 23 discriminator 2 view .LVU137
+ 467 00ca 2C30     		adds	r0, r0, #44
+ 468 00cc 9042     		cmp	r0, r2
+ 469 00ce F7D1     		bne	.L21
+ 470              	.LBE58:
  188:Core/Src/hca_lib.c ****     }
  189:Core/Src/hca_lib.c **** }
- 352              		.loc 1 189 1 is_stmt 0 view .LVU92
- 353 0092 BDEC028B 		vldm	sp!, {d8}
- 354              	.LCFI4:
- 355              		.cfi_restore 80
- 356              		.cfi_restore 81
- 357              		.cfi_def_cfa_offset 16
- 358              	.LVL25:
- 359              		.loc 1 189 1 view .LVU93
- 360 0096 70BD     		pop	{r4, r5, r6, pc}
- 361              		.loc 1 189 1 view .LVU94
- 362              		.cfi_endproc
- 363              	.LFE7:
- 365              		.section	.text.HCA_Add_Channel,"ax",%progbits
- 366              		.align	1
- 367              		.global	HCA_Add_Channel
- 368              		.syntax unified
- 369              		.thumb
- 370              		.thumb_func
- 372              	HCA_Add_Channel:
- 373              	.LVL26:
- 374              	.LFB8:
+ 471              		.loc 1 189 1 is_stmt 0 view .LVU138
+ 472 00d0 BDEC048B 		vldm	sp!, {d8-d9}
+ 473              	.LCFI5:
+ 474              		.cfi_restore 82
+ 475              		.cfi_restore 83
+ 476              		.cfi_restore 80
+ 477              		.cfi_restore 81
+ 478              		.cfi_def_cfa_offset 24
+ 479              	.LVL28:
+ 480              		.loc 1 189 1 view .LVU139
+ 481 00d4 BDE8F081 		pop	{r4, r5, r6, r7, r8, pc}
+ 482              	.LVL29:
+ 483              	.L26:
+ 484              		.loc 1 189 1 view .LVU140
+ 485              		.align	2
+ 486              	.L25:
+ARM GAS  /tmp/ccpBwvj8.s 			page 14
+
+
+ 487 00d8 00000000 		.word	is_lut_initialized
+ 488 00dc 00000000 		.word	HCA_sin_table
+ 489 00e0 DB0FC93A 		.word	986255323
+ 490              		.cfi_endproc
+ 491              	.LFE7:
+ 493              		.section	.text.HCA_Add_Channel,"ax",%progbits
+ 494              		.align	1
+ 495              		.p2align 2,,3
+ 496              		.global	HCA_Add_Channel
+ 497              		.syntax unified
+ 498              		.thumb
+ 499              		.thumb_func
+ 501              	HCA_Add_Channel:
+ 502              	.LVL30:
+ 503              	.LFB8:
  190:Core/Src/hca_lib.c **** 
  191:Core/Src/hca_lib.c **** void HCA_Add_Channel(HCA_Handle_t *hca,
  192:Core/Src/hca_lib.c ****                      uint8_t order,
  193:Core/Src/hca_lib.c ****                      Complex_t kp,
  194:Core/Src/hca_lib.c ****                      Complex_t ki) {
- 375              		.loc 1 194 36 is_stmt 1 view -0
- 376              		.cfi_startproc
- 377              		@ args = 0, pretend = 0, frame = 16
- 378              		@ frame_needed = 0, uses_anonymous_args = 0
- 379              		.loc 1 194 36 is_stmt 0 view .LVU96
- 380 0000 10B5     		push	{r4, lr}
- 381              	.LCFI5:
- 382              		.cfi_def_cfa_offset 8
-ARM GAS  /tmp/cc5BUOoY.s 			page 11
-
-
- 383              		.cfi_offset 4, -8
- 384              		.cfi_offset 14, -4
- 385 0002 84B0     		sub	sp, sp, #16
- 386              	.LCFI6:
- 387              		.cfi_def_cfa_offset 24
- 388 0004 8DED020A 		vstr.32	s0, [sp, #8]
- 389 0008 CDED030A 		vstr.32	s1, [sp, #12]
- 390 000c 8DED001A 		vstr.32	s2, [sp]
- 391 0010 CDED011A 		vstr.32	s3, [sp, #4]
+ 504              		.loc 1 194 36 is_stmt 1 view -0
+ 505              		.cfi_startproc
+ 506              		@ args = 0, pretend = 0, frame = 16
+ 507              		@ frame_needed = 0, uses_anonymous_args = 0
  195:Core/Src/hca_lib.c **** 
  196:Core/Src/hca_lib.c ****     if (hca->active_channel_count >= MAX_HARMONICS) return;
- 392              		.loc 1 196 5 is_stmt 1 view .LVU97
- 393              		.loc 1 196 12 is_stmt 0 view .LVU98
- 394 0014 90F8DCC0 		ldrb	ip, [r0, #220]	@ zero_extendqisi2
- 395              		.loc 1 196 8 view .LVU99
- 396 0018 BCF1040F 		cmp	ip, #4
- 397 001c 34D8     		bhi	.L26
- 398 001e 0346     		mov	r3, r0
- 399 0020 0C46     		mov	r4, r1
+ 508              		.loc 1 196 5 view .LVU142
+ 194:Core/Src/hca_lib.c **** 
+ 509              		.loc 1 194 36 is_stmt 0 view .LVU143
+ 510 0000 00B5     		push	{lr}
+ 511              	.LCFI6:
+ 512              		.cfi_def_cfa_offset 4
+ 513              		.cfi_offset 14, -4
+ 514              		.loc 1 196 12 view .LVU144
+ 515 0002 90F89828 		ldrb	r2, [r0, #2200]	@ zero_extendqisi2
+ 194:Core/Src/hca_lib.c **** 
+ 516              		.loc 1 194 36 view .LVU145
+ 517 0006 85B0     		sub	sp, sp, #20
+ 518              	.LCFI7:
+ 519              		.cfi_def_cfa_offset 24
+ 520              		.loc 1 196 8 view .LVU146
+ 521 0008 312A     		cmp	r2, #49
+ 194:Core/Src/hca_lib.c **** 
+ 522              		.loc 1 194 36 view .LVU147
+ 523 000a 8DED020A 		vstr.32	s0, [sp, #8]
+ 524 000e CDED030A 		vstr.32	s1, [sp, #12]
+ 525 0012 8DED001A 		vstr.32	s2, [sp]
+ 526 0016 CDED011A 		vstr.32	s3, [sp, #4]
+ 527              		.loc 1 196 8 view .LVU148
+ 528 001a 31D8     		bhi	.L27
  197:Core/Src/hca_lib.c **** 
  198:Core/Src/hca_lib.c ****     int idx = hca->active_channel_count;
- 400              		.loc 1 198 5 is_stmt 1 view .LVU100
- 401              	.LVL27:
+ 529              		.loc 1 198 5 is_stmt 1 view .LVU149
+ 530              	.LVL31:
  199:Core/Src/hca_lib.c ****     HCA_Channel_t *ch = &hca->channels[idx];
- 402              		.loc 1 199 5 view .LVU101
+ 531              		.loc 1 199 5 view .LVU150
+ 532 001c 0346     		mov	r3, r0
+ARM GAS  /tmp/ccpBwvj8.s 			page 15
+
+
+ 533              	.LVL32:
  200:Core/Src/hca_lib.c **** 
  201:Core/Src/hca_lib.c ****     ch->harmonic_order = order;
- 403              		.loc 1 201 5 view .LVU102
- 404              		.loc 1 201 24 is_stmt 0 view .LVU103
- 405 0022 2C21     		movs	r1, #44
- 406              	.LVL28:
- 407              		.loc 1 201 24 view .LVU104
- 408 0024 01FB0CF1 		mul	r1, r1, ip
- 409 0028 00EB010E 		add	lr, r0, r1
- 410              	.LVL29:
- 411              		.loc 1 201 24 view .LVU105
- 412 002c 4454     		strb	r4, [r0, r1]
+ 534              		.loc 1 201 5 view .LVU151
+ 535              		.loc 1 201 24 is_stmt 0 view .LVU152
+ 536 001e 2C20     		movs	r0, #44
+ 537              	.LVL33:
+ 538              		.loc 1 201 24 view .LVU153
+ 539 0020 02FB00F0 		mul	r0, r2, r0
+ 540 0024 03EB000C 		add	ip, r3, r0
+ 541              	.LVL34:
+ 542              		.loc 1 201 24 view .LVU154
+ 543 0028 1954     		strb	r1, [r3, r0]
  202:Core/Src/hca_lib.c ****     ch->Kp = kp;
- 413              		.loc 1 202 5 is_stmt 1 view .LVU106
- 414              		.loc 1 202 12 is_stmt 0 view .LVU107
- 415 002e 0EF10C02 		add	r2, lr, #12
- 416 0032 04A9     		add	r1, sp, #16
- 417 0034 11E90300 		ldmdb	r1, {r0, r1}
- 418              	.LVL30:
- 419              		.loc 1 202 12 view .LVU108
- 420 0038 82E80300 		stm	r2, {r0, r1}
+ 544              		.loc 1 202 5 is_stmt 1 view .LVU155
  203:Core/Src/hca_lib.c ****     ch->Ki = ki;
- 421              		.loc 1 203 5 is_stmt 1 view .LVU109
- 422              		.loc 1 203 12 is_stmt 0 view .LVU110
- 423 003c 0EF11402 		add	r2, lr, #20
- 424 0040 DDE90001 		ldrd	r0, r1, [sp]
- 425 0044 82E80300 		stm	r2, {r0, r1}
  204:Core/Src/hca_lib.c **** 
  205:Core/Src/hca_lib.c ****     // Harmonic frequency = order * fundamental
  206:Core/Src/hca_lib.c ****     float harmonic_freq = hca->fundamental_freq * (float)order;
- 426              		.loc 1 206 5 is_stmt 1 view .LVU111
- 427              		.loc 1 206 30 is_stmt 0 view .LVU112
-ARM GAS  /tmp/cc5BUOoY.s 			page 12
-
-
- 428 0048 93ED387A 		vldr.32	s14, [r3, #224]
- 429              		.loc 1 206 51 view .LVU113
- 430 004c 07EE904A 		vmov	s15, r4	@ int
- 431 0050 F8EE677A 		vcvt.f32.u32	s15, s15
- 432              		.loc 1 206 11 view .LVU114
- 433 0054 27EE277A 		vmul.f32	s14, s14, s15
- 434              	.LVL31:
+ 545              		.loc 1 206 51 is_stmt 0 view .LVU156
+ 546 002a 07EE901A 		vmov	s15, r1	@ int
+ 202:Core/Src/hca_lib.c ****     ch->Kp = kp;
+ 547              		.loc 1 202 12 view .LVU157
+ 548 002e DDE90201 		ldrd	r0, r1, [sp, #8]
+ 549              	.LVL35:
+ 202:Core/Src/hca_lib.c ****     ch->Kp = kp;
+ 550              		.loc 1 202 12 view .LVU158
+ 551 0032 CCE90301 		strd	r0, r1, [ip, #12]
+ 203:Core/Src/hca_lib.c ****     ch->Ki = ki;
+ 552              		.loc 1 203 5 is_stmt 1 view .LVU159
+ 203:Core/Src/hca_lib.c ****     ch->Ki = ki;
+ 553              		.loc 1 203 12 is_stmt 0 view .LVU160
+ 554 0036 DDE90001 		ldrd	r0, r1, [sp]
+ 555 003a CCE90501 		strd	r0, r1, [ip, #20]
+ 556              		.loc 1 206 5 is_stmt 1 view .LVU161
+ 557              	.LVL36:
  207:Core/Src/hca_lib.c **** 
  208:Core/Src/hca_lib.c ****     // DDS phase increment: phase += omega * Ts * 2^32
  209:Core/Src/hca_lib.c ****     // For 0th harmonic (DC), harmonic_freq is 0, so angle_step becomes 0 (constant phase).
  210:Core/Src/hca_lib.c ****     ch->angle_step = (uint32_t)((harmonic_freq * hca->sampling_time)
- 435              		.loc 1 210 5 is_stmt 1 view .LVU115
- 436              		.loc 1 210 53 is_stmt 0 view .LVU116
- 437 0058 D3ED397A 		vldr.32	s15, [r3, #228]
- 438              		.loc 1 210 48 view .LVU117
- 439 005c 67EE877A 		vmul.f32	s15, s15, s14
+ 558              		.loc 1 210 5 view .LVU162
+ 206:Core/Src/hca_lib.c **** 
+ 559              		.loc 1 206 30 is_stmt 0 view .LVU163
+ 560 003e 03F69C00 		addw	r0, r3, #2204
+ 561              	.LVL37:
+ 206:Core/Src/hca_lib.c **** 
+ 562              		.loc 1 206 11 view .LVU164
+ 563 0042 90ED006A 		vldr.32	s12, [r0]
  211:Core/Src/hca_lib.c ****                                 * 4294967296.0f);
- 440              		.loc 1 211 33 view .LVU118
- 441 0060 9FED0A7A 		vldr.32	s14, .L29
- 442              	.LVL32:
- 443              		.loc 1 211 33 view .LVU119
- 444 0064 67EE877A 		vmul.f32	s15, s15, s14
+ 564              		.loc 1 211 33 view .LVU165
+ 565 0046 9FED0F7A 		vldr.32	s14, .L30
+ 206:Core/Src/hca_lib.c **** 
+ 566              		.loc 1 206 51 view .LVU166
+ 567 004a F8EE677A 		vcvt.f32.u32	s15, s15
+ 568              	.LVL38:
  210:Core/Src/hca_lib.c ****                                 * 4294967296.0f);
- 445              		.loc 1 210 22 view .LVU120
- 446 0068 FCEEE77A 		vcvt.u32.f32	s15, s15
+ 569              		.loc 1 210 53 view .LVU167
+ARM GAS  /tmp/ccpBwvj8.s 			page 16
+
+
+ 570 004e 03F50A61 		add	r1, r3, #2208
  210:Core/Src/hca_lib.c ****                                 * 4294967296.0f);
- 447              		.loc 1 210 20 view .LVU121
- 448 006c CEED0A7A 		vstr.32	s15, [lr, #40]	@ int
- 449              	.LVL33:
+ 571              		.loc 1 210 48 view .LVU168
+ 572 0052 D1ED006A 		vldr.32	s13, [r1]
+ 206:Core/Src/hca_lib.c **** 
+ 573              		.loc 1 206 11 view .LVU169
+ 574 0056 67EE867A 		vmul.f32	s15, s15, s12
  212:Core/Src/hca_lib.c ****     ch->current_angle = 0;
- 450              		.loc 1 212 5 is_stmt 1 view .LVU122
- 451              		.loc 1 212 23 is_stmt 0 view .LVU123
- 452 0070 0022     		movs	r2, #0
- 453 0072 CEF82420 		str	r2, [lr, #36]
  213:Core/Src/hca_lib.c **** 
  214:Core/Src/hca_lib.c ****     // Disperser window length calculation
  215:Core/Src/hca_lib.c ****     // SPECIAL CASE FOR DC (Order 0):
@@ -702,192 +916,312 @@ ARM GAS  /tmp/cc5BUOoY.s 			page 1
  217:Core/Src/hca_lib.c ****     // The DC component is the average value over one FUNDAMENTAL period.
  218:Core/Src/hca_lib.c ****     // Therefore, for order 0, we use the fundamental frequency to calculate window size.
  219:Core/Src/hca_lib.c ****     float freq_for_window = (order == 0) ? hca->fundamental_freq : harmonic_freq;
- 454              		.loc 1 219 5 is_stmt 1 view .LVU124
  220:Core/Src/hca_lib.c **** 
  221:Core/Src/hca_lib.c ****     uint16_t Ns = (uint16_t)(1.0f /
- 455              		.loc 1 221 5 view .LVU125
  222:Core/Src/hca_lib.c ****                    (freq_for_window * hca->sampling_time));
  223:Core/Src/hca_lib.c **** 
  224:Core/Src/hca_lib.c ****     if (Ns > MAX_WINDOW_SIZE) Ns = MAX_WINDOW_SIZE;
- 456              		.loc 1 224 5 view .LVU126
- 457              		.loc 1 224 31 discriminator 1 view .LVU127
- 458              	.LVL34:
  225:Core/Src/hca_lib.c **** 
  226:Core/Src/hca_lib.c ****     // Reset PI integrator
  227:Core/Src/hca_lib.c ****     ch->integrator_state.real = 0.0f;
- 459              		.loc 1 227 5 view .LVU128
- 460              		.loc 1 227 31 is_stmt 0 view .LVU129
- 461 0076 0022     		movs	r2, #0
-ARM GAS  /tmp/cc5BUOoY.s 			page 13
-
-
- 462 0078 CEF81C20 		str	r2, [lr, #28]	@ float
+ 575              		.loc 1 227 31 view .LVU170
+ 576 005a 0021     		movs	r1, #0
+ 210:Core/Src/hca_lib.c ****                                 * 4294967296.0f);
+ 577              		.loc 1 210 48 view .LVU171
+ 578 005c 67EEA67A 		vmul.f32	s15, s15, s13
+ 579              		.loc 1 227 31 view .LVU172
+ 580 0060 CCF81C10 		str	r1, [ip, #28]	@ float
+ 581              	.LVL39:
+ 211:Core/Src/hca_lib.c ****     ch->current_angle = 0;
+ 582              		.loc 1 211 33 view .LVU173
+ 583 0064 67EE877A 		vmul.f32	s15, s15, s14
  228:Core/Src/hca_lib.c ****     ch->integrator_state.imag = 0.0f;
- 463              		.loc 1 228 5 is_stmt 1 view .LVU130
- 464              		.loc 1 228 31 is_stmt 0 view .LVU131
- 465 007c CEF82020 		str	r2, [lr, #32]	@ float
+ 584              		.loc 1 228 31 view .LVU174
+ 585 0068 CCF82010 		str	r1, [ip, #32]	@ float
+ 210:Core/Src/hca_lib.c ****                                 * 4294967296.0f);
+ 586              		.loc 1 210 22 view .LVU175
+ 587 006c FCEEE77A 		vcvt.u32.f32	s15, s15
  229:Core/Src/hca_lib.c **** 
  230:Core/Src/hca_lib.c ****     hca->active_channel_count++;
- 466              		.loc 1 230 5 is_stmt 1 view .LVU132
- 467              		.loc 1 230 30 is_stmt 0 view .LVU133
- 468 0080 0CF1010C 		add	ip, ip, #1
- 469              	.LVL35:
- 470              		.loc 1 230 30 view .LVU134
- 471 0084 83F8DCC0 		strb	ip, [r3, #220]
- 472              	.LVL36:
- 473              	.L26:
+ 588              		.loc 1 230 30 view .LVU176
+ 589 0070 0132     		adds	r2, r2, #1
+ 590              	.LVL40:
+ 212:Core/Src/hca_lib.c **** 
+ 591              		.loc 1 212 23 view .LVU177
+ 592 0072 0021     		movs	r1, #0
+ 210:Core/Src/hca_lib.c ****                                 * 4294967296.0f);
+ 593              		.loc 1 210 22 view .LVU178
+ 594 0074 CCED0A7A 		vstr.32	s15, [ip, #40]	@ int
+ 212:Core/Src/hca_lib.c **** 
+ 595              		.loc 1 212 5 is_stmt 1 view .LVU179
+ 212:Core/Src/hca_lib.c **** 
+ 596              		.loc 1 212 23 is_stmt 0 view .LVU180
+ 597 0078 CCF82410 		str	r1, [ip, #36]
+ 219:Core/Src/hca_lib.c **** 
+ARM GAS  /tmp/ccpBwvj8.s 			page 17
+
+
+ 598              		.loc 1 219 5 is_stmt 1 view .LVU181
+ 221:Core/Src/hca_lib.c ****                    (freq_for_window * hca->sampling_time));
+ 599              		.loc 1 221 5 view .LVU182
+ 224:Core/Src/hca_lib.c **** 
+ 600              		.loc 1 224 5 view .LVU183
+ 224:Core/Src/hca_lib.c **** 
+ 601              		.loc 1 224 31 discriminator 1 view .LVU184
+ 602              	.LVL41:
+ 227:Core/Src/hca_lib.c ****     ch->integrator_state.imag = 0.0f;
+ 603              		.loc 1 227 5 view .LVU185
+ 228:Core/Src/hca_lib.c **** 
+ 604              		.loc 1 228 5 view .LVU186
+ 605              		.loc 1 230 5 view .LVU187
+ 606              		.loc 1 230 30 is_stmt 0 view .LVU188
+ 607 007c 83F89828 		strb	r2, [r3, #2200]
+ 608              	.LVL42:
+ 609              	.L27:
  231:Core/Src/hca_lib.c **** }
- 474              		.loc 1 231 1 view .LVU135
- 475 0088 04B0     		add	sp, sp, #16
- 476              	.LCFI7:
- 477              		.cfi_def_cfa_offset 8
- 478              		@ sp needed
- 479 008a 10BD     		pop	{r4, pc}
- 480              	.L30:
- 481              		.align	2
- 482              	.L29:
- 483 008c 0000804F 		.word	1333788672
- 484              		.cfi_endproc
- 485              	.LFE8:
- 487              		.section	.text.HCA_Process,"ax",%progbits
- 488              		.align	1
- 489              		.global	HCA_Process
- 490              		.syntax unified
- 491              		.thumb
- 492              		.thumb_func
- 494              	HCA_Process:
- 495              	.LVL37:
- 496              	.LFB9:
+ 610              		.loc 1 231 1 view .LVU189
+ 611 0080 05B0     		add	sp, sp, #20
+ 612              	.LCFI8:
+ 613              		.cfi_def_cfa_offset 4
+ 614              		@ sp needed
+ 615 0082 00BD     		pop	{pc}
+ 616              	.L31:
+ 617              		.align	2
+ 618              	.L30:
+ 619 0084 0000804F 		.word	1333788672
+ 620              		.cfi_endproc
+ 621              	.LFE8:
+ 623              		.section	.text.HCA_Process,"ax",%progbits
+ 624              		.align	1
+ 625              		.p2align 2,,3
+ 626              		.global	HCA_Process
+ 627              		.syntax unified
+ 628              		.thumb
+ 629              		.thumb_func
+ 631              	HCA_Process:
+ 632              	.LVL43:
+ 633              	.LFB9:
  232:Core/Src/hca_lib.c **** 
  233:Core/Src/hca_lib.c **** float HCA_Process(HCA_Handle_t *hca, float input_signal) {
- 497              		.loc 1 233 58 is_stmt 1 view -0
- 498              		.cfi_startproc
- 499              		@ args = 0, pretend = 0, frame = 152
- 500              		@ frame_needed = 0, uses_anonymous_args = 0
+ 634              		.loc 1 233 58 is_stmt 1 view -0
+ 635              		.cfi_startproc
+ 636              		@ args = 0, pretend = 0, frame = 0
+ 637              		@ frame_needed = 0, uses_anonymous_args = 0
  234:Core/Src/hca_lib.c **** 
  235:Core/Src/hca_lib.c ****     if (!is_lut_initialized) return 0.0f;
- 501              		.loc 1 235 5 view .LVU137
- 502              		.loc 1 235 9 is_stmt 0 view .LVU138
- 503 0000 D14B     		ldr	r3, .L57
- 504 0002 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
- 505              		.loc 1 235 8 view .LVU139
- 506 0004 002B     		cmp	r3, #0
- 507 0006 00F09C81 		beq	.L45
- 233:Core/Src/hca_lib.c **** 
- 508              		.loc 1 233 58 view .LVU140
- 509 000a 2DE9F041 		push	{r4, r5, r6, r7, r8, lr}
- 510              	.LCFI8:
- 511              		.cfi_def_cfa_offset 24
-ARM GAS  /tmp/cc5BUOoY.s 			page 14
-
-
- 512              		.cfi_offset 4, -24
- 513              		.cfi_offset 5, -20
- 514              		.cfi_offset 6, -16
- 515              		.cfi_offset 7, -12
- 516              		.cfi_offset 8, -8
- 517              		.cfi_offset 14, -4
- 518 000e 2DED028B 		vpush.64	{d8}
- 519              	.LCFI9:
- 520              		.cfi_def_cfa_offset 32
- 521              		.cfi_offset 80, -32
- 522              		.cfi_offset 81, -28
- 523 0012 A6B0     		sub	sp, sp, #152
- 524              	.LCFI10:
- 525              		.cfi_def_cfa_offset 184
- 526 0014 0546     		mov	r5, r0
+ 638              		.loc 1 235 5 view .LVU191
+ 639              		.loc 1 235 9 is_stmt 0 view .LVU192
+ 640 0000 6E4B     		ldr	r3, .L59
+ 641              		.loc 1 235 8 view .LVU193
+ 642 0002 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 643 0004 002B     		cmp	r3, #0
+ 644 0006 00F0CD80 		beq	.L46
  236:Core/Src/hca_lib.c **** 
  237:Core/Src/hca_lib.c ****     float total_u_t = 0.0f;
- 527              		.loc 1 237 5 is_stmt 1 view .LVU141
- 528              	.LVL38:
+ARM GAS  /tmp/ccpBwvj8.s 			page 18
+
+
+ 645              		.loc 1 237 5 is_stmt 1 view .LVU194
+ 646              	.LVL44:
  238:Core/Src/hca_lib.c **** 
  239:Core/Src/hca_lib.c ****     // Disperser - harmonic step
  240:Core/Src/hca_lib.c ****     // e[n]-e[n-N]*(1/N)
  241:Core/Src/hca_lib.c ****     int32_t read_index = (hca->buf_head - hca->window_len) & WINDOW_MASK;
- 529              		.loc 1 241 5 view .LVU142
- 530              		.loc 1 241 30 is_stmt 0 view .LVU143
- 531 0016 00F58041 		add	r1, r0, #16384
- 532 001a B1F8EC20 		ldrh	r2, [r1, #236]
- 533              		.loc 1 241 46 view .LVU144
- 534 001e B1F8EE30 		ldrh	r3, [r1, #238]
- 535              		.loc 1 241 60 view .LVU145
- 536 0022 D31A     		subs	r3, r2, r3
- 537              		.loc 1 241 13 view .LVU146
- 538 0024 C3F30B03 		ubfx	r3, r3, #0, #12
- 539              	.LVL39:
+ 647              		.loc 1 241 5 view .LVU195
+ 648              		.loc 1 241 30 is_stmt 0 view .LVU196
+ 649 000a 00F58041 		add	r1, r0, #16384
+ 233:Core/Src/hca_lib.c **** 
+ 650              		.loc 1 233 58 view .LVU197
+ 651 000e 70B5     		push	{r4, r5, r6, lr}
+ 652              	.LCFI9:
+ 653              		.cfi_def_cfa_offset 16
+ 654              		.cfi_offset 4, -16
+ 655              		.cfi_offset 5, -12
+ 656              		.cfi_offset 6, -8
+ 657              		.cfi_offset 14, -4
+ 658              		.loc 1 241 30 view .LVU198
+ 659 0010 B1F8A828 		ldrh	r2, [r1, #2216]
+ 660              		.loc 1 241 60 view .LVU199
+ 661 0014 B1F8AA38 		ldrh	r3, [r1, #2218]
+ 662 0018 D31A     		subs	r3, r2, r3
+ 663 001a 0446     		mov	r4, r0
+ 664              	.LVL45:
  242:Core/Src/hca_lib.c ****     float delayed_val = hca->buffer[read_index];
- 540              		.loc 1 242 5 is_stmt 1 view .LVU147
- 541              		.loc 1 242 11 is_stmt 0 view .LVU148
- 542 0028 3A33     		adds	r3, r3, #58
- 543              	.LVL40:
- 544              		.loc 1 242 11 view .LVU149
- 545 002a 00EB8303 		add	r3, r0, r3, lsl #2
- 546              	.LVL41:
- 547              		.loc 1 242 11 view .LVU150
- 548 002e 93ED018A 		vldr.32	s16, [r3, #4]
- 549              	.LVL42:
+ 665              		.loc 1 242 5 is_stmt 1 view .LVU200
+ 241:Core/Src/hca_lib.c ****     float delayed_val = hca->buffer[read_index];
+ 666              		.loc 1 241 13 is_stmt 0 view .LVU201
+ 667 001c C3F30B03 		ubfx	r3, r3, #0, #12
  243:Core/Src/hca_lib.c ****     float harmonic_step = (input_signal - delayed_val)*hca->inv_window_len;
- 550              		.loc 1 243 5 is_stmt 1 view .LVU151
- 551              		.loc 1 243 41 is_stmt 0 view .LVU152
- 552 0032 30EE488A 		vsub.f32	s16, s0, s16
- 553              	.LVL43:
- 554              		.loc 1 243 59 view .LVU153
- 555 0036 D1ED3C7A 		vldr.32	s15, [r1, #240]
- 556              		.loc 1 243 11 view .LVU154
- 557 003a 28EE278A 		vmul.f32	s16, s16, s15
- 558              	.LVL44:
+ 668              		.loc 1 243 59 view .LVU202
+ 669 0020 01F6AC00 		addw	r0, r1, #2220
+ 670              	.LVL46:
+ 671              		.loc 1 243 59 view .LVU203
+ 672 0024 D0ED007A 		vldr.32	s15, [r0]
+ 242:Core/Src/hca_lib.c ****     float delayed_val = hca->buffer[read_index];
+ 673              		.loc 1 242 11 view .LVU204
+ 674 0028 03F22A23 		addw	r3, r3, #554
  244:Core/Src/hca_lib.c **** 
  245:Core/Src/hca_lib.c ****     // Update circular buffer
-ARM GAS  /tmp/cc5BUOoY.s 			page 15
-
-
  246:Core/Src/hca_lib.c ****     hca->buffer[hca->buf_head] = input_signal;
- 559              		.loc 1 246 5 is_stmt 1 view .LVU155
- 560              		.loc 1 246 32 is_stmt 0 view .LVU156
- 561 003e 02F13A03 		add	r3, r2, #58
- 562              	.LVL45:
- 563              		.loc 1 246 32 view .LVU157
- 564 0042 00EB8303 		add	r3, r0, r3, lsl #2
- 565 0046 83ED010A 		vstr.32	s0, [r3, #4]
- 566              	.LVL46:
+ 675              		.loc 1 246 32 view .LVU205
+ 676 002c 02F22A20 		addw	r0, r2, #554
  247:Core/Src/hca_lib.c ****     hca->buf_head = (hca->buf_head + 1) & WINDOW_MASK;
- 567              		.loc 1 247 5 is_stmt 1 view .LVU158
- 568              		.loc 1 247 36 is_stmt 0 view .LVU159
- 569 004a 0132     		adds	r2, r2, #1
- 570              		.loc 1 247 41 view .LVU160
- 571 004c C2F30B02 		ubfx	r2, r2, #0, #12
- 572              		.loc 1 247 19 view .LVU161
- 573 0050 A1F8EC20 		strh	r2, [r1, #236]	@ movhi
+ 677              		.loc 1 247 36 view .LVU206
+ 678 0030 0132     		adds	r2, r2, #1
+ 679              	.LVL47:
+ 242:Core/Src/hca_lib.c ****     float harmonic_step = (input_signal - delayed_val)*hca->inv_window_len;
+ 680              		.loc 1 242 11 view .LVU207
+ 681 0032 04EB8303 		add	r3, r4, r3, lsl #2
+ 246:Core/Src/hca_lib.c ****     hca->buf_head = (hca->buf_head + 1) & WINDOW_MASK;
+ 682              		.loc 1 246 32 view .LVU208
+ 683 0036 04EB8000 		add	r0, r4, r0, lsl #2
+ 684              		.loc 1 247 41 view .LVU209
+ 685 003a C2F30B02 		ubfx	r2, r2, #0, #12
+ 686              	.LVL48:
+ARM GAS  /tmp/ccpBwvj8.s 			page 19
+
+
+ 242:Core/Src/hca_lib.c ****     float harmonic_step = (input_signal - delayed_val)*hca->inv_window_len;
+ 687              		.loc 1 242 11 view .LVU210
+ 688 003e 93ED007A 		vldr.32	s14, [r3]
+ 689              	.LVL49:
+ 243:Core/Src/hca_lib.c **** 
+ 690              		.loc 1 243 5 is_stmt 1 view .LVU211
+ 246:Core/Src/hca_lib.c ****     hca->buf_head = (hca->buf_head + 1) & WINDOW_MASK;
+ 691              		.loc 1 246 5 view .LVU212
+ 246:Core/Src/hca_lib.c ****     hca->buf_head = (hca->buf_head + 1) & WINDOW_MASK;
+ 692              		.loc 1 246 32 is_stmt 0 view .LVU213
+ 693 0042 80ED000A 		vstr.32	s0, [r0]
+ 694              		.loc 1 247 5 is_stmt 1 view .LVU214
+ 695              		.loc 1 247 19 is_stmt 0 view .LVU215
+ 696 0046 A1F8A828 		strh	r2, [r1, #2216]	@ movhi
+ 697              	.LVL50:
  248:Core/Src/hca_lib.c **** 
  249:Core/Src/hca_lib.c ****     for (int i = 0; i < hca->active_channel_count; i++) {
- 574              		.loc 1 249 5 is_stmt 1 view .LVU162
- 575              	.LBB21:
- 576              		.loc 1 249 10 view .LVU163
- 577              	.LVL47:
- 578              		.loc 1 249 14 is_stmt 0 view .LVU164
- 579 0054 0026     		movs	r6, #0
- 580              	.LBE21:
+ 698              		.loc 1 249 5 is_stmt 1 view .LVU216
+ 699              	.LBB59:
+ 700              		.loc 1 249 10 view .LVU217
+ 701              		.loc 1 249 23 discriminator 2 view .LVU218
+ 702 004a 94F89838 		ldrb	r3, [r4, #2200]	@ zero_extendqisi2
+ 703 004e 002B     		cmp	r3, #0
+ 704 0050 00F0AB80 		beq	.L34
+ 705              	.LBE59:
+ 243:Core/Src/hca_lib.c **** 
+ 706              		.loc 1 243 41 is_stmt 0 view .LVU219
+ 707 0054 70EE472A 		vsub.f32	s5, s0, s14
+ 708              	.LVL51:
  237:Core/Src/hca_lib.c **** 
- 581              		.loc 1 237 11 view .LVU165
- 582 0056 DFEDBD8A 		vldr.32	s17, .L57+4
- 583              	.LBB38:
- 584              		.loc 1 249 5 view .LVU166
- 585 005a 06E0     		b	.L33
- 586              	.LVL48:
- 587              	.L46:
- 588              	.LBB22:
+ 709              		.loc 1 237 11 view .LVU220
+ 710 0058 9FED592A 		vldr.32	s4, .L59+4
+ 711 005c DFF864E1 		ldr	lr, .L59+8
+ 243:Core/Src/hca_lib.c **** 
+ 712              		.loc 1 243 11 view .LVU221
+ 713 0060 62EEA72A 		vmul.f32	s5, s5, s15
+ 714              	.LVL52:
+ 243:Core/Src/hca_lib.c **** 
+ 715              		.loc 1 243 11 view .LVU222
+ 716 0064 2346     		mov	r3, r4
+ 717              	.LBB98:
+ 718              		.loc 1 249 14 view .LVU223
+ 719 0066 4FF0000C 		mov	ip, #0
+ 720 006a 04F50A66 		add	r6, r4, #2208
+ 721 006e 04F6A405 		addw	r5, r4, #2212
+ 722              	.LVL53:
+ 723              	.L44:
+ 724              	.LBB60:
  250:Core/Src/hca_lib.c **** 
  251:Core/Src/hca_lib.c ****         HCA_Channel_t *ch = &hca->channels[i];
+ 725              		.loc 1 251 9 is_stmt 1 view .LVU224
  252:Core/Src/hca_lib.c **** 
  253:Core/Src/hca_lib.c ****         // ----------------------------------------------------
  254:Core/Src/hca_lib.c ****         // DDS phase update
  255:Core/Src/hca_lib.c ****         // ----------------------------------------------------
  256:Core/Src/hca_lib.c ****         ch->current_angle += ch->angle_step;
+ 726              		.loc 1 256 9 view .LVU225
+ARM GAS  /tmp/ccpBwvj8.s 			page 20
+
+
+ 727              		.loc 1 256 27 is_stmt 0 view .LVU226
+ 728 0072 D3E90921 		ldrd	r2, r1, [r3, #36]
+ 729 0076 5018     		adds	r0, r2, r1
  257:Core/Src/hca_lib.c **** 
  258:Core/Src/hca_lib.c ****         // Phase-compensated rotating phasor
  259:Core/Src/hca_lib.c ****         Complex_t rot_pos = {0.0f, 0.0f};
  260:Core/Src/hca_lib.c ****         HCA_getPhasor(
  261:Core/Src/hca_lib.c ****             ch->current_angle +
+ 730              		.loc 1 261 31 view .LVU227
+ 731 0078 07EE900A 		vmov	s15, r0	@ int
+ 732 007c F8EE677A 		vcvt.f32.u32	s15, s15
+ 733 0080 93ED026A 		vldr.32	s12, [r3, #8]
+ 734              	.LBB61:
+ 735              	.LBB62:
+  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
+ 736              		.loc 1 69 23 view .LVU228
+ 737 0084 D3ED015A 		vldr.32	s11, [r3, #4]
+ 738 0088 D3ED054A 		vldr.32	s9, [r3, #20]
+ 739 008c D3ED086A 		vldr.32	s13, [r3, #32]
+ 740 0090 93ED033A 		vldr.32	s6, [r3, #12]
+ 741              	.LBE62:
+ 742              	.LBE61:
+ 260:Core/Src/hca_lib.c ****             ch->current_angle +
+ 743              		.loc 1 260 9 view .LVU229
+ 744 0094 FCEEE77A 		vcvt.u32.f32	s15, s15
+ 745 0098 17EE902A 		vmov	r2, s15	@ int
+ 746              	.LBB65:
+ 747              	.LBB66:
+ 124:Core/Src/hca_lib.c **** 
+ 748              		.loc 1 124 14 view .LVU230
+ 749 009c 120D     		lsrs	r2, r2, #20
+ 127:Core/Src/hca_lib.c **** 
+ 750              		.loc 1 127 33 view .LVU231
+ 751 009e 02F58061 		add	r1, r2, #1024
+ 127:Core/Src/hca_lib.c **** 
+ 752              		.loc 1 127 14 view .LVU232
+ 753 00a2 C1F30B01 		ubfx	r1, r1, #0, #12
+ 129:Core/Src/hca_lib.c ****     complex->imag = HCA_sin_table[idx_sin]; // sin(theta)
+ 754              		.loc 1 129 34 view .LVU233
+ 755 00a6 0EEB8101 		add	r1, lr, r1, lsl #2
+ 130:Core/Src/hca_lib.c **** }
+ 756              		.loc 1 130 34 view .LVU234
+ 757 00aa 0EEB8202 		add	r2, lr, r2, lsl #2
+ 129:Core/Src/hca_lib.c ****     complex->imag = HCA_sin_table[idx_sin]; // sin(theta)
+ 758              		.loc 1 129 34 view .LVU235
+ 759 00ae D1ED003A 		vldr.32	s7, [r1]
+ 130:Core/Src/hca_lib.c **** }
+ 760              		.loc 1 130 34 view .LVU236
+ 761 00b2 92ED007A 		vldr.32	s14, [r2]
+ 762 00b6 D3ED067A 		vldr.32	s15, [r3, #24]
+ 763              	.LBE66:
+ 764              	.LBE65:
+ 765              	.LBB68:
+ 766              	.LBB63:
+  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
+ 767              		.loc 1 69 23 view .LVU237
+ 768 00ba E2EEA35A 		vfma.f32	s11, s5, s7
+ARM GAS  /tmp/ccpBwvj8.s 			page 21
+
+
+  70:Core/Src/hca_lib.c ****     return res;
+ 769              		.loc 1 70 23 view .LVU238
+ 770 00be A7EE626A 		vfms.f32	s12, s14, s5
+ 771              	.LBE63:
+ 772              	.LBE68:
+ 773              	.LBB69:
+ 774              	.LBB70:
+  82:Core/Src/hca_lib.c ****     return res;
+ 775              		.loc 1 82 44 view .LVU239
+ 776 00c2 25EEA75A 		vmul.f32	s10, s11, s15
+  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
+ 777              		.loc 1 81 34 view .LVU240
+ 778 00c6 67EEC67A 		vnmul.f32	s15, s15, s12
+  82:Core/Src/hca_lib.c ****     return res;
+ 779              		.loc 1 82 34 view .LVU241
+ 780 00ca A6EE245A 		vfma.f32	s10, s12, s9
+  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
+ 781              		.loc 1 81 34 view .LVU242
+ 782 00ce E5EEA47A 		vfma.f32	s15, s11, s9
+ 783              	.LBE70:
+ 784              	.LBE69:
  262:Core/Src/hca_lib.c ****             ch->angle_step * HCA_DELAY_COMPENSATION_MULTIPLIER,
  263:Core/Src/hca_lib.c ****             &rot_pos
  264:Core/Src/hca_lib.c ****         );
@@ -898,14 +1232,14 @@ ARM GAS  /tmp/cc5BUOoY.s 			page 1
  269:Core/Src/hca_lib.c ****         // Input -> Step -> Modulation
  270:Core/Src/hca_lib.c **** 
  271:Core/Src/hca_lib.c ****         // 1. Modulation: x * e^{-jωt}
-ARM GAS  /tmp/cc5BUOoY.s 			page 16
-
-
  272:Core/Src/hca_lib.c ****         Complex_t modulated_val;
  273:Core/Src/hca_lib.c ****         modulated_val.real = harmonic_step * rot_pos.real;
  274:Core/Src/hca_lib.c ****         modulated_val.imag = harmonic_step * (-rot_pos.imag);
  275:Core/Src/hca_lib.c **** 
  276:Core/Src/hca_lib.c ****         ch->current_val = Complex_Add(ch->current_val, modulated_val);
+ 785              		.loc 1 276 27 view .LVU243
+ 786 00d2 C3ED015A 		vstr.32	s11, [r3, #4]
+ 787 00d6 83ED026A 		vstr.32	s12, [r3, #8]
  277:Core/Src/hca_lib.c **** 
  278:Core/Src/hca_lib.c ****         // ====================================================
  279:Core/Src/hca_lib.c ****         // COMPLEX PI CONTROLLER
@@ -921,22 +1255,262 @@ ARM GAS  /tmp/cc5BUOoY.s 			page 1
  289:Core/Src/hca_lib.c ****         Complex_t ki_term = Complex_Mult(ch->Ki, error_dq);
  290:Core/Src/hca_lib.c ****         Complex_t ki_step =
  291:Core/Src/hca_lib.c ****             Complex_Scale(ki_term, hca->sampling_time);
+ 788              		.loc 1 291 13 view .LVU244
+ 789 00da 96ED004A 		vldr.32	s8, [r6]
+ 790              	.LBB72:
+ARM GAS  /tmp/ccpBwvj8.s 			page 22
+
+
+ 791              	.LBB73:
+  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
+ 792              		.loc 1 69 23 view .LVU245
+ 793 00de D3ED074A 		vldr.32	s9, [r3, #28]
+  70:Core/Src/hca_lib.c ****     return res;
+ 794              		.loc 1 70 23 view .LVU246
+ 795 00e2 E4EE056A 		vfma.f32	s13, s8, s10
+  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
+ 796              		.loc 1 69 23 view .LVU247
+ 797 00e6 E4EE274A 		vfma.f32	s9, s8, s15
+ 798              	.LBE73:
+ 799              	.LBE72:
  292:Core/Src/hca_lib.c **** 
  293:Core/Src/hca_lib.c ****         ch->integrator_state =
  294:Core/Src/hca_lib.c ****             Complex_Add(ch->integrator_state, ki_step);
+ 800              		.loc 1 294 13 view .LVU248
+ 801 00ea C3ED086A 		vstr.32	s13, [r3, #32]
+ 802 00ee C3ED074A 		vstr.32	s9, [r3, #28]
+ 803 00f2 D3ED047A 		vldr.32	s15, [r3, #16]
  295:Core/Src/hca_lib.c **** 
  296:Core/Src/hca_lib.c ****         // Anti-windup saturation
  297:Core/Src/hca_lib.c ****         float limit = hca->output_limit;
+ 804              		.loc 1 297 15 view .LVU249
+ 805 00f6 95ED005A 		vldr.32	s10, [r5]
+ 256:Core/Src/hca_lib.c **** 
+ 806              		.loc 1 256 27 view .LVU250
+ 807 00fa 5862     		str	r0, [r3, #36]
+ 808              	.LBB75:
+ 809              	.LBB76:
+  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
+ 810              		.loc 1 81 34 view .LVU251
+ 811 00fc 27EEC64A 		vnmul.f32	s8, s15, s12
+ 812              	.LBE76:
+ 813              	.LBE75:
+ 259:Core/Src/hca_lib.c ****         HCA_getPhasor(
+ 814              		.loc 1 259 9 is_stmt 1 view .LVU252
+ 815              	.LVL54:
+ 260:Core/Src/hca_lib.c ****             ch->current_angle +
+ 816              		.loc 1 260 9 view .LVU253
+ 817              	.LBB80:
+ 818              	.LBI65:
+ 122:Core/Src/hca_lib.c ****     // 1. Reduce 32-bit phase accumulator to LUT index
+ 819              		.loc 1 122 6 view .LVU254
+ 820              	.LBB67:
+ 124:Core/Src/hca_lib.c **** 
+ 821              		.loc 1 124 5 view .LVU255
+ 127:Core/Src/hca_lib.c **** 
+ 822              		.loc 1 127 5 view .LVU256
+ 129:Core/Src/hca_lib.c ****     complex->imag = HCA_sin_table[idx_sin]; // sin(theta)
+ 823              		.loc 1 129 5 view .LVU257
+ 130:Core/Src/hca_lib.c **** }
+ 824              		.loc 1 130 5 view .LVU258
+ 130:Core/Src/hca_lib.c **** }
+ 825              		.loc 1 130 5 is_stmt 0 view .LVU259
+ 826              	.LBE67:
+ 827              	.LBE80:
+ 272:Core/Src/hca_lib.c ****         modulated_val.real = harmonic_step * rot_pos.real;
+ARM GAS  /tmp/ccpBwvj8.s 			page 23
+
+
+ 828              		.loc 1 272 9 is_stmt 1 view .LVU260
+ 273:Core/Src/hca_lib.c ****         modulated_val.imag = harmonic_step * (-rot_pos.imag);
+ 829              		.loc 1 273 9 view .LVU261
+ 274:Core/Src/hca_lib.c **** 
+ 830              		.loc 1 274 9 view .LVU262
+ 276:Core/Src/hca_lib.c **** 
+ 831              		.loc 1 276 9 view .LVU263
+ 832              	.LBB81:
+ 833              	.LBI61:
+  67:Core/Src/hca_lib.c ****     Complex_t res;
+ 834              		.loc 1 67 25 view .LVU264
+ 835              	.LBB64:
+  68:Core/Src/hca_lib.c ****     res.real = a.real + b.real;
+ 836              		.loc 1 68 5 view .LVU265
+  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
+ 837              		.loc 1 69 5 view .LVU266
+  70:Core/Src/hca_lib.c ****     return res;
+ 838              		.loc 1 70 5 view .LVU267
+  71:Core/Src/hca_lib.c **** }
+ 839              		.loc 1 71 5 view .LVU268
+  71:Core/Src/hca_lib.c **** }
+ 840              		.loc 1 71 5 is_stmt 0 view .LVU269
+ 841              	.LBE64:
+ 842              	.LBE81:
+ 283:Core/Src/hca_lib.c **** 
+ 843              		.loc 1 283 9 is_stmt 1 view .LVU270
+ 286:Core/Src/hca_lib.c **** 
+ 844              		.loc 1 286 9 view .LVU271
+ 845              	.LBB82:
+ 846              	.LBI75:
+  79:Core/Src/hca_lib.c ****     Complex_t res;
+ 847              		.loc 1 79 25 view .LVU272
+ 848              	.LBB77:
+  80:Core/Src/hca_lib.c ****     res.real = (a.real * b.real) - (a.imag * b.imag);
+ 849              		.loc 1 80 5 view .LVU273
+  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
+ 850              		.loc 1 81 5 view .LVU274
+ 851              	.LBE77:
+ 852              	.LBE82:
  298:Core/Src/hca_lib.c ****         if (ch->integrator_state.real > limit)
+ 853              		.loc 1 298 12 is_stmt 0 view .LVU275
+ 854 0100 B4EEE45A 		vcmpe.f32	s10, s9
+ 855              	.LBB83:
+ 856              	.LBB78:
+  82:Core/Src/hca_lib.c ****     return res;
+ 857              		.loc 1 82 44 view .LVU276
+ 858 0104 65EEA77A 		vmul.f32	s15, s11, s15
+ 859              	.LVL55:
+  82:Core/Src/hca_lib.c ****     return res;
+ 860              		.loc 1 82 44 view .LVU277
+ 861              	.LBE78:
+ 862              	.LBE83:
+ 863              		.loc 1 298 12 view .LVU278
+ 864 0108 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 865              	.LBB84:
+ 866              	.LBB79:
+  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
+ARM GAS  /tmp/ccpBwvj8.s 			page 24
+
+
+ 867              		.loc 1 81 34 view .LVU279
+ 868 010c A5EE834A 		vfma.f32	s8, s11, s6
+ 869              	.LVL56:
+  82:Core/Src/hca_lib.c ****     return res;
+ 870              		.loc 1 82 5 is_stmt 1 view .LVU280
+  82:Core/Src/hca_lib.c ****     return res;
+ 871              		.loc 1 82 34 is_stmt 0 view .LVU281
+ 872 0110 E6EE037A 		vfma.f32	s15, s12, s6
+  83:Core/Src/hca_lib.c **** }
+ 873              		.loc 1 83 5 is_stmt 1 view .LVU282
+ 874              	.LVL57:
+  83:Core/Src/hca_lib.c **** }
+ 875              		.loc 1 83 5 is_stmt 0 view .LVU283
+ 876              	.LBE79:
+ 877              	.LBE84:
+ 289:Core/Src/hca_lib.c ****         Complex_t ki_step =
+ 878              		.loc 1 289 9 is_stmt 1 view .LVU284
+ 879              	.LBB85:
+ 880              	.LBI69:
+  79:Core/Src/hca_lib.c ****     Complex_t res;
+ 881              		.loc 1 79 25 view .LVU285
+ 882              	.LBB71:
+  80:Core/Src/hca_lib.c ****     res.real = (a.real * b.real) - (a.imag * b.imag);
+ 883              		.loc 1 80 5 view .LVU286
+  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
+ 884              		.loc 1 81 5 view .LVU287
+  82:Core/Src/hca_lib.c ****     return res;
+ 885              		.loc 1 82 5 view .LVU288
+  83:Core/Src/hca_lib.c **** }
+ 886              		.loc 1 83 5 view .LVU289
+  83:Core/Src/hca_lib.c **** }
+ 887              		.loc 1 83 5 is_stmt 0 view .LVU290
+ 888              	.LBE71:
+ 889              	.LBE85:
+ 290:Core/Src/hca_lib.c ****             Complex_Scale(ki_term, hca->sampling_time);
+ 890              		.loc 1 290 9 is_stmt 1 view .LVU291
+ 293:Core/Src/hca_lib.c ****             Complex_Add(ch->integrator_state, ki_step);
+ 891              		.loc 1 293 9 view .LVU292
+ 892              	.LBB86:
+ 893              	.LBI72:
+  67:Core/Src/hca_lib.c ****     Complex_t res;
+ 894              		.loc 1 67 25 view .LVU293
+ 895              	.LBB74:
+  68:Core/Src/hca_lib.c ****     res.real = a.real + b.real;
+ 896              		.loc 1 68 5 view .LVU294
+  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
+ 897              		.loc 1 69 5 view .LVU295
+  70:Core/Src/hca_lib.c ****     return res;
+ 898              		.loc 1 70 5 view .LVU296
+  71:Core/Src/hca_lib.c **** }
+ 899              		.loc 1 71 5 view .LVU297
+  71:Core/Src/hca_lib.c **** }
+ 900              		.loc 1 71 5 is_stmt 0 view .LVU298
+ 901              	.LBE74:
+ 902              	.LBE86:
+ 297:Core/Src/hca_lib.c ****         if (ch->integrator_state.real > limit)
+ 903              		.loc 1 297 9 is_stmt 1 view .LVU299
+ARM GAS  /tmp/ccpBwvj8.s 			page 25
+
+
+ 904              		.loc 1 298 9 view .LVU300
+ 905              		.loc 1 298 12 is_stmt 0 view .LVU301
+ 906 0114 03D5     		bpl	.L35
  299:Core/Src/hca_lib.c ****             ch->integrator_state.real = limit;
+ 907              		.loc 1 299 13 is_stmt 1 view .LVU302
+ 908              		.loc 1 299 39 is_stmt 0 view .LVU303
+ 909 0116 F0EE454A 		vmov.f32	s9, s10
+ 910 011a 83ED075A 		vstr.32	s10, [r3, #28]
+ 911              	.L35:
  300:Core/Src/hca_lib.c ****         if (ch->integrator_state.real < -limit)
+ 912              		.loc 1 300 9 is_stmt 1 view .LVU304
+ 913              		.loc 1 300 41 is_stmt 0 view .LVU305
+ 914 011e B1EE450A 		vneg.f32	s0, s10
+ 915              		.loc 1 300 12 view .LVU306
+ 916 0122 B4EEE40A 		vcmpe.f32	s0, s9
+ 917 0126 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 918 012a 01DD     		ble	.L37
  301:Core/Src/hca_lib.c ****             ch->integrator_state.real = -limit;
+ 919              		.loc 1 301 13 is_stmt 1 view .LVU307
+ 920              		.loc 1 301 39 is_stmt 0 view .LVU308
+ 921 012c 83ED070A 		vstr.32	s0, [r3, #28]
+ 922              	.L37:
  302:Core/Src/hca_lib.c ****         if (ch->integrator_state.imag > limit)
+ 923              		.loc 1 302 9 is_stmt 1 view .LVU309
+ 924              		.loc 1 302 12 is_stmt 0 view .LVU310
+ 925 0130 B4EEE65A 		vcmpe.f32	s10, s13
+ 926 0134 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 927 0138 03D5     		bpl	.L39
  303:Core/Src/hca_lib.c ****             ch->integrator_state.imag = limit;
+ 928              		.loc 1 303 13 is_stmt 1 view .LVU311
+ 929              		.loc 1 303 39 is_stmt 0 view .LVU312
+ 930 013a F0EE456A 		vmov.f32	s13, s10
+ 931 013e 83ED085A 		vstr.32	s10, [r3, #32]
+ 932              	.L39:
  304:Core/Src/hca_lib.c ****         if (ch->integrator_state.imag < -limit)
+ 933              		.loc 1 304 9 is_stmt 1 view .LVU313
+ 934              		.loc 1 304 12 is_stmt 0 view .LVU314
+ 935 0142 B4EEE60A 		vcmpe.f32	s0, s13
+ 936 0146 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 937 014a 03DD     		ble	.L41
  305:Core/Src/hca_lib.c ****             ch->integrator_state.imag = -limit;
+ 938              		.loc 1 305 13 is_stmt 1 view .LVU315
+ 939              		.loc 1 305 39 is_stmt 0 view .LVU316
+ 940 014c F0EE406A 		vmov.f32	s13, s0
+ 941 0150 83ED080A 		vstr.32	s0, [r3, #32]
+ 942              	.L41:
  306:Core/Src/hca_lib.c **** 
  307:Core/Src/hca_lib.c ****         Complex_t output_dq =
+ 943              		.loc 1 307 9 is_stmt 1 view .LVU317
+ 944              	.LVL58:
+ 945              	.LBB87:
+ 946              	.LBI87:
+  67:Core/Src/hca_lib.c ****     Complex_t res;
+ 947              		.loc 1 67 25 view .LVU318
+ 948              	.LBB88:
+  68:Core/Src/hca_lib.c ****     res.real = a.real + b.real;
+ 949              		.loc 1 68 5 view .LVU319
+ARM GAS  /tmp/ccpBwvj8.s 			page 26
+
+
+  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
+ 950              		.loc 1 69 5 view .LVU320
+  70:Core/Src/hca_lib.c ****     return res;
+ 951              		.loc 1 70 5 view .LVU321
+  71:Core/Src/hca_lib.c **** }
+ 952              		.loc 1 71 5 view .LVU322
+  71:Core/Src/hca_lib.c **** }
+ 953              		.loc 1 71 5 is_stmt 0 view .LVU323
+ 954              	.LBE88:
+ 955              	.LBE87:
  308:Core/Src/hca_lib.c ****             Complex_Add(prop_term, ch->integrator_state);
  309:Core/Src/hca_lib.c **** 
  310:Core/Src/hca_lib.c ****         // ====================================================
@@ -946,6 +1520,32 @@ ARM GAS  /tmp/cc5BUOoY.s 			page 1
  314:Core/Src/hca_lib.c **** 
  315:Core/Src/hca_lib.c ****         // 1. Rotate back: output_dq * e^{+jωt}
  316:Core/Src/hca_lib.c ****         Complex_t rotated_val =
+ 956              		.loc 1 316 9 is_stmt 1 view .LVU324
+ 957              	.LBB91:
+ 958              	.LBI91:
+  79:Core/Src/hca_lib.c ****     Complex_t res;
+ 959              		.loc 1 79 25 view .LVU325
+ 960              	.LBB92:
+  80:Core/Src/hca_lib.c ****     res.real = (a.real * b.real) - (a.imag * b.imag);
+ 961              		.loc 1 80 5 view .LVU326
+  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
+ 962              		.loc 1 81 5 view .LVU327
+ 963              	.LBE92:
+ 964              	.LBE91:
+ 965              	.LBB94:
+ 966              	.LBB89:
+  70:Core/Src/hca_lib.c ****     return res;
+ 967              		.loc 1 70 23 is_stmt 0 view .LVU328
+ 968 0154 77EEA67A 		vadd.f32	s15, s15, s13
+ 969              	.LVL59:
+  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
+ 970              		.loc 1 69 23 view .LVU329
+ 971 0158 93ED076A 		vldr.32	s12, [r3, #28]
+ 972              	.LVL60:
+  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
+ 973              		.loc 1 69 23 view .LVU330
+ 974              	.LBE89:
+ 975              	.LBE94:
  317:Core/Src/hca_lib.c ****             Complex_Mult(output_dq, rot_pos);
  318:Core/Src/hca_lib.c **** 
  319:Core/Src/hca_lib.c ****         // 2. Take real part and scale
@@ -955,1095 +1555,574 @@ ARM GAS  /tmp/cc5BUOoY.s 			page 1
  323:Core/Src/hca_lib.c ****         // to reconstruct the original amplitude.
  324:Core/Src/hca_lib.c ****         // For DC (Order 0), there is no splitting (cos(0)=1), so the gain must be 1.0.
  325:Core/Src/hca_lib.c ****         float current_gain = (ch->harmonic_order == 0) ? 1.0f : 2.0f;
- 589              		.loc 1 325 15 discriminator 2 view .LVU167
- 590 005c F0EE007A 		vmov.f32	s15, #2.0e+0
- 591              	.L42:
-ARM GAS  /tmp/cc5BUOoY.s 			page 17
+ 976              		.loc 1 325 63 view .LVU331
+ 977 015c 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 978              	.LBB95:
+ARM GAS  /tmp/ccpBwvj8.s 			page 27
 
 
- 592              	.LVL49:
+ 979              	.LBB90:
+  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
+ 980              		.loc 1 69 23 view .LVU332
+ 981 015e 74EE066A 		vadd.f32	s13, s8, s12
+ 982              	.LVL61:
+  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
+ 983              		.loc 1 69 23 view .LVU333
+ 984              	.LBE90:
+ 985              	.LBE95:
+ 986              	.LBB96:
+ 987              	.LBB93:
+  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
+ 988              		.loc 1 81 34 view .LVU334
+ 989 0162 67EE677A 		vnmul.f32	s15, s14, s15
+ 990              	.LVL62:
+  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
+ 991              		.loc 1 81 34 view .LVU335
+ 992 0166 E3EEA67A 		vfma.f32	s15, s7, s13
+  82:Core/Src/hca_lib.c ****     return res;
+ 993              		.loc 1 82 5 is_stmt 1 view .LVU336
+  83:Core/Src/hca_lib.c **** }
+ 994              		.loc 1 83 5 view .LVU337
+ 995              	.LVL63:
+  83:Core/Src/hca_lib.c **** }
+ 996              		.loc 1 83 5 is_stmt 0 view .LVU338
+ 997              	.LBE93:
+ 998              	.LBE96:
+ 999              		.loc 1 325 9 is_stmt 1 view .LVU339
+ 1000              		.loc 1 325 63 is_stmt 0 view .LVU340
+ 1001 016a 0AB1     		cbz	r2, .L43
+ 1002              	.LVL64:
  326:Core/Src/hca_lib.c ****         
  327:Core/Src/hca_lib.c ****         float channel_out =
- 593              		.loc 1 327 9 is_stmt 1 view .LVU168
- 594              		.loc 1 327 15 is_stmt 0 view .LVU169
- 595 0060 67EE867A 		vmul.f32	s15, s15, s12
- 596              	.LVL50:
+ 1003              		.loc 1 327 15 view .LVU341
+ 1004 016c 77EEA77A 		vadd.f32	s15, s15, s15
+ 1005              	.LVL65:
+ 1006              	.L43:
+ 1007              		.loc 1 327 9 is_stmt 1 view .LVU342
  328:Core/Src/hca_lib.c ****             rotated_val.real * current_gain;
  329:Core/Src/hca_lib.c **** 
  330:Core/Src/hca_lib.c ****         // 3. Sum all harmonic channels
  331:Core/Src/hca_lib.c ****         total_u_t += channel_out;
- 597              		.loc 1 331 9 is_stmt 1 view .LVU170
- 598              		.loc 1 331 19 is_stmt 0 view .LVU171
- 599 0064 78EEA78A 		vadd.f32	s17, s17, s15
- 600              	.LVL51:
- 601              		.loc 1 331 19 view .LVU172
- 602              	.LBE22:
+ 1008              		.loc 1 331 9 view .LVU343
+ 1009              	.LBE60:
  249:Core/Src/hca_lib.c **** 
- 603              		.loc 1 249 53 is_stmt 1 discriminator 1 view .LVU173
- 604 0068 0136     		adds	r6, r6, #1
- 605              	.LVL52:
- 606              	.L33:
+ 1010              		.loc 1 249 28 is_stmt 0 discriminator 2 view .LVU344
+ 1011 0170 94F89828 		ldrb	r2, [r4, #2200]	@ zero_extendqisi2
  249:Core/Src/hca_lib.c **** 
- 607              		.loc 1 249 23 discriminator 2 view .LVU174
+ 1012              		.loc 1 249 53 discriminator 1 view .LVU345
+ 1013 0174 0CF1010C 		add	ip, ip, #1
+ 1014              	.LVL66:
  249:Core/Src/hca_lib.c **** 
- 608              		.loc 1 249 28 is_stmt 0 discriminator 2 view .LVU175
- 609 006a 95F8DC30 		ldrb	r3, [r5, #220]	@ zero_extendqisi2
+ 1015              		.loc 1 249 23 discriminator 2 view .LVU346
+ 1016 0178 6245     		cmp	r2, ip
+ 1017              	.LBB97:
+ 1018              		.loc 1 331 19 view .LVU347
+ 1019 017a 32EE272A 		vadd.f32	s4, s4, s15
+ARM GAS  /tmp/ccpBwvj8.s 			page 28
+
+
+ 1020              	.LVL67:
+ 1021              		.loc 1 331 19 view .LVU348
+ 1022              	.LBE97:
  249:Core/Src/hca_lib.c **** 
- 610              		.loc 1 249 23 discriminator 2 view .LVU176
- 611 006e B342     		cmp	r3, r6
- 612 0070 40F35081 		ble	.L56
- 613              	.LBB37:
- 251:Core/Src/hca_lib.c **** 
- 614              		.loc 1 251 9 is_stmt 1 view .LVU177
- 615              	.LVL53:
- 256:Core/Src/hca_lib.c **** 
- 616              		.loc 1 256 9 view .LVU178
- 256:Core/Src/hca_lib.c **** 
- 617              		.loc 1 256 11 is_stmt 0 view .LVU179
- 618 0074 2C24     		movs	r4, #44
- 619 0076 04FB0654 		mla	r4, r4, r6, r5
- 620              	.LVL54:
- 256:Core/Src/hca_lib.c **** 
- 621              		.loc 1 256 11 view .LVU180
- 622 007a 636A     		ldr	r3, [r4, #36]
- 256:Core/Src/hca_lib.c **** 
- 623              		.loc 1 256 32 view .LVU181
- 624 007c A26A     		ldr	r2, [r4, #40]
- 256:Core/Src/hca_lib.c **** 
- 625              		.loc 1 256 27 view .LVU182
- 626 007e 1344     		add	r3, r3, r2
- 627 0080 6362     		str	r3, [r4, #36]
- 259:Core/Src/hca_lib.c ****         HCA_getPhasor(
- 628              		.loc 1 259 9 is_stmt 1 view .LVU183
- 259:Core/Src/hca_lib.c ****         HCA_getPhasor(
- 629              		.loc 1 259 19 is_stmt 0 view .LVU184
- 630 0082 0022     		movs	r2, #0
-ARM GAS  /tmp/cc5BUOoY.s 			page 18
-
-
- 631 0084 0092     		str	r2, [sp]	@ float
- 632 0086 0192     		str	r2, [sp, #4]	@ float
- 260:Core/Src/hca_lib.c ****             ch->current_angle +
- 633              		.loc 1 260 9 is_stmt 1 view .LVU185
- 261:Core/Src/hca_lib.c ****             ch->angle_step * HCA_DELAY_COMPENSATION_MULTIPLIER,
- 634              		.loc 1 261 31 is_stmt 0 view .LVU186
- 635 0088 07EE903A 		vmov	s15, r3	@ int
- 636 008c F8EE677A 		vcvt.f32.u32	s15, s15
- 260:Core/Src/hca_lib.c ****             ch->current_angle +
- 637              		.loc 1 260 9 view .LVU187
- 638 0090 6946     		mov	r1, sp
- 639 0092 FCEEE77A 		vcvt.u32.f32	s15, s15
- 640 0096 17EE900A 		vmov	r0, s15	@ int
- 641 009a FFF7FEFF 		bl	HCA_getPhasor
- 642              	.LVL55:
- 272:Core/Src/hca_lib.c ****         modulated_val.real = harmonic_step * rot_pos.real;
- 643              		.loc 1 272 9 is_stmt 1 view .LVU188
- 273:Core/Src/hca_lib.c ****         modulated_val.imag = harmonic_step * (-rot_pos.imag);
- 644              		.loc 1 273 9 view .LVU189
- 273:Core/Src/hca_lib.c ****         modulated_val.imag = harmonic_step * (-rot_pos.imag);
- 645              		.loc 1 273 53 is_stmt 0 view .LVU190
- 646 009e DDED005A 		vldr.32	s11, [sp]
- 273:Core/Src/hca_lib.c ****         modulated_val.imag = harmonic_step * (-rot_pos.imag);
- 647              		.loc 1 273 44 view .LVU191
- 648 00a2 25EE887A 		vmul.f32	s14, s11, s16
- 273:Core/Src/hca_lib.c ****         modulated_val.imag = harmonic_step * (-rot_pos.imag);
- 649              		.loc 1 273 28 view .LVU192
- 650 00a6 8DED027A 		vstr.32	s14, [sp, #8]
- 274:Core/Src/hca_lib.c **** 
- 651              		.loc 1 274 9 is_stmt 1 view .LVU193
- 274:Core/Src/hca_lib.c **** 
- 652              		.loc 1 274 44 is_stmt 0 view .LVU194
- 653 00aa DDED017A 		vldr.32	s15, [sp, #4]
- 654 00ae 67EEC87A 		vnmul.f32	s15, s15, s16
- 274:Core/Src/hca_lib.c **** 
- 655              		.loc 1 274 28 view .LVU195
- 656 00b2 CDED037A 		vstr.32	s15, [sp, #12]
- 276:Core/Src/hca_lib.c **** 
- 657              		.loc 1 276 9 is_stmt 1 view .LVU196
- 658 00b6 0DF1380C 		add	ip, sp, #56
- 659 00ba 271D     		adds	r7, r4, #4
- 660 00bc 97E80300 		ldm	r7, {r0, r1}
- 661 00c0 8CE80300 		stm	ip, {r0, r1}
- 662 00c4 10AA     		add	r2, sp, #64
- 663 00c6 02AB     		add	r3, sp, #8
- 664 00c8 93E80300 		ldm	r3, {r0, r1}
- 665 00cc 82E80300 		stm	r2, {r0, r1}
- 666              	.LBB23:
- 667              	.LBI23:
-  67:Core/Src/hca_lib.c ****     Complex_t res;
- 668              		.loc 1 67 25 view .LVU197
- 669              	.LBB24:
-  68:Core/Src/hca_lib.c ****     res.real = a.real + b.real;
- 670              		.loc 1 68 5 view .LVU198
-  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
- 671              		.loc 1 69 5 view .LVU199
-  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
-ARM GAS  /tmp/cc5BUOoY.s 			page 19
-
-
- 672              		.loc 1 69 17 is_stmt 0 view .LVU200
- 673 00d0 DDED0E6A 		vldr.32	s13, [sp, #56]
-  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
- 674              		.loc 1 69 23 view .LVU201
- 675 00d4 37EE267A 		vadd.f32	s14, s14, s13
-  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
- 676              		.loc 1 69 14 view .LVU202
- 677 00d8 8DED127A 		vstr.32	s14, [sp, #72]
-  70:Core/Src/hca_lib.c ****     return res;
- 678              		.loc 1 70 5 is_stmt 1 view .LVU203
-  70:Core/Src/hca_lib.c ****     return res;
- 679              		.loc 1 70 17 is_stmt 0 view .LVU204
- 680 00dc 9DED0F7A 		vldr.32	s14, [sp, #60]
-  70:Core/Src/hca_lib.c ****     return res;
- 681              		.loc 1 70 23 view .LVU205
- 682 00e0 77EE877A 		vadd.f32	s15, s15, s14
-  70:Core/Src/hca_lib.c ****     return res;
- 683              		.loc 1 70 14 view .LVU206
- 684 00e4 CDED137A 		vstr.32	s15, [sp, #76]
-  71:Core/Src/hca_lib.c **** }
- 685              		.loc 1 71 5 is_stmt 1 view .LVU207
-  71:Core/Src/hca_lib.c **** }
- 686              		.loc 1 71 12 is_stmt 0 view .LVU208
- 687 00e8 0DF18008 		add	r8, sp, #128
- 688 00ec 12AB     		add	r3, sp, #72
- 689 00ee 93E80300 		ldm	r3, {r0, r1}
- 690 00f2 88E80300 		stm	r8, {r0, r1}
- 691 00f6 0DF1780E 		add	lr, sp, #120
- 692 00fa 8EE80300 		stm	lr, {r0, r1}
- 693              	.LBE24:
- 694              	.LBE23:
- 276:Core/Src/hca_lib.c **** 
- 695              		.loc 1 276 27 view .LVU209
- 696 00fe 87E80300 		stm	r7, {r0, r1}
- 283:Core/Src/hca_lib.c **** 
- 697              		.loc 1 283 9 is_stmt 1 view .LVU210
- 283:Core/Src/hca_lib.c **** 
- 698              		.loc 1 283 19 is_stmt 0 view .LVU211
- 699 0102 0DF1100E 		add	lr, sp, #16
- 700 0106 8EE80300 		stm	lr, {r0, r1}
- 286:Core/Src/hca_lib.c **** 
- 701              		.loc 1 286 9 is_stmt 1 view .LVU212
- 702 010a 04F10C01 		add	r1, r4, #12
- 703 010e 03C9     		ldm	r1, {r0, r1}
- 704 0110 8CE80300 		stm	ip, {r0, r1}
- 705 0114 9EE80300 		ldm	lr, {r0, r1}
- 706 0118 82E80300 		stm	r2, {r0, r1}
- 707              	.LBB25:
- 708              	.LBI25:
-  79:Core/Src/hca_lib.c ****     Complex_t res;
- 709              		.loc 1 79 25 view .LVU213
- 710              	.LBB26:
-  80:Core/Src/hca_lib.c ****     res.real = (a.real * b.real) - (a.imag * b.imag);
- 711              		.loc 1 80 5 view .LVU214
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 712              		.loc 1 81 5 view .LVU215
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
-ARM GAS  /tmp/cc5BUOoY.s 			page 20
-
-
- 713              		.loc 1 81 18 is_stmt 0 view .LVU216
- 714 011c DDED0E7A 		vldr.32	s15, [sp, #56]
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 715              		.loc 1 81 27 view .LVU217
- 716 0120 9DED107A 		vldr.32	s14, [sp, #64]
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 717              		.loc 1 81 24 view .LVU218
- 718 0124 67EE876A 		vmul.f32	s13, s15, s14
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 719              		.loc 1 81 38 view .LVU219
- 720 0128 9DED0F5A 		vldr.32	s10, [sp, #60]
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 721              		.loc 1 81 47 view .LVU220
- 722 012c DDED114A 		vldr.32	s9, [sp, #68]
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 723              		.loc 1 81 44 view .LVU221
- 724 0130 25EE244A 		vmul.f32	s8, s10, s9
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 725              		.loc 1 81 34 view .LVU222
- 726 0134 36EEC46A 		vsub.f32	s12, s13, s8
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 727              		.loc 1 81 14 view .LVU223
- 728 0138 8DED126A 		vstr.32	s12, [sp, #72]
-  82:Core/Src/hca_lib.c ****     return res;
- 729              		.loc 1 82 5 is_stmt 1 view .LVU224
-  82:Core/Src/hca_lib.c ****     return res;
- 730              		.loc 1 82 24 is_stmt 0 view .LVU225
- 731 013c 67EEA47A 		vmul.f32	s15, s15, s9
-  82:Core/Src/hca_lib.c ****     return res;
- 732              		.loc 1 82 44 view .LVU226
- 733 0140 27EE057A 		vmul.f32	s14, s14, s10
-  82:Core/Src/hca_lib.c ****     return res;
- 734              		.loc 1 82 34 view .LVU227
- 735 0144 77EE877A 		vadd.f32	s15, s15, s14
-  82:Core/Src/hca_lib.c ****     return res;
- 736              		.loc 1 82 14 view .LVU228
- 737 0148 CDED137A 		vstr.32	s15, [sp, #76]
-  83:Core/Src/hca_lib.c **** }
- 738              		.loc 1 83 5 is_stmt 1 view .LVU229
-  83:Core/Src/hca_lib.c **** }
- 739              		.loc 1 83 12 is_stmt 0 view .LVU230
- 740 014c 1CAF     		add	r7, sp, #112
- 741 014e 93E80300 		ldm	r3, {r0, r1}
- 742 0152 87E80300 		stm	r7, {r0, r1}
- 743 0156 0DF11808 		add	r8, sp, #24
- 744 015a 88E80300 		stm	r8, {r0, r1}
- 745              	.LBE26:
- 746              	.LBE25:
- 289:Core/Src/hca_lib.c ****         Complex_t ki_step =
- 747              		.loc 1 289 9 is_stmt 1 view .LVU231
- 748 015e 04F11401 		add	r1, r4, #20
- 749 0162 03C9     		ldm	r1, {r0, r1}
- 750 0164 8CE80300 		stm	ip, {r0, r1}
- 751              	.LBB27:
- 752              	.LBI27:
-  79:Core/Src/hca_lib.c ****     Complex_t res;
- 753              		.loc 1 79 25 view .LVU232
-ARM GAS  /tmp/cc5BUOoY.s 			page 21
-
-
- 754              	.LBB28:
-  80:Core/Src/hca_lib.c ****     res.real = (a.real * b.real) - (a.imag * b.imag);
- 755              		.loc 1 80 5 view .LVU233
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 756              		.loc 1 81 5 view .LVU234
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 757              		.loc 1 81 18 is_stmt 0 view .LVU235
- 758 0168 DDED0E6A 		vldr.32	s13, [sp, #56]
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 759              		.loc 1 81 27 view .LVU236
- 760 016c 9DED105A 		vldr.32	s10, [sp, #64]
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 761              		.loc 1 81 24 view .LVU237
- 762 0170 26EE857A 		vmul.f32	s14, s13, s10
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 763              		.loc 1 81 38 view .LVU238
- 764 0174 DDED0F4A 		vldr.32	s9, [sp, #60]
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 765              		.loc 1 81 47 view .LVU239
- 766 0178 9DED114A 		vldr.32	s8, [sp, #68]
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 767              		.loc 1 81 44 view .LVU240
- 768 017c 64EE843A 		vmul.f32	s7, s9, s8
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 769              		.loc 1 81 34 view .LVU241
- 770 0180 37EE637A 		vsub.f32	s14, s14, s7
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 771              		.loc 1 81 14 view .LVU242
- 772 0184 8DED127A 		vstr.32	s14, [sp, #72]
-  82:Core/Src/hca_lib.c ****     return res;
- 773              		.loc 1 82 5 is_stmt 1 view .LVU243
-  82:Core/Src/hca_lib.c ****     return res;
- 774              		.loc 1 82 24 is_stmt 0 view .LVU244
- 775 0188 66EE846A 		vmul.f32	s13, s13, s8
-  82:Core/Src/hca_lib.c ****     return res;
- 776              		.loc 1 82 44 view .LVU245
- 777 018c 25EE245A 		vmul.f32	s10, s10, s9
-  82:Core/Src/hca_lib.c ****     return res;
- 778              		.loc 1 82 34 view .LVU246
- 779 0190 76EE856A 		vadd.f32	s13, s13, s10
-  82:Core/Src/hca_lib.c ****     return res;
- 780              		.loc 1 82 14 view .LVU247
- 781 0194 CDED136A 		vstr.32	s13, [sp, #76]
-  83:Core/Src/hca_lib.c **** }
- 782              		.loc 1 83 5 is_stmt 1 view .LVU248
-  83:Core/Src/hca_lib.c **** }
- 783              		.loc 1 83 12 is_stmt 0 view .LVU249
- 784 0198 0DF1680E 		add	lr, sp, #104
- 785 019c 93E80300 		ldm	r3, {r0, r1}
- 786 01a0 8EE80300 		stm	lr, {r0, r1}
- 787 01a4 08AF     		add	r7, sp, #32
- 788 01a6 87E80300 		stm	r7, {r0, r1}
- 789              	.LBE28:
- 790              	.LBE27:
- 290:Core/Src/hca_lib.c ****             Complex_Scale(ki_term, hca->sampling_time);
- 791              		.loc 1 290 9 is_stmt 1 view .LVU250
- 291:Core/Src/hca_lib.c **** 
-ARM GAS  /tmp/cc5BUOoY.s 			page 22
-
-
- 792              		.loc 1 291 13 is_stmt 0 view .LVU251
- 793 01aa 95ED395A 		vldr.32	s10, [r5, #228]
- 794 01ae 82E80300 		stm	r2, {r0, r1}
- 795              	.LVL56:
- 796              	.LBB29:
- 797              	.LBI29:
-  89:Core/Src/hca_lib.c ****     Complex_t res;
- 798              		.loc 1 89 25 is_stmt 1 view .LVU252
- 799              	.LBB30:
-  90:Core/Src/hca_lib.c ****     res.real = a.real * scalar;
- 800              		.loc 1 90 5 view .LVU253
-  91:Core/Src/hca_lib.c ****     res.imag = a.imag * scalar;
- 801              		.loc 1 91 5 view .LVU254
-  91:Core/Src/hca_lib.c ****     res.imag = a.imag * scalar;
- 802              		.loc 1 91 23 is_stmt 0 view .LVU255
- 803 01b2 25EE077A 		vmul.f32	s14, s10, s14
-  91:Core/Src/hca_lib.c ****     res.imag = a.imag * scalar;
- 804              		.loc 1 91 14 view .LVU256
- 805 01b6 8DED127A 		vstr.32	s14, [sp, #72]
-  92:Core/Src/hca_lib.c ****     return res;
- 806              		.loc 1 92 5 is_stmt 1 view .LVU257
-  92:Core/Src/hca_lib.c ****     return res;
- 807              		.loc 1 92 23 is_stmt 0 view .LVU258
- 808 01ba 65EE266A 		vmul.f32	s13, s10, s13
-  92:Core/Src/hca_lib.c ****     return res;
- 809              		.loc 1 92 14 view .LVU259
- 810 01be CDED136A 		vstr.32	s13, [sp, #76]
-  93:Core/Src/hca_lib.c **** }
- 811              		.loc 1 93 5 is_stmt 1 view .LVU260
-  93:Core/Src/hca_lib.c **** }
- 812              		.loc 1 93 12 is_stmt 0 view .LVU261
- 813 01c2 0DF1600E 		add	lr, sp, #96
- 814 01c6 93E80300 		ldm	r3, {r0, r1}
- 815 01ca 8EE80300 		stm	lr, {r0, r1}
- 816 01ce 0AAF     		add	r7, sp, #40
- 817 01d0 87E80300 		stm	r7, {r0, r1}
- 818              	.LVL57:
-  93:Core/Src/hca_lib.c **** }
- 819              		.loc 1 93 12 view .LVU262
- 820              	.LBE30:
- 821              	.LBE29:
- 293:Core/Src/hca_lib.c ****             Complex_Add(ch->integrator_state, ki_step);
- 822              		.loc 1 293 9 is_stmt 1 view .LVU263
- 823 01d4 1C34     		adds	r4, r4, #28
- 824              	.LVL58:
- 293:Core/Src/hca_lib.c ****             Complex_Add(ch->integrator_state, ki_step);
- 825              		.loc 1 293 9 is_stmt 0 view .LVU264
- 826 01d6 94E80300 		ldm	r4, {r0, r1}
- 827 01da 8CE80300 		stm	ip, {r0, r1}
- 828 01de 97E80300 		ldm	r7, {r0, r1}
- 829 01e2 82E80300 		stm	r2, {r0, r1}
- 830              	.LBB31:
- 831              	.LBI31:
-  67:Core/Src/hca_lib.c ****     Complex_t res;
- 832              		.loc 1 67 25 is_stmt 1 view .LVU265
- 833              	.LBB32:
-  68:Core/Src/hca_lib.c ****     res.real = a.real + b.real;
-ARM GAS  /tmp/cc5BUOoY.s 			page 23
-
-
- 834              		.loc 1 68 5 view .LVU266
-  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
- 835              		.loc 1 69 5 view .LVU267
-  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
- 836              		.loc 1 69 17 is_stmt 0 view .LVU268
- 837 01e6 9DED0E5A 		vldr.32	s10, [sp, #56]
-  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
- 838              		.loc 1 69 23 view .LVU269
- 839 01ea 35EE075A 		vadd.f32	s10, s10, s14
-  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
- 840              		.loc 1 69 14 view .LVU270
- 841 01ee 8DED125A 		vstr.32	s10, [sp, #72]
-  70:Core/Src/hca_lib.c ****     return res;
- 842              		.loc 1 70 5 is_stmt 1 view .LVU271
-  70:Core/Src/hca_lib.c ****     return res;
- 843              		.loc 1 70 17 is_stmt 0 view .LVU272
- 844 01f2 9DED0F7A 		vldr.32	s14, [sp, #60]
-  70:Core/Src/hca_lib.c ****     return res;
- 845              		.loc 1 70 23 view .LVU273
- 846 01f6 37EE267A 		vadd.f32	s14, s14, s13
-  70:Core/Src/hca_lib.c ****     return res;
- 847              		.loc 1 70 14 view .LVU274
- 848 01fa 8DED137A 		vstr.32	s14, [sp, #76]
-  71:Core/Src/hca_lib.c **** }
- 849              		.loc 1 71 5 is_stmt 1 view .LVU275
-  71:Core/Src/hca_lib.c **** }
- 850              		.loc 1 71 12 is_stmt 0 view .LVU276
- 851 01fe 16AA     		add	r2, sp, #88
- 852 0200 93E80300 		ldm	r3, {r0, r1}
- 853 0204 82E80300 		stm	r2, {r0, r1}
- 854 0208 14AB     		add	r3, sp, #80
- 855 020a 83E80300 		stm	r3, {r0, r1}
- 856              	.LBE32:
- 857              	.LBE31:
- 294:Core/Src/hca_lib.c **** 
- 858              		.loc 1 294 13 view .LVU277
- 859 020e 84E80300 		stm	r4, {r0, r1}
- 297:Core/Src/hca_lib.c ****         if (ch->integrator_state.real > limit)
- 860              		.loc 1 297 9 is_stmt 1 view .LVU278
- 297:Core/Src/hca_lib.c ****         if (ch->integrator_state.real > limit)
- 861              		.loc 1 297 15 is_stmt 0 view .LVU279
- 862 0212 D5ED3A6A 		vldr.32	s13, [r5, #232]
- 863              	.LVL59:
- 298:Core/Src/hca_lib.c ****             ch->integrator_state.real = limit;
- 864              		.loc 1 298 9 is_stmt 1 view .LVU280
- 298:Core/Src/hca_lib.c ****             ch->integrator_state.real = limit;
- 865              		.loc 1 298 12 is_stmt 0 view .LVU281
- 866 0216 F4EEC56A 		vcmpe.f32	s13, s10
- 867 021a F1EE10FA 		vmrs	APSR_nzcv, FPSCR
- 868 021e 04D5     		bpl	.L34
- 299:Core/Src/hca_lib.c ****         if (ch->integrator_state.real < -limit)
- 869              		.loc 1 299 13 is_stmt 1 view .LVU282
- 299:Core/Src/hca_lib.c ****         if (ch->integrator_state.real < -limit)
- 870              		.loc 1 299 39 is_stmt 0 view .LVU283
- 871 0220 2C23     		movs	r3, #44
- 872 0222 03FB0653 		mla	r3, r3, r6, r5
- 873              	.LVL60:
-ARM GAS  /tmp/cc5BUOoY.s 			page 24
-
-
- 299:Core/Src/hca_lib.c ****         if (ch->integrator_state.real < -limit)
- 874              		.loc 1 299 39 view .LVU284
- 875 0226 C3ED076A 		vstr.32	s13, [r3, #28]
- 876              	.LVL61:
- 877              	.L34:
- 300:Core/Src/hca_lib.c ****             ch->integrator_state.real = -limit;
- 878              		.loc 1 300 9 is_stmt 1 view .LVU285
- 300:Core/Src/hca_lib.c ****             ch->integrator_state.real = -limit;
- 879              		.loc 1 300 33 is_stmt 0 view .LVU286
- 880 022a 2C23     		movs	r3, #44
- 881 022c 03FB0653 		mla	r3, r3, r6, r5
- 882 0230 D3ED074A 		vldr.32	s9, [r3, #28]
- 300:Core/Src/hca_lib.c ****             ch->integrator_state.real = -limit;
- 883              		.loc 1 300 41 view .LVU287
- 884 0234 B1EE665A 		vneg.f32	s10, s13
- 300:Core/Src/hca_lib.c ****             ch->integrator_state.real = -limit;
- 885              		.loc 1 300 12 view .LVU288
- 886 0238 F4EEC54A 		vcmpe.f32	s9, s10
- 887 023c F1EE10FA 		vmrs	APSR_nzcv, FPSCR
- 888 0240 04D5     		bpl	.L36
- 301:Core/Src/hca_lib.c ****         if (ch->integrator_state.imag > limit)
- 889              		.loc 1 301 13 is_stmt 1 view .LVU289
- 301:Core/Src/hca_lib.c ****         if (ch->integrator_state.imag > limit)
- 890              		.loc 1 301 39 is_stmt 0 view .LVU290
- 891 0242 2C23     		movs	r3, #44
- 892 0244 03FB0653 		mla	r3, r3, r6, r5
- 893 0248 83ED075A 		vstr.32	s10, [r3, #28]
- 894              	.L36:
- 302:Core/Src/hca_lib.c ****             ch->integrator_state.imag = limit;
- 895              		.loc 1 302 9 is_stmt 1 view .LVU291
- 302:Core/Src/hca_lib.c ****             ch->integrator_state.imag = limit;
- 896              		.loc 1 302 12 is_stmt 0 view .LVU292
- 897 024c F4EEC76A 		vcmpe.f32	s13, s14
- 898 0250 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
- 899 0254 04D5     		bpl	.L38
- 303:Core/Src/hca_lib.c ****         if (ch->integrator_state.imag < -limit)
- 900              		.loc 1 303 13 is_stmt 1 view .LVU293
- 303:Core/Src/hca_lib.c ****         if (ch->integrator_state.imag < -limit)
- 901              		.loc 1 303 39 is_stmt 0 view .LVU294
- 902 0256 2C23     		movs	r3, #44
- 903 0258 03FB0653 		mla	r3, r3, r6, r5
- 904 025c C3ED086A 		vstr.32	s13, [r3, #32]
- 905              	.L38:
- 304:Core/Src/hca_lib.c ****             ch->integrator_state.imag = -limit;
- 906              		.loc 1 304 9 is_stmt 1 view .LVU295
- 304:Core/Src/hca_lib.c ****             ch->integrator_state.imag = -limit;
- 907              		.loc 1 304 33 is_stmt 0 view .LVU296
- 908 0260 2C23     		movs	r3, #44
- 909 0262 03FB0653 		mla	r3, r3, r6, r5
- 910 0266 93ED087A 		vldr.32	s14, [r3, #32]
- 304:Core/Src/hca_lib.c ****             ch->integrator_state.imag = -limit;
- 911              		.loc 1 304 12 view .LVU297
- 912 026a B4EEC75A 		vcmpe.f32	s10, s14
- 913 026e F1EE10FA 		vmrs	APSR_nzcv, FPSCR
- 914 0272 04DD     		ble	.L40
- 305:Core/Src/hca_lib.c **** 
- 915              		.loc 1 305 13 is_stmt 1 view .LVU298
-ARM GAS  /tmp/cc5BUOoY.s 			page 25
-
-
- 305:Core/Src/hca_lib.c **** 
- 916              		.loc 1 305 39 is_stmt 0 view .LVU299
- 917 0274 2C23     		movs	r3, #44
- 918 0276 03FB0653 		mla	r3, r3, r6, r5
- 919 027a 83ED085A 		vstr.32	s10, [r3, #32]
- 920              	.L40:
- 307:Core/Src/hca_lib.c ****             Complex_Add(prop_term, ch->integrator_state);
- 921              		.loc 1 307 9 is_stmt 1 view .LVU300
- 922 027e 0EAF     		add	r7, sp, #56
- 923 0280 06AB     		add	r3, sp, #24
- 924 0282 93E80300 		ldm	r3, {r0, r1}
- 925 0286 87E80300 		stm	r7, {r0, r1}
- 926 028a 2C22     		movs	r2, #44
- 927 028c 06FB02F2 		mul	r2, r6, r2
- 928 0290 AB18     		adds	r3, r5, r2
- 929 0292 10AC     		add	r4, sp, #64
- 930              	.LVL62:
- 307:Core/Src/hca_lib.c ****             Complex_Add(prop_term, ch->integrator_state);
- 931              		.loc 1 307 9 is_stmt 0 view .LVU301
- 932 0294 1C33     		adds	r3, r3, #28
- 933 0296 93E80300 		ldm	r3, {r0, r1}
- 934 029a 84E80300 		stm	r4, {r0, r1}
- 935              	.LBB33:
- 936              	.LBI33:
-  67:Core/Src/hca_lib.c ****     Complex_t res;
- 937              		.loc 1 67 25 is_stmt 1 view .LVU302
- 938              	.LBB34:
-  68:Core/Src/hca_lib.c ****     res.real = a.real + b.real;
- 939              		.loc 1 68 5 view .LVU303
-  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
- 940              		.loc 1 69 5 view .LVU304
-  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
- 941              		.loc 1 69 26 is_stmt 0 view .LVU305
- 942 029e 9DED107A 		vldr.32	s14, [sp, #64]
-  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
- 943              		.loc 1 69 23 view .LVU306
- 944 02a2 76EE076A 		vadd.f32	s13, s12, s14
- 945              	.LVL63:
-  69:Core/Src/hca_lib.c ****     res.imag = a.imag + b.imag;
- 946              		.loc 1 69 14 view .LVU307
- 947 02a6 CDED126A 		vstr.32	s13, [sp, #72]
-  70:Core/Src/hca_lib.c ****     return res;
- 948              		.loc 1 70 5 is_stmt 1 view .LVU308
-  70:Core/Src/hca_lib.c ****     return res;
- 949              		.loc 1 70 26 is_stmt 0 view .LVU309
- 950 02aa 9DED117A 		vldr.32	s14, [sp, #68]
-  70:Core/Src/hca_lib.c ****     return res;
- 951              		.loc 1 70 23 view .LVU310
- 952 02ae 77EE877A 		vadd.f32	s15, s15, s14
-  70:Core/Src/hca_lib.c ****     return res;
- 953              		.loc 1 70 14 view .LVU311
- 954 02b2 CDED137A 		vstr.32	s15, [sp, #76]
-  71:Core/Src/hca_lib.c **** }
- 955              		.loc 1 71 5 is_stmt 1 view .LVU312
-  71:Core/Src/hca_lib.c **** }
- 956              		.loc 1 71 12 is_stmt 0 view .LVU313
- 957 02b6 0DF1900E 		add	lr, sp, #144
-ARM GAS  /tmp/cc5BUOoY.s 			page 26
-
-
- 958 02ba 12AB     		add	r3, sp, #72
- 959 02bc 93E80300 		ldm	r3, {r0, r1}
- 960 02c0 8EE80300 		stm	lr, {r0, r1}
- 961 02c4 0DF1300C 		add	ip, sp, #48
- 962 02c8 8CE80300 		stm	ip, {r0, r1}
- 963              	.LBE34:
- 964              	.LBE33:
- 316:Core/Src/hca_lib.c ****             Complex_Mult(output_dq, rot_pos);
- 965              		.loc 1 316 9 is_stmt 1 view .LVU314
- 966 02cc 87E80300 		stm	r7, {r0, r1}
- 967 02d0 DDE90001 		ldrd	r0, r1, [sp]
- 968 02d4 84E80300 		stm	r4, {r0, r1}
- 969              	.LBB35:
- 970              	.LBI35:
-  79:Core/Src/hca_lib.c ****     Complex_t res;
- 971              		.loc 1 79 25 view .LVU315
- 972              	.LBB36:
-  80:Core/Src/hca_lib.c ****     res.real = (a.real * b.real) - (a.imag * b.imag);
- 973              		.loc 1 80 5 view .LVU316
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 974              		.loc 1 81 5 view .LVU317
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 975              		.loc 1 81 24 is_stmt 0 view .LVU318
- 976 02d8 25EEA66A 		vmul.f32	s12, s11, s13
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 977              		.loc 1 81 47 view .LVU319
- 978 02dc 9DED117A 		vldr.32	s14, [sp, #68]
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 979              		.loc 1 81 44 view .LVU320
- 980 02e0 27EE275A 		vmul.f32	s10, s14, s15
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 981              		.loc 1 81 34 view .LVU321
- 982 02e4 36EE456A 		vsub.f32	s12, s12, s10
-  81:Core/Src/hca_lib.c ****     res.imag = (a.real * b.imag) + (a.imag * b.real);
- 983              		.loc 1 81 14 view .LVU322
- 984 02e8 8DED126A 		vstr.32	s12, [sp, #72]
-  82:Core/Src/hca_lib.c ****     return res;
- 985              		.loc 1 82 5 is_stmt 1 view .LVU323
-  82:Core/Src/hca_lib.c ****     return res;
- 986              		.loc 1 82 24 is_stmt 0 view .LVU324
- 987 02ec 27EE267A 		vmul.f32	s14, s14, s13
-  82:Core/Src/hca_lib.c ****     return res;
- 988              		.loc 1 82 44 view .LVU325
- 989 02f0 65EEA75A 		vmul.f32	s11, s11, s15
-  82:Core/Src/hca_lib.c ****     return res;
- 990              		.loc 1 82 34 view .LVU326
- 991 02f4 37EE257A 		vadd.f32	s14, s14, s11
-  82:Core/Src/hca_lib.c ****     return res;
- 992              		.loc 1 82 14 view .LVU327
- 993 02f8 8DED137A 		vstr.32	s14, [sp, #76]
-  83:Core/Src/hca_lib.c **** }
- 994              		.loc 1 83 5 is_stmt 1 view .LVU328
-  83:Core/Src/hca_lib.c **** }
- 995              		.loc 1 83 12 is_stmt 0 view .LVU329
- 996 02fc 22AC     		add	r4, sp, #136
- 997 02fe 93E80300 		ldm	r3, {r0, r1}
- 998 0302 84E80300 		stm	r4, {r0, r1}
-ARM GAS  /tmp/cc5BUOoY.s 			page 27
-
-
- 999              	.LBE36:
- 1000              	.LBE35:
- 325:Core/Src/hca_lib.c ****         
- 1001              		.loc 1 325 9 is_stmt 1 view .LVU330
- 325:Core/Src/hca_lib.c ****         
- 1002              		.loc 1 325 33 is_stmt 0 view .LVU331
- 1003 0306 AB5C     		ldrb	r3, [r5, r2]	@ zero_extendqisi2
- 325:Core/Src/hca_lib.c ****         
- 1004              		.loc 1 325 63 view .LVU332
- 1005 0308 002B     		cmp	r3, #0
- 1006 030a 7FF4A7AE 		bne	.L46
- 325:Core/Src/hca_lib.c ****         
- 1007              		.loc 1 325 15 discriminator 1 view .LVU333
- 1008 030e F7EE007A 		vmov.f32	s15, #1.0e+0
- 1009 0312 A5E6     		b	.L42
- 1010              	.LVL64:
- 1011              	.L56:
- 325:Core/Src/hca_lib.c ****         
- 1012              		.loc 1 325 15 discriminator 1 view .LVU334
- 1013              	.LBE37:
- 1014              	.LBE38:
+ 1023              		.loc 1 249 53 is_stmt 1 discriminator 1 view .LVU349
+ 249:Core/Src/hca_lib.c **** 
+ 1024              		.loc 1 249 23 discriminator 2 view .LVU350
+ 1025 017e 03F12C03 		add	r3, r3, #44
+ 1026 0182 3FF776AF 		bgt	.L44
+ 1027              	.LVL68:
+ 1028              	.L45:
+ 249:Core/Src/hca_lib.c **** 
+ 1029              		.loc 1 249 23 is_stmt 0 discriminator 2 view .LVU351
+ 1030              	.LBE98:
  332:Core/Src/hca_lib.c ****     }
  333:Core/Src/hca_lib.c **** 
  334:Core/Src/hca_lib.c ****     // Output saturation
  335:Core/Src/hca_lib.c ****     if (total_u_t > hca->output_limit)
- 1015              		.loc 1 335 5 is_stmt 1 view .LVU335
- 1016              		.loc 1 335 24 is_stmt 0 view .LVU336
- 1017 0314 95ED3A0A 		vldr.32	s0, [r5, #232]
- 1018              		.loc 1 335 8 view .LVU337
- 1019 0318 B4EEE80A 		vcmpe.f32	s0, s17
- 1020 031c F1EE10FA 		vmrs	APSR_nzcv, FPSCR
- 1021 0320 01D5     		bpl	.L44
+ 1031              		.loc 1 335 5 is_stmt 1 view .LVU352
+ 1032 0186 B4EEC52A 		vcmpe.f32	s4, s10
+ 1033 018a F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 1034 018e D8BF     		it	le
+ 1035 0190 B0EE425A 		vmovle.f32	s10, s4
+ 1036              	.LVL69:
  336:Core/Src/hca_lib.c ****         total_u_t = hca->output_limit;
- 1022              		.loc 1 336 19 view .LVU338
- 1023 0322 F0EE408A 		vmov.f32	s17, s0
- 1024              	.LVL65:
- 1025              	.L44:
  337:Core/Src/hca_lib.c ****     if (total_u_t < -hca->output_limit)
- 1026              		.loc 1 337 5 is_stmt 1 view .LVU339
- 1027              		.loc 1 337 21 is_stmt 0 view .LVU340
- 1028 0326 B1EE400A 		vneg.f32	s0, s0
- 1029              		.loc 1 337 8 view .LVU341
- 1030 032a B4EEE80A 		vcmpe.f32	s0, s17
- 1031 032e F1EE10FA 		vmrs	APSR_nzcv, FPSCR
- 1032 0332 01DC     		bgt	.L31
+ 1037              		.loc 1 337 5 view .LVU353
+ 1038 0194 B4EEC50A 		vcmpe.f32	s0, s10
+ 1039 0198 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 1040 019c D8BF     		it	le
+ 1041 019e B0EE450A 		vmovle.f32	s0, s10
  338:Core/Src/hca_lib.c ****         total_u_t = -hca->output_limit;
  339:Core/Src/hca_lib.c **** 
  340:Core/Src/hca_lib.c ****     return total_u_t;
- 1033              		.loc 1 340 12 view .LVU342
- 1034 0334 B0EE680A 		vmov.f32	s0, s17
- 1035              	.L31:
  341:Core/Src/hca_lib.c **** }
- 1036              		.loc 1 341 1 view .LVU343
- 1037 0338 26B0     		add	sp, sp, #152
- 1038              	.LCFI11:
- 1039              		.cfi_def_cfa_offset 32
- 1040              		@ sp needed
-ARM GAS  /tmp/cc5BUOoY.s 			page 28
-
-
- 1041 033a BDEC028B 		vldm	sp!, {d8}
- 1042              	.LCFI12:
- 1043              		.cfi_restore 80
- 1044              		.cfi_restore 81
- 1045              		.cfi_def_cfa_offset 24
- 1046              	.LVL66:
- 1047              		.loc 1 341 1 view .LVU344
- 1048 033e BDE8F081 		pop	{r4, r5, r6, r7, r8, pc}
- 1049              	.LVL67:
- 1050              	.L45:
- 1051              	.LCFI13:
- 1052              		.cfi_def_cfa_offset 0
- 1053              		.cfi_restore 4
- 1054              		.cfi_restore 5
- 1055              		.cfi_restore 6
- 1056              		.cfi_restore 7
- 1057              		.cfi_restore 8
- 1058              		.cfi_restore 14
+ 1042              		.loc 1 341 1 is_stmt 0 view .LVU354
+ 1043 01a2 70BD     		pop	{r4, r5, r6, pc}
+ 1044              	.LVL70:
+ 1045              	.L46:
+ 1046              	.LCFI10:
+ 1047              		.cfi_def_cfa_offset 0
+ 1048              		.cfi_restore 4
+ 1049              		.cfi_restore 5
+ 1050              		.cfi_restore 6
+ 1051              		.cfi_restore 14
  235:Core/Src/hca_lib.c **** 
- 1059              		.loc 1 235 37 discriminator 1 view .LVU345
- 1060 0342 9FED020A 		vldr.32	s0, .L57+4
- 1061              	.LVL68:
- 1062              		.loc 1 341 1 view .LVU346
- 1063 0346 7047     		bx	lr
- 1064              	.L58:
- 1065              		.align	2
- 1066              	.L57:
- 1067 0348 00000000 		.word	is_lut_initialized
- 1068 034c 00000000 		.word	0
- 1069              		.cfi_endproc
- 1070              	.LFE9:
- 1072              		.section	.text.HCA_UpdateChannel,"ax",%progbits
- 1073              		.align	1
- 1074              		.global	HCA_UpdateChannel
- 1075              		.syntax unified
- 1076              		.thumb
- 1077              		.thumb_func
- 1079              	HCA_UpdateChannel:
- 1080              	.LVL69:
- 1081              	.LFB10:
+ 1052              		.loc 1 235 37 discriminator 1 view .LVU355
+ 1053 01a4 9FED060A 		vldr.32	s0, .L59+4
+ 1054              	.LVL71:
+ 1055              		.loc 1 341 1 view .LVU356
+ 1056 01a8 7047     		bx	lr
+ 1057              	.LVL72:
+ 1058              	.L34:
+ 1059              	.LCFI11:
+ 1060              		.cfi_def_cfa_offset 16
+ 1061              		.cfi_offset 4, -16
+ 1062              		.cfi_offset 5, -12
+ARM GAS  /tmp/ccpBwvj8.s 			page 29
+
+
+ 1063              		.cfi_offset 6, -8
+ 1064              		.cfi_offset 14, -4
+ 335:Core/Src/hca_lib.c ****         total_u_t = hca->output_limit;
+ 1065              		.loc 1 335 24 view .LVU357
+ 1066 01aa 04F6A404 		addw	r4, r4, #2212
+ 1067              	.LVL73:
+ 335:Core/Src/hca_lib.c ****         total_u_t = hca->output_limit;
+ 1068              		.loc 1 335 24 view .LVU358
+ 1069 01ae 94ED005A 		vldr.32	s10, [r4]
+ 237:Core/Src/hca_lib.c **** 
+ 1070              		.loc 1 237 11 view .LVU359
+ 1071 01b2 9FED032A 		vldr.32	s4, .L59+4
+ 337:Core/Src/hca_lib.c ****         total_u_t = -hca->output_limit;
+ 1072              		.loc 1 337 21 view .LVU360
+ 1073 01b6 B1EE450A 		vneg.f32	s0, s10
+ 1074              	.LVL74:
+ 337:Core/Src/hca_lib.c ****         total_u_t = -hca->output_limit;
+ 1075              		.loc 1 337 21 view .LVU361
+ 1076 01ba E4E7     		b	.L45
+ 1077              	.L60:
+ 1078              		.align	2
+ 1079              	.L59:
+ 1080 01bc 00000000 		.word	is_lut_initialized
+ 1081 01c0 00000000 		.word	0
+ 1082 01c4 00000000 		.word	HCA_sin_table
+ 1083              		.cfi_endproc
+ 1084              	.LFE9:
+ 1086              		.section	.text.HCA_UpdateChannel,"ax",%progbits
+ 1087              		.align	1
+ 1088              		.p2align 2,,3
+ 1089              		.global	HCA_UpdateChannel
+ 1090              		.syntax unified
+ 1091              		.thumb
+ 1092              		.thumb_func
+ 1094              	HCA_UpdateChannel:
+ 1095              	.LVL75:
+ 1096              	.LFB10:
  342:Core/Src/hca_lib.c **** 
  343:Core/Src/hca_lib.c **** void HCA_UpdateChannel(HCA_Handle_t *hca,
  344:Core/Src/hca_lib.c ****                        uint8_t       order,
  345:Core/Src/hca_lib.c ****                        Complex_t     kp,
  346:Core/Src/hca_lib.c ****                        Complex_t     ki)
  347:Core/Src/hca_lib.c **** {
- 1082              		.loc 1 347 1 is_stmt 1 view -0
- 1083              		.cfi_startproc
- 1084              		@ args = 0, pretend = 0, frame = 16
- 1085              		@ frame_needed = 0, uses_anonymous_args = 0
- 1086              		@ link register save eliminated.
- 1087              		.loc 1 347 1 is_stmt 0 view .LVU348
- 1088 0000 84B0     		sub	sp, sp, #16
- 1089              	.LCFI14:
- 1090              		.cfi_def_cfa_offset 16
- 1091 0002 8DED020A 		vstr.32	s0, [sp, #8]
- 1092 0006 CDED030A 		vstr.32	s1, [sp, #12]
-ARM GAS  /tmp/cc5BUOoY.s 			page 29
-
-
- 1093 000a 8DED001A 		vstr.32	s2, [sp]
- 1094 000e CDED011A 		vstr.32	s3, [sp, #4]
+ 1097              		.loc 1 347 1 is_stmt 1 view -0
+ 1098              		.cfi_startproc
+ 1099              		@ args = 0, pretend = 0, frame = 16
+ 1100              		@ frame_needed = 0, uses_anonymous_args = 0
  348:Core/Src/hca_lib.c ****     for (int i = 0; i < hca->active_channel_count; i++) {
- 1095              		.loc 1 348 5 is_stmt 1 view .LVU349
- 1096              	.LBB39:
- 1097              		.loc 1 348 10 view .LVU350
- 1098              	.LVL70:
- 1099              		.loc 1 348 14 is_stmt 0 view .LVU351
- 1100 0012 0023     		movs	r3, #0
- 1101              		.loc 1 348 5 view .LVU352
- 1102 0014 00E0     		b	.L60
- 1103              	.LVL71:
- 1104              	.L61:
- 1105              		.loc 1 348 53 is_stmt 1 discriminator 1 view .LVU353
- 1106 0016 0133     		adds	r3, r3, #1
- 1107              	.LVL72:
- 1108              	.L60:
- 1109              		.loc 1 348 23 discriminator 2 view .LVU354
- 1110              		.loc 1 348 28 is_stmt 0 discriminator 2 view .LVU355
- 1111 0018 90F8DC20 		ldrb	r2, [r0, #220]	@ zero_extendqisi2
- 1112              		.loc 1 348 23 discriminator 2 view .LVU356
- 1113 001c 9A42     		cmp	r2, r3
- 1114 001e 14DD     		ble	.L59
+ 1101              		.loc 1 348 5 view .LVU363
+ 1102              	.LBB99:
+ 1103              		.loc 1 348 10 view .LVU364
+ 1104              		.loc 1 348 23 discriminator 2 view .LVU365
+ 1105              	.LBE99:
+ 347:Core/Src/hca_lib.c ****     for (int i = 0; i < hca->active_channel_count; i++) {
+ 1106              		.loc 1 347 1 is_stmt 0 view .LVU366
+ 1107 0000 00B5     		push	{lr}
+ 1108              	.LCFI12:
+ARM GAS  /tmp/ccpBwvj8.s 			page 30
+
+
+ 1109              		.cfi_def_cfa_offset 4
+ 1110              		.cfi_offset 14, -4
+ 1111              	.LBB100:
+ 1112              		.loc 1 348 28 discriminator 2 view .LVU367
+ 1113 0002 90F898C8 		ldrb	ip, [r0, #2200]	@ zero_extendqisi2
+ 1114              	.LBE100:
+ 347:Core/Src/hca_lib.c ****     for (int i = 0; i < hca->active_channel_count; i++) {
+ 1115              		.loc 1 347 1 view .LVU368
+ 1116 0006 85B0     		sub	sp, sp, #20
+ 1117              	.LCFI13:
+ 1118              		.cfi_def_cfa_offset 24
+ 347:Core/Src/hca_lib.c ****     for (int i = 0; i < hca->active_channel_count; i++) {
+ 1119              		.loc 1 347 1 view .LVU369
+ 1120 0008 8DED020A 		vstr.32	s0, [sp, #8]
+ 1121 000c CDED030A 		vstr.32	s1, [sp, #12]
+ 1122 0010 8DED001A 		vstr.32	s2, [sp]
+ 1123 0014 CDED011A 		vstr.32	s3, [sp, #4]
+ 1124              	.LBB101:
+ 1125              		.loc 1 348 23 discriminator 2 view .LVU370
+ 1126 0018 BCF1000F 		cmp	ip, #0
+ 1127 001c 16D0     		beq	.L61
+ 1128 001e 8646     		mov	lr, r0
+ 1129 0020 0346     		mov	r3, r0
+ 1130              		.loc 1 348 14 view .LVU371
+ 1131 0022 0022     		movs	r2, #0
+ 1132 0024 02E0     		b	.L64
+ 1133              	.LVL76:
+ 1134              	.L63:
+ 1135              		.loc 1 348 53 discriminator 1 view .LVU372
+ 1136 0026 0132     		adds	r2, r2, #1
+ 1137              	.LVL77:
+ 1138              		.loc 1 348 23 is_stmt 1 discriminator 2 view .LVU373
+ 1139 0028 6245     		cmp	r2, ip
+ 1140 002a 0FD0     		beq	.L61
+ 1141              	.LVL78:
+ 1142              	.L64:
  349:Core/Src/hca_lib.c ****         if (hca->channels[i].harmonic_order == order) {
- 1115              		.loc 1 349 9 is_stmt 1 view .LVU357
- 1116              		.loc 1 349 29 is_stmt 0 view .LVU358
- 1117 0020 2C22     		movs	r2, #44
- 1118 0022 03FB02F2 		mul	r2, r3, r2
- 1119 0026 825C     		ldrb	r2, [r0, r2]	@ zero_extendqisi2
- 1120              		.loc 1 349 12 view .LVU359
- 1121 0028 8A42     		cmp	r2, r1
- 1122 002a F4D1     		bne	.L61
+ 1143              		.loc 1 349 9 view .LVU374
+ 348:Core/Src/hca_lib.c ****     for (int i = 0; i < hca->active_channel_count; i++) {
+ 1144              		.loc 1 348 53 discriminator 1 view .LVU375
+ 1145              		.loc 1 349 12 is_stmt 0 view .LVU376
+ 1146 002c 1878     		ldrb	r0, [r3]	@ zero_extendqisi2
+ 1147 002e 8842     		cmp	r0, r1
+ 348:Core/Src/hca_lib.c ****     for (int i = 0; i < hca->active_channel_count; i++) {
+ 1148              		.loc 1 348 23 discriminator 2 view .LVU377
+ 1149 0030 03F12C03 		add	r3, r3, #44
+ 1150              		.loc 1 349 12 view .LVU378
+ 1151 0034 F7D1     		bne	.L63
  350:Core/Src/hca_lib.c ****             /*
  351:Core/Src/hca_lib.c ****              * Write Kp first, then Ki.  The ISR may read between these two
  352:Core/Src/hca_lib.c ****              * writes — see header note.  For tuning purposes this is fine.
  353:Core/Src/hca_lib.c ****              */
  354:Core/Src/hca_lib.c ****             hca->channels[i].Kp = kp;
- 1123              		.loc 1 354 13 is_stmt 1 view .LVU360
- 1124              		.loc 1 354 33 is_stmt 0 view .LVU361
- 1125 002c 2C22     		movs	r2, #44
- 1126 002e 02FB0303 		mla	r3, r2, r3, r0
- 1127              	.LVL73:
- 1128              		.loc 1 354 33 view .LVU362
- 1129 0032 03F10C02 		add	r2, r3, #12
- 1130 0036 04A9     		add	r1, sp, #16
- 1131              	.LVL74:
- 1132              		.loc 1 354 33 view .LVU363
- 1133 0038 11E90300 		ldmdb	r1, {r0, r1}
- 1134              	.LVL75:
- 1135              		.loc 1 354 33 view .LVU364
- 1136 003c 82E80300 		stm	r2, {r0, r1}
+ 1152              		.loc 1 354 13 is_stmt 1 view .LVU379
+ 1153              		.loc 1 354 33 is_stmt 0 view .LVU380
+ 1154 0036 DDE90201 		ldrd	r0, r1, [sp, #8]
+ 1155              	.LVL79:
+ARM GAS  /tmp/ccpBwvj8.s 			page 31
+
+
+ 1156              		.loc 1 354 33 view .LVU381
+ 1157 003a 2C23     		movs	r3, #44
+ 1158 003c 03FB02EE 		mla	lr, r3, r2, lr
+ 1159              	.LVL80:
+ 1160              		.loc 1 354 33 view .LVU382
+ 1161 0040 CEE90301 		strd	r0, r1, [lr, #12]
  355:Core/Src/hca_lib.c ****             hca->channels[i].Ki = ki;
- 1137              		.loc 1 355 13 is_stmt 1 view .LVU365
- 1138              		.loc 1 355 33 is_stmt 0 view .LVU366
- 1139 0040 1433     		adds	r3, r3, #20
- 1140 0042 DDE90001 		ldrd	r0, r1, [sp]
- 1141 0046 83E80300 		stm	r3, {r0, r1}
-ARM GAS  /tmp/cc5BUOoY.s 			page 30
-
-
+ 1162              		.loc 1 355 13 is_stmt 1 view .LVU383
+ 1163              		.loc 1 355 33 is_stmt 0 view .LVU384
+ 1164 0044 DDE90001 		ldrd	r0, r1, [sp]
+ 1165 0048 CEE90501 		strd	r0, r1, [lr, #20]
  356:Core/Src/hca_lib.c ****             return;
- 1142              		.loc 1 356 13 is_stmt 1 view .LVU367
- 1143              	.L59:
- 1144              	.LBE39:
+ 1166              		.loc 1 356 13 is_stmt 1 view .LVU385
+ 1167              	.LVL81:
+ 1168              	.L61:
+ 1169              		.loc 1 356 13 is_stmt 0 view .LVU386
+ 1170              	.LBE101:
  357:Core/Src/hca_lib.c ****         }
  358:Core/Src/hca_lib.c ****     }
  359:Core/Src/hca_lib.c ****     /* order not found — silently ignore */
  360:Core/Src/hca_lib.c **** }
- 1145              		.loc 1 360 1 is_stmt 0 view .LVU368
- 1146 004a 04B0     		add	sp, sp, #16
- 1147              	.LCFI15:
- 1148              		.cfi_def_cfa_offset 0
- 1149              		@ sp needed
- 1150 004c 7047     		bx	lr
- 1151              		.cfi_endproc
- 1152              	.LFE10:
- 1154              		.section	.text.HCA_reset_accumulators,"ax",%progbits
- 1155              		.align	1
- 1156              		.global	HCA_reset_accumulators
- 1157              		.syntax unified
- 1158              		.thumb
- 1159              		.thumb_func
- 1161              	HCA_reset_accumulators:
- 1162              	.LVL76:
- 1163              	.LFB11:
+ 1171              		.loc 1 360 1 view .LVU387
+ 1172 004c 05B0     		add	sp, sp, #20
+ 1173              	.LCFI14:
+ 1174              		.cfi_def_cfa_offset 4
+ 1175              		@ sp needed
+ 1176 004e 00BD     		pop	{pc}
+ 1177              		.cfi_endproc
+ 1178              	.LFE10:
+ 1180              		.section	.text.HCA_reset_accumulators,"ax",%progbits
+ 1181              		.align	1
+ 1182              		.p2align 2,,3
+ 1183              		.global	HCA_reset_accumulators
+ 1184              		.syntax unified
+ 1185              		.thumb
+ 1186              		.thumb_func
+ 1188              	HCA_reset_accumulators:
+ 1189              	.LVL82:
+ 1190              	.LFB11:
  361:Core/Src/hca_lib.c **** 
  362:Core/Src/hca_lib.c **** void HCA_reset_accumulators(HCA_Handle_t* hca) {
- 1164              		.loc 1 362 48 is_stmt 1 view -0
- 1165              		.cfi_startproc
- 1166              		@ args = 0, pretend = 0, frame = 0
- 1167              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1191              		.loc 1 362 48 is_stmt 1 view -0
+ 1192              		.cfi_startproc
+ 1193              		@ args = 0, pretend = 0, frame = 8
+ 1194              		@ frame_needed = 0, uses_anonymous_args = 0
  363:Core/Src/hca_lib.c ****     if (!hca) return;
- 1168              		.loc 1 363 5 view .LVU370
- 1169              		.loc 1 363 8 is_stmt 0 view .LVU371
- 1170 0000 F0B1     		cbz	r0, .L70
- 362:Core/Src/hca_lib.c ****     if (!hca) return;
- 1171              		.loc 1 362 48 view .LVU372
- 1172 0002 10B5     		push	{r4, lr}
- 1173              	.LCFI16:
- 1174              		.cfi_def_cfa_offset 8
- 1175              		.cfi_offset 4, -8
- 1176              		.cfi_offset 14, -4
- 1177 0004 0446     		mov	r4, r0
+ 1195              		.loc 1 363 5 view .LVU389
+ 1196              		.loc 1 363 8 is_stmt 0 view .LVU390
+ 1197 0000 00B3     		cbz	r0, .L81
  364:Core/Src/hca_lib.c **** 
  365:Core/Src/hca_lib.c ****     hca->buf_head = 0;
- 1178              		.loc 1 365 5 is_stmt 1 view .LVU373
- 1179              		.loc 1 365 19 is_stmt 0 view .LVU374
- 1180 0006 00F58043 		add	r3, r0, #16384
- 1181 000a 4FF00002 		mov	r2, #0	@ movhi
- 1182 000e A3F8EC20 		strh	r2, [r3, #236]	@ movhi
+ 1198              		.loc 1 365 5 is_stmt 1 view .LVU391
+ 362:Core/Src/hca_lib.c ****     if (!hca) return;
+ 1199              		.loc 1 362 48 is_stmt 0 view .LVU392
+ 1200 0002 00B5     		push	{lr}
+ 1201              	.LCFI15:
+ 1202              		.cfi_def_cfa_offset 4
+ARM GAS  /tmp/ccpBwvj8.s 			page 32
+
+
+ 1203              		.cfi_offset 14, -4
+ 1204              		.loc 1 365 19 view .LVU393
+ 1205 0004 00F58042 		add	r2, r0, #16384
+ 362:Core/Src/hca_lib.c ****     if (!hca) return;
+ 1206              		.loc 1 362 48 view .LVU394
+ 1207 0008 83B0     		sub	sp, sp, #12
+ 1208              	.LCFI16:
+ 1209              		.cfi_def_cfa_offset 16
+ 1210              		.loc 1 365 19 view .LVU395
+ 1211 000a 0021     		movs	r1, #0
+ 1212 000c 0346     		mov	r3, r0
+ 1213 000e A2F8A818 		strh	r1, [r2, #2216]	@ movhi
  366:Core/Src/hca_lib.c ****         
  367:Core/Src/hca_lib.c ****     // Clear the entire sliding window buffer
  368:Core/Src/hca_lib.c ****     memset(hca->buffer, 0, sizeof(float) * MAX_WINDOW_SIZE);
- 1183              		.loc 1 368 5 is_stmt 1 view .LVU375
- 1184 0012 4FF48042 		mov	r2, #16384
- 1185 0016 0021     		movs	r1, #0
- 1186 0018 EC30     		adds	r0, r0, #236
-ARM GAS  /tmp/cc5BUOoY.s 			page 31
-
-
- 1187              	.LVL77:
- 1188              		.loc 1 368 5 is_stmt 0 view .LVU376
- 1189 001a FFF7FEFF 		bl	memset
- 1190              	.LVL78:
+ 1214              		.loc 1 368 5 is_stmt 1 view .LVU396
+ 1215 0012 00F6A800 		addw	r0, r0, #2216
+ 1216              	.LVL83:
+ 1217              		.loc 1 368 5 is_stmt 0 view .LVU397
+ 1218 0016 4FF48042 		mov	r2, #16384
+ 1219 001a 0193     		str	r3, [sp, #4]
+ 1220 001c FFF7FEFF 		bl	memset
+ 1221              	.LVL84:
  369:Core/Src/hca_lib.c **** 
  370:Core/Src/hca_lib.c ****     for (uint8_t i = 0; i < hca->active_channel_count; i++) {
- 1191              		.loc 1 370 5 is_stmt 1 view .LVU377
- 1192              	.LBB40:
- 1193              		.loc 1 370 10 view .LVU378
- 1194              		.loc 1 370 18 is_stmt 0 view .LVU379
- 1195 001e 0021     		movs	r1, #0
- 1196              		.loc 1 370 5 view .LVU380
- 1197 0020 09E0     		b	.L67
- 1198              	.LVL79:
- 1199              	.L68:
- 1200              	.LBB41:
+ 1222              		.loc 1 370 5 is_stmt 1 view .LVU398
+ 1223              	.LBB102:
+ 1224              		.loc 1 370 10 view .LVU399
+ 1225              		.loc 1 370 27 discriminator 2 view .LVU400
+ 1226              		.loc 1 370 32 is_stmt 0 discriminator 2 view .LVU401
+ 1227 0020 019B     		ldr	r3, [sp, #4]
+ 1228 0022 93F89828 		ldrb	r2, [r3, #2200]	@ zero_extendqisi2
+ 1229              		.loc 1 370 27 discriminator 2 view .LVU402
+ 1230 0026 5AB1     		cbz	r2, .L70
+ 1231 0028 1846     		mov	r0, r3
+ 1232 002a 2C21     		movs	r1, #44
+ 1233              	.LBB103:
  371:Core/Src/hca_lib.c ****         HCA_Channel_t* ch = &hca->channels[i];
- 1201              		.loc 1 371 9 is_stmt 1 view .LVU381
  372:Core/Src/hca_lib.c ****         
  373:Core/Src/hca_lib.c ****         // 1. Reset Integrators
  374:Core/Src/hca_lib.c ****         ch->integrator_state.real = 0.0f;
- 1202              		.loc 1 374 9 view .LVU382
- 1203              		.loc 1 374 35 is_stmt 0 view .LVU383
- 1204 0022 2C23     		movs	r3, #44
- 1205 0024 03FB0143 		mla	r3, r3, r1, r4
- 1206              	.LVL80:
- 1207              		.loc 1 374 35 view .LVU384
- 1208 0028 0022     		movs	r2, #0
- 1209 002a DA61     		str	r2, [r3, #28]	@ float
+ 1234              		.loc 1 374 35 view .LVU403
+ 1235 002c 0023     		movs	r3, #0
+ 1236 002e 01FB0202 		mla	r2, r1, r2, r0
+ 1237              	.LVL85:
+ 1238              	.L72:
+ 371:Core/Src/hca_lib.c ****         HCA_Channel_t* ch = &hca->channels[i];
+ 1239              		.loc 1 371 9 is_stmt 1 view .LVU404
+ 1240              		.loc 1 374 9 view .LVU405
+ 1241              		.loc 1 374 35 is_stmt 0 view .LVU406
+ 1242 0032 C361     		str	r3, [r0, #28]	@ float
  375:Core/Src/hca_lib.c ****         ch->integrator_state.imag = 0.0f;
- 1210              		.loc 1 375 9 is_stmt 1 view .LVU385
- 1211              		.loc 1 375 35 is_stmt 0 view .LVU386
- 1212 002c 1A62     		str	r2, [r3, #32]	@ float
+ 1243              		.loc 1 375 9 is_stmt 1 view .LVU407
+ 1244              		.loc 1 375 35 is_stmt 0 view .LVU408
+ 1245 0034 0362     		str	r3, [r0, #32]	@ float
  376:Core/Src/hca_lib.c ****         
  377:Core/Src/hca_lib.c ****         // 2. Reset Disperser State (Full Clear)
+ARM GAS  /tmp/ccpBwvj8.s 			page 33
+
+
  378:Core/Src/hca_lib.c ****         ch->current_val.real = 0.0f;
- 1213              		.loc 1 378 9 is_stmt 1 view .LVU387
- 1214              		.loc 1 378 30 is_stmt 0 view .LVU388
- 1215 002e 5A60     		str	r2, [r3, #4]	@ float
+ 1246              		.loc 1 378 9 is_stmt 1 view .LVU409
+ 1247              		.loc 1 378 30 is_stmt 0 view .LVU410
+ 1248 0036 4360     		str	r3, [r0, #4]	@ float
  379:Core/Src/hca_lib.c ****         ch->current_val.imag = 0.0f;
- 1216              		.loc 1 379 9 is_stmt 1 view .LVU389
- 1217              		.loc 1 379 30 is_stmt 0 view .LVU390
- 1218 0030 9A60     		str	r2, [r3, #8]	@ float
- 1219              	.LBE41:
+ 1249              		.loc 1 379 9 is_stmt 1 view .LVU411
+ 1250              		.loc 1 379 30 is_stmt 0 view .LVU412
+ 1251 0038 8360     		str	r3, [r0, #8]	@ float
+ 1252              	.LBE103:
  370:Core/Src/hca_lib.c ****         HCA_Channel_t* ch = &hca->channels[i];
- 1220              		.loc 1 370 57 is_stmt 1 discriminator 1 view .LVU391
- 1221 0032 0131     		adds	r1, r1, #1
- 1222              	.LVL81:
+ 1253              		.loc 1 370 57 is_stmt 1 discriminator 1 view .LVU413
+ 1254              	.LVL86:
  370:Core/Src/hca_lib.c ****         HCA_Channel_t* ch = &hca->channels[i];
- 1223              		.loc 1 370 57 is_stmt 0 discriminator 1 view .LVU392
- 1224 0034 C9B2     		uxtb	r1, r1
- 1225              	.LVL82:
- 1226              	.L67:
+ 1255              		.loc 1 370 27 discriminator 2 view .LVU414
+ 1256 003a 2C30     		adds	r0, r0, #44
+ 1257              	.LVL87:
  370:Core/Src/hca_lib.c ****         HCA_Channel_t* ch = &hca->channels[i];
- 1227              		.loc 1 370 27 is_stmt 1 discriminator 2 view .LVU393
+ 1258              		.loc 1 370 27 is_stmt 0 discriminator 2 view .LVU415
+ 1259 003c 9042     		cmp	r0, r2
+ 1260 003e F8D1     		bne	.L72
+ 1261              	.LVL88:
+ 1262              	.L70:
  370:Core/Src/hca_lib.c ****         HCA_Channel_t* ch = &hca->channels[i];
- 1228              		.loc 1 370 32 is_stmt 0 discriminator 2 view .LVU394
-ARM GAS  /tmp/cc5BUOoY.s 			page 32
-
-
- 1229 0036 94F8DC30 		ldrb	r3, [r4, #220]	@ zero_extendqisi2
- 370:Core/Src/hca_lib.c ****         HCA_Channel_t* ch = &hca->channels[i];
- 1230              		.loc 1 370 27 discriminator 2 view .LVU395
- 1231 003a 8B42     		cmp	r3, r1
- 1232 003c F1D8     		bhi	.L68
- 1233              	.LBE40:
+ 1263              		.loc 1 370 27 discriminator 2 view .LVU416
+ 1264              	.LBE102:
  380:Core/Src/hca_lib.c **** 
  381:Core/Src/hca_lib.c ****         //ch->current_angle = (uint32_t)0;
  382:Core/Src/hca_lib.c ****     }
  383:Core/Src/hca_lib.c **** }
- 1234              		.loc 1 383 1 view .LVU396
- 1235 003e 10BD     		pop	{r4, pc}
- 1236              	.LVL83:
- 1237              	.L70:
- 1238              	.LCFI17:
- 1239              		.cfi_def_cfa_offset 0
- 1240              		.cfi_restore 4
- 1241              		.cfi_restore 14
- 1242              		.loc 1 383 1 view .LVU397
- 1243 0040 7047     		bx	lr
- 1244              		.cfi_endproc
- 1245              	.LFE11:
- 1247              		.section	.text.HCA_reset_accumulators_fast,"ax",%progbits
- 1248              		.align	1
- 1249              		.global	HCA_reset_accumulators_fast
- 1250              		.syntax unified
- 1251              		.thumb
- 1252              		.thumb_func
- 1254              	HCA_reset_accumulators_fast:
- 1255              	.LVL84:
- 1256              	.LFB12:
+ 1265              		.loc 1 383 1 view .LVU417
+ 1266 0040 03B0     		add	sp, sp, #12
+ 1267              	.LCFI17:
+ 1268              		.cfi_def_cfa_offset 4
+ 1269              		@ sp needed
+ 1270 0042 00BD     		pop	{pc}
+ 1271              	.LVL89:
+ 1272              	.L81:
+ 1273              	.LCFI18:
+ 1274              		.cfi_def_cfa_offset 0
+ 1275              		.cfi_restore 14
+ 1276              		.loc 1 383 1 view .LVU418
+ 1277 0044 7047     		bx	lr
+ 1278              		.cfi_endproc
+ 1279              	.LFE11:
+ 1281 0046 00BF     		.section	.text.HCA_reset_accumulators_fast,"ax",%progbits
+ 1282              		.align	1
+ 1283              		.p2align 2,,3
+ 1284              		.global	HCA_reset_accumulators_fast
+ 1285              		.syntax unified
+ 1286              		.thumb
+ 1287              		.thumb_func
+ 1289              	HCA_reset_accumulators_fast:
+ 1290              	.LVL90:
+ 1291              	.LFB12:
  384:Core/Src/hca_lib.c **** 
  385:Core/Src/hca_lib.c **** void HCA_reset_accumulators_fast(HCA_Handle_t* hca) {
- 1257              		.loc 1 385 53 is_stmt 1 view -0
- 1258              		.cfi_startproc
- 1259              		@ args = 0, pretend = 0, frame = 0
- 1260              		@ frame_needed = 0, uses_anonymous_args = 0
- 1261              		@ link register save eliminated.
+ 1292              		.loc 1 385 53 is_stmt 1 view -0
+ARM GAS  /tmp/ccpBwvj8.s 			page 34
+
+
+ 1293              		.cfi_startproc
+ 1294              		@ args = 0, pretend = 0, frame = 0
+ 1295              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1296              		@ link register save eliminated.
  386:Core/Src/hca_lib.c ****     if (!hca) return;
- 1262              		.loc 1 386 5 view .LVU399
- 1263              		.loc 1 386 8 is_stmt 0 view .LVU400
- 1264 0000 8446     		mov	ip, r0
- 1265 0002 98B1     		cbz	r0, .L73
+ 1297              		.loc 1 386 5 view .LVU420
+ 1298              		.loc 1 386 8 is_stmt 0 view .LVU421
+ 1299 0000 90B1     		cbz	r0, .L84
  387:Core/Src/hca_lib.c ****     hca->buf_head = 0;
- 1266              		.loc 1 387 5 is_stmt 1 view .LVU401
- 1267              		.loc 1 387 19 is_stmt 0 view .LVU402
- 1268 0004 00F58043 		add	r3, r0, #16384
- 1269 0008 0022     		movs	r2, #0
- 1270 000a A3F8EC20 		strh	r2, [r3, #236]	@ movhi
+ 1300              		.loc 1 387 5 is_stmt 1 view .LVU422
+ 1301              		.loc 1 387 19 is_stmt 0 view .LVU423
+ 1302 0002 00F58043 		add	r3, r0, #16384
+ 1303 0006 0022     		movs	r2, #0
+ 1304 0008 A3F8A828 		strh	r2, [r3, #2216]	@ movhi
  388:Core/Src/hca_lib.c **** 
  389:Core/Src/hca_lib.c ****     for (uint8_t i = 0; i < hca->active_channel_count; i++) {
- 1271              		.loc 1 389 5 is_stmt 1 view .LVU403
- 1272              	.LBB42:
- 1273              		.loc 1 389 10 view .LVU404
- 1274              	.LVL85:
- 1275              		.loc 1 389 5 is_stmt 0 view .LVU405
- 1276 000e 09E0     		b	.L75
-ARM GAS  /tmp/cc5BUOoY.s 			page 33
-
-
- 1277              	.LVL86:
- 1278              	.L76:
- 1279              	.LBB43:
+ 1305              		.loc 1 389 5 is_stmt 1 view .LVU424
+ 1306              	.LBB104:
+ 1307              		.loc 1 389 10 view .LVU425
+ 1308              	.LVL91:
+ 1309              		.loc 1 389 27 discriminator 2 view .LVU426
+ 1310              		.loc 1 389 32 is_stmt 0 discriminator 2 view .LVU427
+ 1311 000c 90F89828 		ldrb	r2, [r0, #2200]	@ zero_extendqisi2
+ 1312              		.loc 1 389 27 discriminator 2 view .LVU428
+ 1313 0010 52B1     		cbz	r2, .L84
+ 1314 0012 2C21     		movs	r1, #44
+ 1315              	.LBB105:
  390:Core/Src/hca_lib.c ****         HCA_Channel_t* ch = &hca->channels[i];
- 1280              		.loc 1 390 9 is_stmt 1 view .LVU406
  391:Core/Src/hca_lib.c ****         
  392:Core/Src/hca_lib.c ****         // 1. Reset Integrators
  393:Core/Src/hca_lib.c ****         ch->integrator_state.real = 0.0f;
- 1281              		.loc 1 393 9 view .LVU407
- 1282              		.loc 1 393 35 is_stmt 0 view .LVU408
- 1283 0010 2C23     		movs	r3, #44
- 1284 0012 03FB02C3 		mla	r3, r3, r2, ip
- 1285              	.LVL87:
- 1286              		.loc 1 393 35 view .LVU409
- 1287 0016 0021     		movs	r1, #0
- 1288 0018 D961     		str	r1, [r3, #28]	@ float
+ 1316              		.loc 1 393 35 view .LVU429
+ 1317 0014 0023     		movs	r3, #0
+ 1318 0016 01FB0202 		mla	r2, r1, r2, r0
+ 1319              	.LVL92:
+ 1320              	.L86:
+ 390:Core/Src/hca_lib.c ****         HCA_Channel_t* ch = &hca->channels[i];
+ 1321              		.loc 1 390 9 is_stmt 1 view .LVU430
+ 1322              		.loc 1 393 9 view .LVU431
+ 1323              		.loc 1 393 35 is_stmt 0 view .LVU432
+ 1324 001a C361     		str	r3, [r0, #28]	@ float
  394:Core/Src/hca_lib.c ****         ch->integrator_state.imag = 0.0f;
- 1289              		.loc 1 394 9 is_stmt 1 view .LVU410
- 1290              		.loc 1 394 35 is_stmt 0 view .LVU411
- 1291 001a 1962     		str	r1, [r3, #32]	@ float
+ 1325              		.loc 1 394 9 is_stmt 1 view .LVU433
+ 1326              		.loc 1 394 35 is_stmt 0 view .LVU434
+ 1327 001c 0362     		str	r3, [r0, #32]	@ float
  395:Core/Src/hca_lib.c **** 
  396:Core/Src/hca_lib.c ****         // 2. Reset Disperser Sum and Head
  397:Core/Src/hca_lib.c ****         // We reset the sum and head, but leave the buffer data as-is.
  398:Core/Src/hca_lib.c ****         // It will be overwritten as the head advances.
  399:Core/Src/hca_lib.c ****         ch->current_val.real = 0.0f;
- 1292              		.loc 1 399 9 is_stmt 1 view .LVU412
- 1293              		.loc 1 399 30 is_stmt 0 view .LVU413
- 1294 001c 5960     		str	r1, [r3, #4]	@ float
+ 1328              		.loc 1 399 9 is_stmt 1 view .LVU435
+ 1329              		.loc 1 399 30 is_stmt 0 view .LVU436
+ 1330 001e 4360     		str	r3, [r0, #4]	@ float
  400:Core/Src/hca_lib.c ****         ch->current_val.imag = 0.0f;
- 1295              		.loc 1 400 9 is_stmt 1 view .LVU414
- 1296              		.loc 1 400 30 is_stmt 0 view .LVU415
- 1297 001e 9960     		str	r1, [r3, #8]	@ float
- 1298              	.LBE43:
+ 1331              		.loc 1 400 9 is_stmt 1 view .LVU437
+ 1332              		.loc 1 400 30 is_stmt 0 view .LVU438
+ 1333 0020 8360     		str	r3, [r0, #8]	@ float
+ARM GAS  /tmp/ccpBwvj8.s 			page 35
+
+
+ 1334              	.LBE105:
  389:Core/Src/hca_lib.c ****         HCA_Channel_t* ch = &hca->channels[i];
- 1299              		.loc 1 389 57 is_stmt 1 discriminator 1 view .LVU416
- 1300 0020 0132     		adds	r2, r2, #1
- 1301              	.LVL88:
+ 1335              		.loc 1 389 57 is_stmt 1 discriminator 1 view .LVU439
+ 1336              	.LVL93:
  389:Core/Src/hca_lib.c ****         HCA_Channel_t* ch = &hca->channels[i];
- 1302              		.loc 1 389 57 is_stmt 0 discriminator 1 view .LVU417
- 1303 0022 D2B2     		uxtb	r2, r2
- 1304              	.LVL89:
- 1305              	.L75:
+ 1337              		.loc 1 389 27 discriminator 2 view .LVU440
+ 1338 0022 2C30     		adds	r0, r0, #44
+ 1339              	.LVL94:
  389:Core/Src/hca_lib.c ****         HCA_Channel_t* ch = &hca->channels[i];
- 1306              		.loc 1 389 27 is_stmt 1 discriminator 2 view .LVU418
+ 1340              		.loc 1 389 27 is_stmt 0 discriminator 2 view .LVU441
+ 1341 0024 9042     		cmp	r0, r2
+ 1342 0026 F8D1     		bne	.L86
+ 1343              	.LVL95:
+ 1344              	.L84:
  389:Core/Src/hca_lib.c ****         HCA_Channel_t* ch = &hca->channels[i];
- 1307              		.loc 1 389 32 is_stmt 0 discriminator 2 view .LVU419
- 1308 0024 9CF8DC30 		ldrb	r3, [ip, #220]	@ zero_extendqisi2
- 389:Core/Src/hca_lib.c ****         HCA_Channel_t* ch = &hca->channels[i];
- 1309              		.loc 1 389 27 discriminator 2 view .LVU420
- 1310 0028 9342     		cmp	r3, r2
- 1311 002a F1D8     		bhi	.L76
- 1312              	.LVL90:
- 1313              	.L73:
- 389:Core/Src/hca_lib.c ****         HCA_Channel_t* ch = &hca->channels[i];
- 1314              		.loc 1 389 27 discriminator 2 view .LVU421
- 1315              	.LBE42:
+ 1345              		.loc 1 389 27 discriminator 2 view .LVU442
+ 1346              	.LBE104:
  401:Core/Src/hca_lib.c **** 
-ARM GAS  /tmp/cc5BUOoY.s 			page 34
-
-
  402:Core/Src/hca_lib.c ****         //ch->current_angle = (uint32_t)0;
  403:Core/Src/hca_lib.c **** 
  404:Core/Src/hca_lib.c ****     }
  405:Core/Src/hca_lib.c **** }
- 1316              		.loc 1 405 1 view .LVU422
- 1317 002c 7047     		bx	lr
- 1318              		.cfi_endproc
- 1319              	.LFE12:
- 1321              		.section	.bss.is_lut_initialized,"aw",%nobits
- 1324              	is_lut_initialized:
- 1325 0000 00       		.space	1
- 1326              		.global	HCA_sin_table
- 1327              		.section	.bss.HCA_sin_table,"aw",%nobits
- 1328              		.align	2
- 1331              	HCA_sin_table:
- 1332 0000 00000000 		.space	16384
- 1332      00000000 
- 1332      00000000 
- 1332      00000000 
- 1332      00000000 
- 1333              		.text
- 1334              	.Letext0:
- 1335              		.file 2 "/usr/arm-none-eabi/include/machine/_default_types.h"
- 1336              		.file 3 "/usr/arm-none-eabi/include/sys/_stdint.h"
- 1337              		.file 4 "Core/Inc/hca_lib.h"
- 1338              		.file 5 "/usr/arm-none-eabi/include/string.h"
- 1339              		.file 6 "/usr/arm-none-eabi/include/math.h"
- 1340              		.file 7 "<built-in>"
-ARM GAS  /tmp/cc5BUOoY.s 			page 35
+ 1347              		.loc 1 405 1 view .LVU443
+ 1348 0028 7047     		bx	lr
+ 1349              		.cfi_endproc
+ 1350              	.LFE12:
+ 1352 002a 00BF     		.section	.bss.is_lut_initialized,"aw",%nobits
+ 1355              	is_lut_initialized:
+ 1356 0000 00       		.space	1
+ 1357              		.global	HCA_sin_table
+ 1358              		.section	.bss.HCA_sin_table,"aw",%nobits
+ 1359              		.align	2
+ 1362              	HCA_sin_table:
+ 1363 0000 00000000 		.space	16384
+ 1363      00000000 
+ 1363      00000000 
+ 1363      00000000 
+ 1363      00000000 
+ 1364              		.text
+ 1365              	.Letext0:
+ 1366              		.file 2 "/usr/arm-none-eabi/include/machine/_default_types.h"
+ 1367              		.file 3 "/usr/arm-none-eabi/include/sys/_stdint.h"
+ 1368              		.file 4 "Core/Inc/hca_lib.h"
+ 1369              		.file 5 "/usr/arm-none-eabi/include/string.h"
+ 1370              		.file 6 "/usr/arm-none-eabi/include/math.h"
+ 1371              		.file 7 "<built-in>"
+ARM GAS  /tmp/ccpBwvj8.s 			page 36
 
 
 DEFINED SYMBOLS
                             *ABS*:00000000 hca_lib.c
-     /tmp/cc5BUOoY.s:21     .text.HCA_CreateLUTs:00000000 $t
-     /tmp/cc5BUOoY.s:27     .text.HCA_CreateLUTs:00000000 HCA_CreateLUTs
-     /tmp/cc5BUOoY.s:96     .text.HCA_CreateLUTs:0000003c $d
-     /tmp/cc5BUOoY.s:1324   .bss.is_lut_initialized:00000000 is_lut_initialized
-     /tmp/cc5BUOoY.s:1331   .bss.HCA_sin_table:00000000 HCA_sin_table
-     /tmp/cc5BUOoY.s:103    .text.HCA_getPhasor:00000000 $t
-     /tmp/cc5BUOoY.s:109    .text.HCA_getPhasor:00000000 HCA_getPhasor
-     /tmp/cc5BUOoY.s:147    .text.HCA_getPhasor:00000020 $d
-     /tmp/cc5BUOoY.s:152    .text.HCA_fastSin:00000000 $t
-     /tmp/cc5BUOoY.s:158    .text.HCA_fastSin:00000000 HCA_fastSin
-     /tmp/cc5BUOoY.s:180    .text.HCA_fastSin:00000010 $d
-     /tmp/cc5BUOoY.s:185    .text.HCA_fastCos:00000000 $t
-     /tmp/cc5BUOoY.s:191    .text.HCA_fastCos:00000000 HCA_fastCos
-     /tmp/cc5BUOoY.s:220    .text.HCA_fastCos:00000018 $d
-     /tmp/cc5BUOoY.s:225    .text.HCA_Init:00000000 $t
-     /tmp/cc5BUOoY.s:231    .text.HCA_Init:00000000 HCA_Init
-     /tmp/cc5BUOoY.s:366    .text.HCA_Add_Channel:00000000 $t
-     /tmp/cc5BUOoY.s:372    .text.HCA_Add_Channel:00000000 HCA_Add_Channel
-     /tmp/cc5BUOoY.s:483    .text.HCA_Add_Channel:0000008c $d
-     /tmp/cc5BUOoY.s:488    .text.HCA_Process:00000000 $t
-     /tmp/cc5BUOoY.s:494    .text.HCA_Process:00000000 HCA_Process
-     /tmp/cc5BUOoY.s:1067   .text.HCA_Process:00000348 $d
-     /tmp/cc5BUOoY.s:1073   .text.HCA_UpdateChannel:00000000 $t
-     /tmp/cc5BUOoY.s:1079   .text.HCA_UpdateChannel:00000000 HCA_UpdateChannel
-     /tmp/cc5BUOoY.s:1155   .text.HCA_reset_accumulators:00000000 $t
-     /tmp/cc5BUOoY.s:1161   .text.HCA_reset_accumulators:00000000 HCA_reset_accumulators
-     /tmp/cc5BUOoY.s:1248   .text.HCA_reset_accumulators_fast:00000000 $t
-     /tmp/cc5BUOoY.s:1254   .text.HCA_reset_accumulators_fast:00000000 HCA_reset_accumulators_fast
-     /tmp/cc5BUOoY.s:1325   .bss.is_lut_initialized:00000000 $d
-     /tmp/cc5BUOoY.s:1328   .bss.HCA_sin_table:00000000 $d
+     /tmp/ccpBwvj8.s:21     .text.HCA_CreateLUTs:00000000 $t
+     /tmp/ccpBwvj8.s:28     .text.HCA_CreateLUTs:00000000 HCA_CreateLUTs
+     /tmp/ccpBwvj8.s:121    .text.HCA_CreateLUTs:00000040 $d
+     /tmp/ccpBwvj8.s:1355   .bss.is_lut_initialized:00000000 is_lut_initialized
+     /tmp/ccpBwvj8.s:1362   .bss.HCA_sin_table:00000000 HCA_sin_table
+     /tmp/ccpBwvj8.s:128    .text.HCA_getPhasor:00000000 $t
+     /tmp/ccpBwvj8.s:135    .text.HCA_getPhasor:00000000 HCA_getPhasor
+     /tmp/ccpBwvj8.s:173    .text.HCA_getPhasor:00000020 $d
+     /tmp/ccpBwvj8.s:178    .text.HCA_fastSin:00000000 $t
+     /tmp/ccpBwvj8.s:185    .text.HCA_fastSin:00000000 HCA_fastSin
+     /tmp/ccpBwvj8.s:209    .text.HCA_fastSin:00000010 $d
+     /tmp/ccpBwvj8.s:214    .text.HCA_fastCos:00000000 $t
+     /tmp/ccpBwvj8.s:221    .text.HCA_fastCos:00000000 HCA_fastCos
+     /tmp/ccpBwvj8.s:251    .text.HCA_fastCos:00000018 $d
+     /tmp/ccpBwvj8.s:256    .text.HCA_Init:00000000 $t
+     /tmp/ccpBwvj8.s:263    .text.HCA_Init:00000000 HCA_Init
+     /tmp/ccpBwvj8.s:487    .text.HCA_Init:000000d8 $d
+     /tmp/ccpBwvj8.s:494    .text.HCA_Add_Channel:00000000 $t
+     /tmp/ccpBwvj8.s:501    .text.HCA_Add_Channel:00000000 HCA_Add_Channel
+     /tmp/ccpBwvj8.s:619    .text.HCA_Add_Channel:00000084 $d
+     /tmp/ccpBwvj8.s:624    .text.HCA_Process:00000000 $t
+     /tmp/ccpBwvj8.s:631    .text.HCA_Process:00000000 HCA_Process
+     /tmp/ccpBwvj8.s:1080   .text.HCA_Process:000001bc $d
+     /tmp/ccpBwvj8.s:1087   .text.HCA_UpdateChannel:00000000 $t
+     /tmp/ccpBwvj8.s:1094   .text.HCA_UpdateChannel:00000000 HCA_UpdateChannel
+     /tmp/ccpBwvj8.s:1181   .text.HCA_reset_accumulators:00000000 $t
+     /tmp/ccpBwvj8.s:1188   .text.HCA_reset_accumulators:00000000 HCA_reset_accumulators
+     /tmp/ccpBwvj8.s:1282   .text.HCA_reset_accumulators_fast:00000000 $t
+     /tmp/ccpBwvj8.s:1289   .text.HCA_reset_accumulators_fast:00000000 HCA_reset_accumulators_fast
+     /tmp/ccpBwvj8.s:1356   .bss.is_lut_initialized:00000000 $d
+     /tmp/ccpBwvj8.s:1359   .bss.HCA_sin_table:00000000 $d
 
 UNDEFINED SYMBOLS
 sinf

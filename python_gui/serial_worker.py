@@ -26,13 +26,19 @@ from PyQt5.QtCore import QThread, pyqtSignal
 import serial
 
 from protocol import (
+    CMD_GET_COEFFS,
     CMD_PING,
+    CMD_RESET_INTEGRATORS,
     CMD_START,
     CMD_STOP,
+    COEFF_FRAME_SIZE,
+    COEFF_SYNC1,
     FRAME_SIZE,
     PING_REPLY_PREFIX,
     SYNC0,
     SYNC1,
+    build_set_coeff_command,
+    parse_coeff_frame,
     parse_frame,
 )
 
@@ -55,6 +61,12 @@ class SerialWorker(QThread):
         self._streaming = False
         self._cmd_queue: "queue.Queue[bytes]" = queue.Queue()
         self._frame_queue: "queue.Queue" = queue.Queue()  # AdcFrame items, GUI-thread pulls
+        self._coeff_queue: "queue.Queue" = queue.Queue()  # CoeffFrame items, likewise
+        # Plain ints, written here and read from the GUI thread. Only ever
+        # incremented, so a torn read just shows a slightly stale count.
+        self._bytes_read = 0
+        self._frames_ok = 0
+        self._frames_rejected = 0   # sync matched but the frame failed to parse
 
     # --- public control API, safe to call from the GUI thread ---
     # These only enqueue; the actual serial.write() happens inside run(),
@@ -70,19 +82,46 @@ class SerialWorker(QThread):
     def ping(self):
         self._cmd_queue.put(CMD_PING)
 
+    def request_coefficients(self):
+        """Ask the device to report the Kp/Ki of every active HCA channel."""
+        self._cmd_queue.put(CMD_GET_COEFFS)
+
+    def reset_integrators(self):
+        """Clear every channel's integrator state on the device. The device
+        replies with its full coefficient report, which serves as the ack."""
+        self._cmd_queue.put(CMD_RESET_INTEGRATORS)
+
+    def set_coefficient(self, order: int, kp: complex, ki: complex):
+        """Push new gains for one harmonic order. The device echoes the channel
+        back once applied, so the reply -- not this call -- is the confirmation."""
+        self._cmd_queue.put(build_set_coeff_command(order, kp, ki))
+
     def stop(self):
         self._running = False
 
     def drain_frames(self):
         """Non-blocking pull of every AdcFrame parsed since the last call.
         Call this from a GUI-thread timer, not from run()."""
-        frames = []
+        return self._drain(self._frame_queue)
+
+    def stats(self):
+        """(bytes read, frames accepted, frames rejected) since connect. Lets the
+        GUI tell 'no bytes arriving' from 'bytes arriving but not framing'."""
+        return self._bytes_read, self._frames_ok, self._frames_rejected
+
+    def drain_coeff_frames(self):
+        """Non-blocking pull of every CoeffFrame parsed since the last call."""
+        return self._drain(self._coeff_queue)
+
+    @staticmethod
+    def _drain(q):
+        items = []
         while True:
             try:
-                frames.append(self._frame_queue.get_nowait())
+                items.append(q.get_nowait())
             except queue.Empty:
                 break
-        return frames
+        return items
 
     # --- internal, only ever runs on this thread ---
     def _drain_command_queue(self):
@@ -109,6 +148,21 @@ class SerialWorker(QThread):
         self._running = True
         buf = bytearray()
 
+        try:
+            self._read_loop(buf)
+        except Exception as exc:  # noqa: BLE001 - a dead thread must not be silent
+            self.error.emit(f"Serial reader stopped: {type(exc).__name__}: {exc}")
+
+        if self._ser is not None:
+            try:
+                if self._streaming:
+                    self._ser.write(CMD_STOP)
+                self._ser.close()
+            except serial.SerialException:
+                pass
+        self.disconnected.emit()
+
+    def _read_loop(self, buf):
         while self._running:
             self._drain_command_queue()
 
@@ -119,6 +173,7 @@ class SerialWorker(QThread):
                 break
 
             if chunk:
+                self._bytes_read += len(chunk)
                 buf.extend(chunk)
 
                 # Handle the ASCII ping reply separately (not a fixed-size binary frame)
@@ -128,31 +183,52 @@ class SerialWorker(QThread):
                         self.ping_ok.emit(True)
                         del buf[: nl + 1]
 
-                # Resync on the two sync bytes, then parse fixed-size frames
+                # Resync on SYNC0, then let the following byte pick the frame
+                # type: SYNC1 is an ADC sample, COEFF_SYNC1 a coefficient
+                # report. Both are fixed-size and checksummed, so a sync-byte
+                # collision inside float payload data just fails to parse and
+                # the loop slides forward a byte.
                 while True:
-                    idx = buf.find(bytes([SYNC0, SYNC1]))
+                    idx = buf.find(bytes([SYNC0]))
                     if idx == -1:
-                        if len(buf) > FRAME_SIZE * 4:
-                            del buf[: len(buf) - FRAME_SIZE]  # keep tail, avoid unbounded growth
+                        # No frame start in sight. Keep a short tail (a split
+                        # ASCII ping reply lives here too) but never let the
+                        # buffer grow without bound.
+                        if len(buf) > COEFF_FRAME_SIZE * 4:
+                            del buf[: len(buf) - COEFF_FRAME_SIZE]
                         break
                     if idx > 0:
                         del buf[:idx]
-                    if len(buf) < FRAME_SIZE:
+                    if len(buf) < 2:
                         break
 
-                    frame = parse_frame(bytes(buf[:FRAME_SIZE]))
+                    if buf[1] == SYNC1:
+                        # A sample frame parses to a list (it carries a batch);
+                        # a coefficient frame to a single record.
+                        size, parse, sink, batched = (
+                            FRAME_SIZE, parse_frame, self._frame_queue, True
+                        )
+                    elif buf[1] == COEFF_SYNC1:
+                        size, parse, sink, batched = (
+                            COEFF_FRAME_SIZE, parse_coeff_frame, self._coeff_queue, False
+                        )
+                    else:
+                        del buf[:1]  # 0xA5 that starts no frame
+                        continue
+
+                    if len(buf) < size:
+                        break
+
+                    frame = parse(bytes(buf[:size]))
                     if frame is None:
+                        self._frames_rejected += 1
                         del buf[:1]  # bad checksum/sync collision, slide forward one byte
                         continue
 
-                    del buf[:FRAME_SIZE]
-                    self._frame_queue.put(frame)
-
-        if self._ser is not None:
-            try:
-                if self._streaming:
-                    self._ser.write(CMD_STOP)
-                self._ser.close()
-            except serial.SerialException:
-                pass
-        self.disconnected.emit()
+                    self._frames_ok += 1
+                    del buf[:size]
+                    if batched:
+                        for sample in frame:
+                            sink.put(sample)
+                    else:
+                        sink.put(frame)

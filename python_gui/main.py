@@ -37,6 +37,7 @@ from PyQt5.QtWidgets import (
 )
 from serial.tools import list_ports
 
+from coefficients_window import CoefficientsWindow
 from dark_theme import apply_dark_theme
 from export_worker import CsvExportWorker
 from fft_window import FFTWindow
@@ -50,14 +51,23 @@ MAX_LIVE_WINDOW_SECONDS = 30.0
 # each row's spinbox just controls how much of that trailing history it
 # displays, so changing a spinbox never needs to resize a deque.
 MAX_LIVE_SAMPLES = int(MAX_LIVE_WINDOW_SECONDS * STREAM_RATE_HZ)
-MAX_SESSION_SAMPLES = 2_000_000  # ~33 min at 1kHz, bounds RAM use for CSV export
+MAX_SESSION_SAMPLES = 2_000_000  # ~6.7 min at 5kHz, bounds RAM use for CSV export
 
-# GUI redraw cadence. Deliberately decoupled from the 1kHz data rate: the
+# GUI redraw cadence. Deliberately decoupled from the 5kHz data rate: the
 # worker thread just buffers parsed frames (see serial_worker.drain_frames),
 # and this timer pulls+redraws on its own schedule. If a redraw ever takes
 # longer than this interval, the next pull just picks up a bigger batch -
 # there is no per-sample signal backlog that can pile up.
 GUI_UPDATE_INTERVAL_MS = 50  # 20 Hz
+
+# How much stream history each rate/loss estimate is computed over. Long enough
+# that HAL_GetTick's 1ms resolution contributes well under a percent of error.
+RATE_WINDOW_MS = 2000
+# Report the link as healthy only within this much of the nominal rate. The FFT
+# scales frequency by the assumed rate, so a 20% shortfall reads a 50Hz
+# fundamental as 62.5Hz -- worth flagging loudly rather than leaving to be
+# discovered in the spectrum.
+RATE_TOLERANCE = 0.02
 
 
 class SignalRow(QWidget):
@@ -143,8 +153,14 @@ class MainWindow(QMainWindow):
         self.worker: SerialWorker | None = None
         self._csv_worker: CsvExportWorker | None = None
         self._fft_windows = []
+        self._coeff_window: CoefficientsWindow | None = None
         self._session_capped = False
         self._t0_ms = None
+
+        # Rolling stream-integrity estimate, see _update_rate_stats
+        self._rate_window_start_ms = None
+        self._rate_window_first_seq = None
+        self._rate_window_received = 0
 
         self.live_t = deque(maxlen=MAX_LIVE_SAMPLES)
         self.live_buffers = {name: deque(maxlen=MAX_LIVE_SAMPLES) for name in SIGNAL_NAMES}
@@ -196,7 +212,28 @@ class MainWindow(QMainWindow):
         self.stream_btn.clicked.connect(self._on_stream_toggled)
         conn_layout.addWidget(self.stream_btn)
 
+        # Not gated on a connection: the editor is also useful offline for
+        # preparing a coefficient set and saving it to CSV.
+        self.coeff_btn = QPushButton("Coefficients")
+        self.coeff_btn.setToolTip("Read, edit and send the HCA Kp/Ki gains per harmonic")
+        self.coeff_btn.clicked.connect(self._open_coefficients_window)
+        conn_layout.addWidget(self.coeff_btn)
+
         conn_layout.addStretch(1)
+        self.rate_label = QLabel("")
+        self.rate_label.setObjectName("statsLabel")
+        self.rate_label.setToolTip(
+            "Measured from the seq and timestamp_ms fields of the arriving frames.\n\n"
+            "'sent' is how fast the device pushed frames: seq advances only on a\n"
+            "successful push, so a device-side FIFO overflow shows up here as a\n"
+            "rate below nominal, with no gaps.\n\n"
+            "'lost' is the fraction of pushed frames that never arrived -- gaps in\n"
+            "seq, i.e. bytes dropped between the device and this program.\n\n"
+            "Either one skews the FFT: it assumes samples are uniformly spaced at\n"
+            "the nominal rate."
+        )
+        conn_layout.addWidget(self.rate_label)
+
         self.status_label = QLabel("Disconnected")
         self.status_label.setObjectName("statusLabel")
         conn_layout.addWidget(self.status_label)
@@ -368,11 +405,19 @@ class MainWindow(QMainWindow):
         if frames:
             self._on_frames(frames)
 
+        # Drained unconditionally so the queue cannot grow while the
+        # coefficients window is closed.
+        coeff_frames = self.worker.drain_coeff_frames()
+        if coeff_frames and self._coeff_window is not None:
+            self._coeff_window.on_coeff_frames(coeff_frames)
+
     def _on_frames(self, frames):
         if not frames:
             return
         if self._t0_ms is None:
             self._t0_ms = frames[0].timestamp_ms
+
+        self._update_rate_stats(frames)
 
         for f in frames:
             t = (f.timestamp_ms - self._t0_ms) / 1000.0
@@ -446,11 +491,78 @@ class MainWindow(QMainWindow):
                     return i
         return None
 
+    def _update_rate_stats(self, frames):
+        """Estimate the true stream rate and the in-transit loss from the frames
+        themselves, rather than trusting STREAM_RATE_HZ.
+
+        The two failure modes are separable because of how the firmware drops.
+        PushStreamFrame returns *before* incrementing stream_seq when its FIFO is
+        full, so a device that cannot keep up emits fewer frames but a contiguous
+        seq; bytes lost on the wire instead leave holes in seq. Comparing the seq
+        span against the timestamp span therefore gives the device's true push
+        rate, and comparing the received count against that span gives the loss.
+        """
+        last = frames[-1]
+        if self._rate_window_start_ms is None:
+            self._rate_window_start_ms = frames[0].timestamp_ms
+            self._rate_window_first_seq = frames[0].seq
+            self._rate_window_received = 0
+
+        self._rate_window_received += len(frames)
+        span_ms = last.timestamp_ms - self._rate_window_start_ms
+        if span_ms < RATE_WINDOW_MS:
+            return
+
+        span_s = span_ms / 1000.0
+        pushed = last.seq - self._rate_window_first_seq + 1
+        received = self._rate_window_received
+        device_hz = pushed / span_s
+        host_hz = received / span_s
+        lost = 1.0 - (received / pushed) if pushed > 0 else 0.0
+
+        self._rate_window_start_ms = None  # start the next window fresh
+
+        text = f"{host_hz:.0f} Hz in / {device_hz:.0f} Hz sent"
+        if lost > 0.001:
+            text += f" / {lost * 100:.1f}% lost"
+        healthy = abs(host_hz - STREAM_RATE_HZ) <= RATE_TOLERANCE * STREAM_RATE_HZ
+        self.rate_label.setText(text)
+        self.rate_label.setObjectName("statsLabel" if healthy else "statusLabelError")
+        self.rate_label.setStyle(self.rate_label.style())
+
+        if not healthy:
+            culprit = (
+                "frames are being lost in transit (seq gaps) - the link or the "
+                "ST-LINK VCP cannot carry the byte rate"
+                if lost > 0.01
+                else "the device is pushing below nominal (no seq gaps) - its "
+                "stream FIFO is overflowing because the UART cannot drain it"
+            )
+            self.statusBar().showMessage(
+                f"Stream is {host_hz:.0f} Hz, not the {STREAM_RATE_HZ:.0f} Hz the FFT "
+                f"assumes: {culprit}. Spectrum frequencies read "
+                f"{STREAM_RATE_HZ / host_hz:.2f}x high."
+            )
+
     def _get_live_buffer(self, name: str, n: int):
         buf = self.live_buffers.get(name)
         if buf is None or len(buf) < n:
             return np.fromiter(buf, dtype=np.float64) if buf else None
         return np.fromiter(buf, dtype=np.float64)[-n:]
+
+    # ------------------------------------------------------- Coefficients
+    def _open_coefficients_window(self):
+        if self._coeff_window is None:
+            # Hands over a getter, not the worker itself: self.worker is
+            # replaced on every reconnect, and the window outlives that.
+            self._coeff_window = CoefficientsWindow(lambda: self.worker, parent=self)
+            self._coeff_window.destroyed.connect(self._on_coeff_window_closed)
+        self._coeff_window.show()
+        self._coeff_window.raise_()
+        self._coeff_window.activateWindow()
+
+    def _on_coeff_window_closed(self):
+        self._coeff_window = None
 
     # ---------------------------------------------------------------- FFT
     def _open_fft_window(self, name, label):

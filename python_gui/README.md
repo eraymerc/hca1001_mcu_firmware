@@ -8,10 +8,19 @@ UART adapter needed.
 
 ## Wire protocol
 
-One 19-byte frame per sample (sync + seq + timestamp + float voltage +
-float error + checksum), decimated to 1kHz from the 40kHz control loop
-(`ADC_STREAM_DECIMATION` in `main.c`). Full float precision, resyncs
-instantly on any dropped/corrupted byte via the two sync bytes.
+One 75-byte frame per 8 samples (sync + seq + timestamp + 8x[float
+voltage, float error] + checksum), decimated to 5kHz from the 40kHz
+control loop (`ADC_STREAM_DECIMATION` in `main.c`). Full float
+precision, resyncs instantly on any dropped/corrupted byte via the two
+sync bytes.
+
+Samples are batched because framing per sample cost 19 bytes for 8 bytes
+of payload; at 5kHz that 95,000 B/s was more than the ST-LINK VCP would
+carry, and the silently dropped samples made the FFT read frequencies
+25% high. Batching brings it to 46,900 B/s.
+
+Coefficient frames (HCA Kp/Ki) share the link, distinguished by a
+different second sync byte (0x5B vs 0x5A).
 
 ## Install
 
@@ -36,10 +45,12 @@ python main.py
    within a second, you've likely got the wrong port or the firmware
    isn't flashed yet.
 4. Click **Start Streaming**. Each row (Voltage, HCA Error) plots live at
-   ~1 kHz.
+   ~5 kHz. The readout beside the connection status shows the measured
+   stream rate and any frame loss; if it turns red the spectrum's
+   frequency axis is scaled wrong.
 5. Click **FFT** next to any signal to open a live spectrum window for
-   just that signal (2048-sample window, Hann-windowed, updates 4×/sec,
-   Nyquist = 500 Hz).
+   just that signal (8192-sample window, Hann-windowed, updates 4×/sec,
+   Nyquist = 2500 Hz, harmonics tabulated to H50).
 6. Use the checkboxes on each row to choose which signals are included
    when exporting.
 7. **Save Selected as CSV** — writes every captured sample (seq,
@@ -50,7 +61,7 @@ python main.py
 ## Notes
 
 - The session buffer for CSV export is capped at 2,000,000 samples
-  (~33 minutes at 1 kHz) to bound RAM use. Save and reconnect to keep
+  (~6.7 minutes at 5 kHz) to bound RAM use. Save and reconnect to keep
   capturing past that.
 - This GUI intentionally does **not** include any HCA gain-tuning
   controls — it's read-only monitoring.

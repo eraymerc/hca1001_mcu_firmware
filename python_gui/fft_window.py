@@ -19,11 +19,13 @@ from PyQt5.QtWidgets import (
 
 from protocol import STREAM_RATE_HZ
 
-FFT_WINDOW_SAMPLES = 2048     # ~2s of history at 1kHz
+FFT_WINDOW_SAMPLES = 8192     # ~1.6s of history at 5kHz -> ~0.6Hz bins
 UPDATE_INTERVAL_MS = 250
 DB_FLOOR = 1e-12              # clamp before log10 so a true-zero bin doesn't give -inf
 
-HARMONIC_ORDERS = (1, 3, 5, 7, 9)
+MAX_HARMONIC_ORDER = 50
+HARMONIC_ORDERS = tuple(range(1, MAX_HARMONIC_ORDER + 1))
+TABLE_VISIBLE_ROWS = 12       # the rest of the 50 rows are reached by scrolling
 THD_MIN_ORDER = 2             # H1 is the reference; the THD sum starts at H2
 F0_SEARCH_LO_HZ = 30.0
 F0_SEARCH_HI_HZ = 90.0
@@ -50,9 +52,13 @@ class FFTWindow(QMainWindow):
     factor); the dB checkbox applies 20*log10 on top of whichever of those
     is selected.
 
-    Below the plot, the odd harmonics H1/H3/H5/H7/H9 of the detected
-    fundamental are tabulated with amplitude, share of the fundamental and
-    phase. Phase is reported as phi_h - h*phi_1 against the fundamental of
+    Below the plot, harmonics H1..H50 of the detected fundamental are
+    tabulated with amplitude, share of the fundamental and phase. Orders
+    whose frequency lands above the Nyquist of the stream are listed with
+    their frequency but no measurement; at the 5 kHz stream rate Nyquist is
+    2.5 kHz, so all 50 orders of a 50 Hz fundamental are measurable.
+
+    Phase is reported as phi_h - h*phi_1 against the fundamental of
     PHASE_REF_SIGNAL, which makes it independent of where the analysis window
     happens to start -- a raw np.angle() would jitter randomly every refresh.
     Angles follow the usual DFT cosine convention, so a signal thought of as
@@ -105,7 +111,8 @@ class FFTWindow(QMainWindow):
         self.thd_label.setToolTip(
             "THD-F: sqrt(sum of squared harmonic amplitudes, orders 2..N) / fundamental.\n"
             f"N is capped by the {STREAM_RATE_HZ / 2:.0f} Hz Nyquist of the "
-            f"{STREAM_RATE_HZ / 1000:.0f} kHz stream, so at 50 Hz nothing above H10 is measured."
+            f"{STREAM_RATE_HZ / 1000:.1f} kHz stream, so at 50 Hz nothing above "
+            f"H{int((STREAM_RATE_HZ / 2) // DEFAULT_F0_HZ)} is measured."
         )
         controls.addWidget(self.thd_label)
 
@@ -123,6 +130,7 @@ class FFTWindow(QMainWindow):
         )
         self.plot.addItem(self.harmonic_markers)
 
+        # One label per order; the ones above Nyquist simply stay hidden.
         self.harmonic_texts = []
         for h in HARMONIC_ORDERS:
             text = pg.TextItem(f"H{h}", color=MARKER_COLOR, anchor=(0.5, 1.2))
@@ -142,8 +150,9 @@ class FFTWindow(QMainWindow):
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         row_h = 24
         self.table.verticalHeader().setDefaultSectionSize(row_h)
+        visible_rows = min(len(HARMONIC_ORDERS), TABLE_VISIBLE_ROWS)
         self.table.setFixedHeight(
-            self.table.horizontalHeader().height() + row_h * len(HARMONIC_ORDERS) + 4
+            self.table.horizontalHeader().height() + row_h * visible_rows + 4
         )
         for row in range(len(HARMONIC_ORDERS)):
             for col in range(6):
@@ -197,7 +206,7 @@ class FFTWindow(QMainWindow):
 
         Computed from linear peak amplitudes, so the figure is invariant to
         the dB and RMS toggles (both would scale numerator and denominator
-        alike). At 1 kHz the sum truncates around H10 for a 50 Hz
+        alike). At 5 kHz the sum reaches about H50 for a 50 Hz
         fundamental -- h_max is reported so the readout can say so."""
         h_max = int(nyquist // f0)
         squares = 0.0

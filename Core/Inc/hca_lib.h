@@ -38,8 +38,21 @@
  * ============================================================================
  */
 
-/** @brief Maximum number of harmonic channels processed in parallel */
-#define MAX_HARMONICS 5
+/**
+ * @brief Maximum number of harmonic channels processed in parallel.
+ *
+ * Raised so orders up to the 50th can be given their own channel. Slots are
+ * statically reserved (~40 bytes each) but only become active when main()
+ * registers them with HCA_Add_Channel, so this is purely a ceiling: the
+ * per-sample cost tracks active_channel_count, not this number.
+ *
+ * That per-sample cost is the real constraint. HCA_Process walks every active
+ * channel inside the 40kHz control ISR, which has roughly 4250 cycles at
+ * 170MHz, so registering many orders eats the budget quickly. The set of
+ * channels is deliberately fixed at boot -- the host can retune gains over the
+ * link, but never add a channel and change the ISR's workload at runtime.
+ */
+#define MAX_HARMONICS 50
 
 /** @brief Lookup table resolution in bits */
 #define LUT_BITS 12

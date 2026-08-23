@@ -1,4 +1,4 @@
-ARM GAS  /tmp/ccCSo5rM.s 			page 1
+ARM GAS  /tmp/ccNIaU1V.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -12,7 +12,7 @@ ARM GAS  /tmp/ccCSo5rM.s 			page 1
    9              		.eabi_attribute 24, 1
   10              		.eabi_attribute 25, 1
   11              		.eabi_attribute 26, 1
-  12              		.eabi_attribute 30, 1
+  12              		.eabi_attribute 30, 2
   13              		.eabi_attribute 34, 1
   14              		.eabi_attribute 18, 4
   15              		.file	"unipolar_spwm_controller.c"
@@ -22,13 +22,14 @@ ARM GAS  /tmp/ccCSo5rM.s 			page 1
   19              		.file 1 "Core/Src/unipolar_spwm_controller.c"
   20              		.section	.text.USPWM,"ax",%progbits
   21              		.align	1
-  22              		.global	USPWM
-  23              		.syntax unified
-  24              		.thumb
-  25              		.thumb_func
-  27              	USPWM:
-  28              	.LVL0:
-  29              	.LFB329:
+  22              		.p2align 2,,3
+  23              		.global	USPWM
+  24              		.syntax unified
+  25              		.thumb
+  26              		.thumb_func
+  28              	USPWM:
+  29              	.LVL0:
+  30              	.LFB329:
    1:Core/Src/unipolar_spwm_controller.c **** /*
    2:Core/Src/unipolar_spwm_controller.c ****  * unipolar_spwm_controller.c
    3:Core/Src/unipolar_spwm_controller.c ****  *
@@ -52,122 +53,113 @@ ARM GAS  /tmp/ccCSo5rM.s 			page 1
   21:Core/Src/unipolar_spwm_controller.c ****  */
   22:Core/Src/unipolar_spwm_controller.c **** unsigned int USPWM(TIM_TypeDef *tim, float instant_signal, uint32_t arr_val, float modulation_index
   23:Core/Src/unipolar_spwm_controller.c **** {
-  30              		.loc 1 23 1 view -0
-  31              		.cfi_startproc
-  32              		@ args = 0, pretend = 0, frame = 0
-  33              		@ frame_needed = 0, uses_anonymous_args = 0
-  34              		@ link register save eliminated.
-  35              		.loc 1 23 1 is_stmt 0 view .LVU1
-ARM GAS  /tmp/ccCSo5rM.s 			page 2
+  31              		.loc 1 23 1 view -0
+  32              		.cfi_startproc
+  33              		@ args = 0, pretend = 0, frame = 0
+  34              		@ frame_needed = 0, uses_anonymous_args = 0
+  35              		@ link register save eliminated.
+ARM GAS  /tmp/ccNIaU1V.s 			page 2
 
 
-  36 0000 0346     		mov	r3, r0
   24:Core/Src/unipolar_spwm_controller.c ****     /* 1. Guvenlik Sinirlamasi (Saturation) */
   25:Core/Src/unipolar_spwm_controller.c ****     /* Sinyal -1.0 ile 1.0 disina cikarsa PWM bozulmamasi icin kirpilir */
   26:Core/Src/unipolar_spwm_controller.c ****     if (instant_signal > 1.0f) instant_signal = 1.0f;
-  37              		.loc 1 26 5 is_stmt 1 view .LVU2
-  38              		.loc 1 26 8 is_stmt 0 view .LVU3
-  39 0002 F7EE007A 		vmov.f32	s15, #1.0e+0
-  40 0006 B4EEE70A 		vcmpe.f32	s0, s15
-  41 000a F1EE10FA 		vmrs	APSR_nzcv, FPSCR
-  42 000e 1ADD     		ble	.L5
-  43              		.loc 1 26 47 discriminator 1 view .LVU4
-  44 0010 B7EE000A 		vmov.f32	s0, #1.0e+0
-  45              	.LVL1:
-  46              	.L2:
+  36              		.loc 1 26 5 view .LVU1
+  37              		.loc 1 26 8 is_stmt 0 view .LVU2
+  38 0000 F7EE007A 		vmov.f32	s15, #1.0e+0
+  39 0004 B4EEE70A 		vcmpe.f32	s0, s15
+  40 0008 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+  23:Core/Src/unipolar_spwm_controller.c ****     /* 1. Guvenlik Sinirlamasi (Saturation) */
+  41              		.loc 1 23 1 view .LVU3
+  42 000c 0346     		mov	r3, r0
+  43              		.loc 1 26 8 view .LVU4
+  44 000e 0ADC     		bgt	.L2
   27:Core/Src/unipolar_spwm_controller.c ****     if (instant_signal < -1.0f) instant_signal = -1.0f;
+  45              		.loc 1 27 5 is_stmt 1 view .LVU5
   28:Core/Src/unipolar_spwm_controller.c **** 
   29:Core/Src/unipolar_spwm_controller.c ****     /* 2. Duty Cycle Hesaplamasi */
   30:Core/Src/unipolar_spwm_controller.c ****     /* Center Aligned Mod icin formül: Duty = (ARR / 2) * (1 + Sinyal)
   31:Core/Src/unipolar_spwm_controller.c ****        Sinyal 0 iken Duty %50 olur (Tasima dalgasi ile kesisim noktasi) */
   32:Core/Src/unipolar_spwm_controller.c ****     float duty_float = ((float)arr_val / 2.0f) * (1.0f + instant_signal* modulation_index);
-  47              		.loc 1 32 5 is_stmt 1 view .LVU5
-  48              		.loc 1 32 25 is_stmt 0 view .LVU6
-  49 0014 07EE901A 		vmov	s15, r1	@ int
-  50 0018 F8EE677A 		vcvt.f32.u32	s15, s15
-  51              		.loc 1 32 40 view .LVU7
-  52 001c B6EE007A 		vmov.f32	s14, #5.0e-1
-  53 0020 67EE877A 		vmul.f32	s15, s15, s14
-  54              		.loc 1 32 72 view .LVU8
-  55 0024 20EE200A 		vmul.f32	s0, s0, s1
-  56              	.LVL2:
-  57              		.loc 1 32 56 view .LVU9
-  58 0028 B7EE007A 		vmov.f32	s14, #1.0e+0
-  59 002c 30EE070A 		vadd.f32	s0, s0, s14
-  60              		.loc 1 32 11 view .LVU10
-  61 0030 67EE807A 		vmul.f32	s15, s15, s0
-  62              	.LVL3:
+  46              		.loc 1 32 72 is_stmt 0 view .LVU6
+  47 0010 FFEE007A 		vmov.f32	s15, #-1.0e+0
+  48 0014 F4EEC07A 		vcmpe.f32	s15, s0
+  49 0018 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+  50 001c D8BF     		it	le
+  51 001e F0EE407A 		vmovle.f32	s15, s0
+  52 0022 60EEA70A 		vmul.f32	s1, s1, s15
+  53              	.LVL1:
+  54              	.L2:
+  55              		.loc 1 32 5 is_stmt 1 view .LVU7
   33:Core/Src/unipolar_spwm_controller.c **** 
   34:Core/Src/unipolar_spwm_controller.c ****     /* 3. Integer Donusumu */
   35:Core/Src/unipolar_spwm_controller.c ****     uint32_t ccr1_val = (uint32_t)duty_float;
-  63              		.loc 1 35 5 is_stmt 1 view .LVU11
-  64              		.loc 1 35 14 is_stmt 0 view .LVU12
-  65 0034 FCEEE77A 		vcvt.u32.f32	s15, s15
-  66              	.LVL4:
-  67              		.loc 1 35 14 view .LVU13
-  68 0038 17EE900A 		vmov	r0, s15	@ int
-  69              	.LVL5:
+  56              		.loc 1 35 5 view .LVU8
+  32:Core/Src/unipolar_spwm_controller.c **** 
+  57              		.loc 1 32 40 is_stmt 0 view .LVU9
+  58 0026 07EE901A 		vmov	s15, r1	@ int
+  32:Core/Src/unipolar_spwm_controller.c **** 
+  59              		.loc 1 32 56 view .LVU10
+  60 002a B7EE007A 		vmov.f32	s14, #1.0e+0
+  61 002e 70EE870A 		vadd.f32	s1, s1, s14
+  62              	.LVL2:
+  32:Core/Src/unipolar_spwm_controller.c **** 
+  63              		.loc 1 32 40 view .LVU11
+  64 0032 FBEEEF7A 		vcvt.f32.u32	s15, s15, #1
+  32:Core/Src/unipolar_spwm_controller.c **** 
+  65              		.loc 1 32 11 view .LVU12
+  66 0036 67EEA07A 		vmul.f32	s15, s15, s1
+  67              	.LVL3:
+  68              		.loc 1 35 14 view .LVU13
+  69 003a FCEEE77A 		vcvt.u32.f32	s15, s15
+  70              	.LVL4:
+  71              		.loc 1 35 14 view .LVU14
+  72 003e 17EE900A 		vmov	r0, s15	@ int
+  73              	.LVL5:
   36:Core/Src/unipolar_spwm_controller.c **** 
   37:Core/Src/unipolar_spwm_controller.c ****     /* 4. Unipolar Mantigi (Leg B Hesabi) */
+ARM GAS  /tmp/ccNIaU1V.s 			page 3
+
+
   38:Core/Src/unipolar_spwm_controller.c ****     /* Leg B (CH2), Leg A (CH1) ile zıt çalışmalıdır.
   39:Core/Src/unipolar_spwm_controller.c ****        Yani sinyal pozitifken CH1 artar, CH2 azalır.
   40:Core/Src/unipolar_spwm_controller.c ****        Matematiksel olarak: CCR2 = ARR - CCR1 */
   41:Core/Src/unipolar_spwm_controller.c ****     uint32_t ccr2_val = arr_val - ccr1_val;
-  70              		.loc 1 41 5 is_stmt 1 view .LVU14
-  71              		.loc 1 41 14 is_stmt 0 view .LVU15
-  72 003c 091A     		subs	r1, r1, r0
-  73              	.LVL6:
+  74              		.loc 1 41 5 is_stmt 1 view .LVU15
+  75              		.loc 1 41 14 is_stmt 0 view .LVU16
+  76 0042 091A     		subs	r1, r1, r0
+  77              	.LVL6:
   42:Core/Src/unipolar_spwm_controller.c **** 
-ARM GAS  /tmp/ccCSo5rM.s 			page 3
-
-
   43:Core/Src/unipolar_spwm_controller.c ****     /* 5. Registerlara Yazma */
   44:Core/Src/unipolar_spwm_controller.c ****     /* Doğrudan Timer Registerlarina erisim (En hizli yontem) */
   45:Core/Src/unipolar_spwm_controller.c ****     tim->CCR1 = ccr1_val;
-  74              		.loc 1 45 5 is_stmt 1 view .LVU16
-  75              		.loc 1 45 15 is_stmt 0 view .LVU17
-  76 003e C3ED0D7A 		vstr.32	s15, [r3, #52]	@ int
+  78              		.loc 1 45 5 is_stmt 1 view .LVU17
+  79              		.loc 1 45 15 is_stmt 0 view .LVU18
+  80 0044 C3ED0D7A 		vstr.32	s15, [r3, #52]	@ int
   46:Core/Src/unipolar_spwm_controller.c ****     tim->CCR2 = ccr2_val;
-  77              		.loc 1 46 5 is_stmt 1 view .LVU18
-  78              		.loc 1 46 15 is_stmt 0 view .LVU19
-  79 0042 9963     		str	r1, [r3, #56]
+  81              		.loc 1 46 5 is_stmt 1 view .LVU19
+  82              		.loc 1 46 15 is_stmt 0 view .LVU20
+  83 0048 9963     		str	r1, [r3, #56]
   47:Core/Src/unipolar_spwm_controller.c **** 
   48:Core/Src/unipolar_spwm_controller.c ****     /* Opsiyonel: Hesaplanan degeri geri don */
   49:Core/Src/unipolar_spwm_controller.c ****     return ccr1_val;
-  80              		.loc 1 49 5 is_stmt 1 view .LVU20
+  84              		.loc 1 49 5 is_stmt 1 view .LVU21
   50:Core/Src/unipolar_spwm_controller.c **** }
-  81              		.loc 1 50 1 is_stmt 0 view .LVU21
-  82 0044 7047     		bx	lr
-  83              	.LVL7:
-  84              	.L5:
-  27:Core/Src/unipolar_spwm_controller.c **** 
-  85              		.loc 1 27 5 is_stmt 1 view .LVU22
-  27:Core/Src/unipolar_spwm_controller.c **** 
-  86              		.loc 1 27 8 is_stmt 0 view .LVU23
-  87 0046 FFEE007A 		vmov.f32	s15, #-1.0e+0
-  88 004a B4EEE70A 		vcmpe.f32	s0, s15
-  89 004e F1EE10FA 		vmrs	APSR_nzcv, FPSCR
-  90 0052 DFD5     		bpl	.L2
-  27:Core/Src/unipolar_spwm_controller.c **** 
-  91              		.loc 1 27 48 discriminator 1 view .LVU24
-  92 0054 BFEE000A 		vmov.f32	s0, #-1.0e+0
-  93              	.LVL8:
-  27:Core/Src/unipolar_spwm_controller.c **** 
-  94              		.loc 1 27 48 discriminator 1 view .LVU25
-  95 0058 DCE7     		b	.L2
-  96              		.cfi_endproc
-  97              	.LFE329:
-  99              		.text
- 100              	.Letext0:
- 101              		.file 2 "/usr/arm-none-eabi/include/machine/_default_types.h"
- 102              		.file 3 "/usr/arm-none-eabi/include/sys/_stdint.h"
- 103              		.file 4 "Drivers/CMSIS/Device/ST/STM32G4xx/Include/stm32g474xx.h"
-ARM GAS  /tmp/ccCSo5rM.s 			page 4
+  85              		.loc 1 50 1 is_stmt 0 view .LVU22
+  86 004a 7047     		bx	lr
+  87              		.cfi_endproc
+  88              	.LFE329:
+  90              		.text
+  91              	.Letext0:
+  92              		.file 2 "/usr/arm-none-eabi/include/machine/_default_types.h"
+  93              		.file 3 "/usr/arm-none-eabi/include/sys/_stdint.h"
+  94              		.file 4 "Drivers/CMSIS/Device/ST/STM32G4xx/Include/stm32g474xx.h"
+ARM GAS  /tmp/ccNIaU1V.s 			page 4
 
 
 DEFINED SYMBOLS
                             *ABS*:00000000 unipolar_spwm_controller.c
-     /tmp/ccCSo5rM.s:21     .text.USPWM:00000000 $t
-     /tmp/ccCSo5rM.s:27     .text.USPWM:00000000 USPWM
+     /tmp/ccNIaU1V.s:21     .text.USPWM:00000000 $t
+     /tmp/ccNIaU1V.s:28     .text.USPWM:00000000 USPWM
 
 NO UNDEFINED SYMBOLS

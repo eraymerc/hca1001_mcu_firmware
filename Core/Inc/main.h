@@ -39,26 +39,71 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 
+/** Samples carried by one AdcStreamFrame_t. */
+#define STREAM_BATCH_SAMPLES 8U
+
 /**
- * @brief Binary frame sent over USART2 (DMA) for ADC1/HCA live monitoring.
+ * @brief Binary frame sent over LPUART1 for ADC1/HCA live monitoring.
  *
- * Full float precision, one frame per sample -- affordable again now that
- * the link runs at 2,000,000 baud (200,000 B/s capacity). Decimated to
- * 1kHz from the 40kHz control loop (see ADC_STREAM_DECIMATION in main.c);
- * 19 bytes * 1000 Hz = 19,000 B/s, comfortably within budget.
+ * Carries STREAM_BATCH_SAMPLES samples, not one. Sending a frame per sample
+ * cost 19 bytes for 8 bytes of payload, and at the 5kHz stream rate that
+ * 95,000 B/s exceeded what the ST-LINK's virtual COM port would carry: roughly
+ * one sample in five went missing, and the host -- which derives frequency from
+ * an assumed sample rate -- read a 50Hz fundamental as 62.5Hz.
+ *
+ * Batching amortises the 11 bytes of framing over 8 samples: 75 bytes per
+ * batch is 9.4 B/sample, so 5kHz now needs 46,900 B/s, half of what it did. It
+ * also drops the transmit rate from 5,000 to 625 frames/s, which cuts the time
+ * the main loop spends inside the blocking HAL_UART_Transmit by the same
+ * factor.
  *
  * Layout is fixed and packed so the Python host can parse it with
- * struct.unpack('<BBIIffB', ...) without any padding surprises.
+ * struct.unpack('<BBII' + 'ff'*8 + 'B', ...) without any padding surprises.
  */
 typedef struct __attribute__((packed)) {
     uint8_t  sync0;         /**< 0xA5 */
     uint8_t  sync1;         /**< 0x5A */
-    uint32_t seq;           /**< Frame sequence number, increments every pushed frame */
-    uint32_t timestamp_ms;  /**< HAL_GetTick() at push time */
-    float    voltage;       /**< ADC1 channel, scaled to actual sense volts */
-    float    error;         /**< HCA control loop error signal (r_t - measured) */
-    uint8_t  checksum;      /**< 8-bit additive checksum over seq..error */
+    uint32_t seq;           /**< Batch sequence number, increments every pushed frame */
+    uint32_t timestamp_ms;  /**< HAL_GetTick() when samples[0] was taken */
+    struct {
+        float voltage;      /**< ADC1 channel, scaled to actual sense volts */
+        float error;        /**< HCA control loop error signal (r_t - measured) */
+    } samples[STREAM_BATCH_SAMPLES];
+    uint8_t  checksum;      /**< 8-bit additive checksum over seq..samples */
 } AdcStreamFrame_t;
+
+/* The host hard-codes these sizes in its struct format strings (python_gui/
+ * protocol.py). Catch any padding or layout drift here rather than as garbled
+ * samples on the wire. */
+_Static_assert(sizeof(AdcStreamFrame_t) == 75, "AdcStreamFrame_t must stay 75 bytes");
+
+/**
+ * @brief Coefficient report frame sent over LPUART1, one per active HCA channel.
+ *
+ * Sent in reply to STREAM_CMD_GET_COEFF (all channels) and as an echo of a
+ * STREAM_CMD_SET_COEFF that was applied (just the channel that changed), so
+ * the host always displays gains the controller is actually running.
+ *
+ * Uses a different second sync byte (COEFF_SYNC1) than the ADC stream frame,
+ * which lets the host demultiplex the two on one link: it resyncs on
+ * STREAM_SYNC0 and then picks the frame length from the byte that follows.
+ *
+ * Packed for struct.unpack('<BBBBBffffB', ...) on the host -- 22 bytes.
+ */
+typedef struct __attribute__((packed)) {
+    uint8_t  sync0;         /**< 0xA5 */
+    uint8_t  sync1;         /**< 0x5B */
+    uint8_t  index;         /**< Channel slot, 0-based */
+    uint8_t  count;         /**< Number of active channels, so the host knows when it has them all */
+    uint8_t  order;         /**< Harmonic order of this channel */
+    float    kp_real;       /**< Complex proportional gain, real part */
+    float    kp_imag;       /**< Complex proportional gain, imaginary part */
+    float    ki_real;       /**< Complex integral gain, real part */
+    float    ki_imag;       /**< Complex integral gain, imaginary part */
+    uint8_t  checksum;      /**< 8-bit additive checksum over index..ki_imag */
+} HcaCoeffFrame_t;
+
+_Static_assert(sizeof(HcaCoeffFrame_t) == 22, "HcaCoeffFrame_t must stay 22 bytes");
 
 /* USER CODE END ET */
 
@@ -72,6 +117,23 @@ typedef struct __attribute__((packed)) {
 #define STREAM_CMD_START     'S'   /**< Start streaming frames */
 #define STREAM_CMD_STOP      'X'   /**< Stop streaming frames */
 #define STREAM_CMD_PING      'P'   /**< Request identification reply */
+#define STREAM_CMD_GET_COEFF 'G'   /**< Report every channel's Kp/Ki as HcaCoeffFrame_t */
+#define STREAM_CMD_SET_COEFF 'C'   /**< Followed by COEFF_CMD_PAYLOAD_LEN payload bytes, see below */
+#define STREAM_CMD_RESET_INT 'R'   /**< Clear every channel's integrator and the disperser window */
+
+/** Second sync byte of HcaCoeffFrame_t; distinguishes it from an AdcStreamFrame_t */
+#define COEFF_SYNC1         0x5BU
+
+/**
+ * Payload following a STREAM_CMD_SET_COEFF byte, little-endian and packed:
+ *   uint8_t order; float kp_real, kp_imag, ki_real, ki_imag; uint8_t checksum;
+ * The checksum is the 8-bit additive sum over the preceding 17 bytes.
+ */
+#define COEFF_CMD_PAYLOAD_LEN  18U
+
+/** A half-sent SET_COEFF payload is abandoned after this long, so a host that
+ *  dies mid-command cannot leave the parser swallowing later S/X/P bytes. */
+#define COEFF_CMD_TIMEOUT_MS   100U
 
 #define STREAM_PING_REPLY    "HCA1001_ADC_STREAM_V1\n"
 

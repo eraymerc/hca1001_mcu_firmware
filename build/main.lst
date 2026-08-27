@@ -1,4 +1,4 @@
-ARM GAS  /tmp/ccM9DiHI.s 			page 1
+ARM GAS  /tmp/ccd6fuMZ.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -58,7 +58,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
   27:Core/Src/main.c **** #include "unipolar_spwm_controller.h"
   28:Core/Src/main.c **** /* USER CODE END Includes */
   29:Core/Src/main.c **** 
-ARM GAS  /tmp/ccM9DiHI.s 			page 2
+ARM GAS  /tmp/ccd6fuMZ.s 			page 2
 
 
   30:Core/Src/main.c **** /* Private typedef -----------------------------------------------------------*/
@@ -118,7 +118,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
   84:Core/Src/main.c **** 
   85:Core/Src/main.c **** ADC_HandleTypeDef hadc1;
   86:Core/Src/main.c **** DMA_HandleTypeDef hdma_adc1;
-ARM GAS  /tmp/ccM9DiHI.s 			page 3
+ARM GAS  /tmp/ccd6fuMZ.s 			page 3
 
 
   87:Core/Src/main.c **** 
@@ -178,7 +178,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  141:Core/Src/main.c **** 
  142:Core/Src/main.c ****   /* USER CODE BEGIN 1 */
  143:Core/Src/main.c **** 
-ARM GAS  /tmp/ccM9DiHI.s 			page 4
+ARM GAS  /tmp/ccd6fuMZ.s 			page 4
 
 
  144:Core/Src/main.c ****   /* USER CODE END 1 */
@@ -238,7 +238,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  198:Core/Src/main.c ****   //HCA_Add_Channel(&hca, 17, kp17, ki17);    
  199:Core/Src/main.c ****   
  200:Core/Src/main.c ****   /* USER CODE END Init */
-ARM GAS  /tmp/ccM9DiHI.s 			page 5
+ARM GAS  /tmp/ccd6fuMZ.s 			page 5
 
 
  201:Core/Src/main.c **** 
@@ -298,7 +298,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  255:Core/Src/main.c ****      *     }
  256:Core/Src/main.c ****      *   }
  257:Core/Src/main.c ****      */
-ARM GAS  /tmp/ccM9DiHI.s 			page 6
+ARM GAS  /tmp/ccd6fuMZ.s 			page 6
 
 
  258:Core/Src/main.c ****     if (stream_fifo_tail != stream_fifo_head)
@@ -358,7 +358,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  312:Core/Src/main.c ****     Error_Handler();
  313:Core/Src/main.c ****   }
  314:Core/Src/main.c **** 
-ARM GAS  /tmp/ccM9DiHI.s 			page 7
+ARM GAS  /tmp/ccd6fuMZ.s 			page 7
 
 
  315:Core/Src/main.c ****   /** Enables the Clock Security System
@@ -418,7 +418,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  369:Core/Src/main.c **** 
  370:Core/Src/main.c ****   /** Configure Regular Channel
  371:Core/Src/main.c ****   */
-ARM GAS  /tmp/ccM9DiHI.s 			page 8
+ARM GAS  /tmp/ccd6fuMZ.s 			page 8
 
 
  372:Core/Src/main.c ****   sConfig.Channel = ADC_CHANNEL_1;
@@ -478,7 +478,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  426:Core/Src/main.c ****   {
  427:Core/Src/main.c ****     Error_Handler();
  428:Core/Src/main.c ****   }
-ARM GAS  /tmp/ccM9DiHI.s 			page 9
+ARM GAS  /tmp/ccd6fuMZ.s 			page 9
 
 
  429:Core/Src/main.c ****   /* USER CODE BEGIN LPUART1_Init 2 */
@@ -538,7 +538,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  483:Core/Src/main.c ****   if (HAL_TIM_PWM_ConfigChannel(&htim8, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
  484:Core/Src/main.c ****   {
  485:Core/Src/main.c ****     Error_Handler();
-ARM GAS  /tmp/ccM9DiHI.s 			page 10
+ARM GAS  /tmp/ccd6fuMZ.s 			page 10
 
 
  486:Core/Src/main.c ****   }
@@ -598,7 +598,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  540:Core/Src/main.c ****   * @param None
  541:Core/Src/main.c ****   * @retval None
  542:Core/Src/main.c ****   */
-ARM GAS  /tmp/ccM9DiHI.s 			page 11
+ARM GAS  /tmp/ccd6fuMZ.s 			page 11
 
 
  543:Core/Src/main.c **** static void MX_GPIO_Init(void)
@@ -658,7 +658,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  597:Core/Src/main.c **** /**
  598:Core/Src/main.c ****  * ADC1 in differential mode reports Vinp-Vinn as a 12-bit *straight offset
  599:Core/Src/main.c ****  * binary* code (0..4095, unsigned) -- NOT two's complement. Code 2048
-ARM GAS  /tmp/ccM9DiHI.s 			page 12
+ARM GAS  /tmp/ccd6fuMZ.s 			page 12
 
 
  600:Core/Src/main.c ****  * (0x800) means Vinp-Vinn = 0V; 0 means -VREF; 4095 means ~+VREF. Center
@@ -718,7 +718,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  654:Core/Src/main.c **** 
  655:Core/Src/main.c ****     uint32_t theta = angle_fundamental;
  656:Core/Src/main.c ****     float r_t = HCA_fastSin(theta)*reference_multiplier;
-ARM GAS  /tmp/ccM9DiHI.s 			page 13
+ARM GAS  /tmp/ccd6fuMZ.s 			page 13
 
 
  657:Core/Src/main.c **** 
@@ -778,7 +778,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  711:Core/Src/main.c ****     }
  712:Core/Src/main.c **** 
  713:Core/Src/main.c ****     AdcStreamFrame_t *f = &stream_fifo[stream_fifo_head];
-ARM GAS  /tmp/ccM9DiHI.s 			page 14
+ARM GAS  /tmp/ccd6fuMZ.s 			page 14
 
 
  714:Core/Src/main.c ****     *f              = stream_accum;
@@ -838,7 +838,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  768:Core/Src/main.c **** }
  769:Core/Src/main.c **** 
  770:Core/Src/main.c **** /* ---- SET_COEFF payload reassembly ----------------------------------------
-ARM GAS  /tmp/ccM9DiHI.s 			page 15
+ARM GAS  /tmp/ccd6fuMZ.s 			page 15
 
 
  771:Core/Src/main.c ****  * The main loop hands us one byte at a time, so a multi-byte command has to be
@@ -898,7 +898,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
   52              	.LCFI1:
   53              		.cfi_def_cfa_offset 32
  796:Core/Src/main.c ****     f.sync1   = COEFF_SYNC1;
-ARM GAS  /tmp/ccM9DiHI.s 			page 16
+ARM GAS  /tmp/ccd6fuMZ.s 			page 16
 
 
   54              		.loc 1 796 15 view .LVU9
@@ -958,7 +958,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  783:Core/Src/main.c **** {
   90              		.loc 1 783 16 view .LVU27
   91              	.LBB106:
-ARM GAS  /tmp/ccM9DiHI.s 			page 17
+ARM GAS  /tmp/ccd6fuMZ.s 			page 17
 
 
  785:Core/Src/main.c ****     for (uint16_t i = 0; i < len; i++) {
@@ -1018,7 +1018,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  129              		.loc 1 762 13 view .LVU43
  130              	.LBB110:
  764:Core/Src/main.c ****     {
-ARM GAS  /tmp/ccM9DiHI.s 			page 18
+ARM GAS  /tmp/ccd6fuMZ.s 			page 18
 
 
  131              		.loc 1 764 5 view .LVU44
@@ -1078,7 +1078,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  176              		.loc 1 818 5 view .LVU52
  815:Core/Src/main.c ****     HcaRefFrame_t f;
  177              		.loc 1 815 1 is_stmt 0 view .LVU53
-ARM GAS  /tmp/ccM9DiHI.s 			page 19
+ARM GAS  /tmp/ccd6fuMZ.s 			page 19
 
 
  178 0000 00B5     		push	{lr}
@@ -1138,7 +1138,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  215              	.LBB113:
  786:Core/Src/main.c ****         sum += p[i];
  216              		.loc 1 786 10 view .LVU71
-ARM GAS  /tmp/ccM9DiHI.s 			page 20
+ARM GAS  /tmp/ccd6fuMZ.s 			page 20
 
 
  786:Core/Src/main.c ****         sum += p[i];
@@ -1198,7 +1198,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  255              	.LBE115:
  256              	.LBE114:
  827:Core/Src/main.c ****     HAL_UART_Transmit(&hlpuart1, (uint8_t*)&f, (uint16_t)sizeof(f), 10);
-ARM GAS  /tmp/ccM9DiHI.s 			page 21
+ARM GAS  /tmp/ccd6fuMZ.s 			page 21
 
 
  257              		.loc 1 827 5 view .LVU87
@@ -1258,7 +1258,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  308 000a FFF7FEFF 		bl	memset
  309              	.LVL15:
  278:Core/Src/main.c **** 
-ARM GAS  /tmp/ccM9DiHI.s 			page 22
+ARM GAS  /tmp/ccd6fuMZ.s 			page 22
 
 
  310              		.loc 1 278 3 is_stmt 1 view .LVU93
@@ -1318,7 +1318,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  296:Core/Src/main.c ****   {
  346              		.loc 1 296 3 is_stmt 1 view .LVU112
  296:Core/Src/main.c ****   {
-ARM GAS  /tmp/ccM9DiHI.s 			page 23
+ARM GAS  /tmp/ccd6fuMZ.s 			page 23
 
 
  347              		.loc 1 296 7 is_stmt 0 view .LVU113
@@ -1378,7 +1378,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  873:Core/Src/main.c **** 
  874:Core/Src/main.c **** /** Validate a fully received SET_REF payload and apply it. */
  875:Core/Src/main.c **** static void ApplyRefCommand(void)
-ARM GAS  /tmp/ccM9DiHI.s 			page 24
+ARM GAS  /tmp/ccd6fuMZ.s 			page 24
 
 
  876:Core/Src/main.c **** {
@@ -1438,7 +1438,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  930:Core/Src/main.c ****              * put a transient on the output. The ~16KB memset costs roughly one
  931:Core/Src/main.c ****              * 40kHz ISR period.
  932:Core/Src/main.c ****              *
-ARM GAS  /tmp/ccM9DiHI.s 			page 25
+ARM GAS  /tmp/ccd6fuMZ.s 			page 25
 
 
  933:Core/Src/main.c ****              * Gains are untouched, so echoing them back doubles as the ack. */
@@ -1498,7 +1498,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  356              		.loc 1 985 3 view .LVU117
  357              	.LBB117:
  358              	.LBI117:
-ARM GAS  /tmp/ccM9DiHI.s 			page 26
+ARM GAS  /tmp/ccd6fuMZ.s 			page 26
 
 
  359              		.file 2 "Drivers/CMSIS/Include/cmsis_gcc.h"
@@ -1558,7 +1558,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
   54:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
   55:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __USED
   56:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __USED                                 __attribute__((used))
-ARM GAS  /tmp/ccM9DiHI.s 			page 27
+ARM GAS  /tmp/ccd6fuMZ.s 			page 27
 
 
   57:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
@@ -1618,7 +1618,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  111:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __ALIGNED(x)                           __attribute__((aligned(x)))
  112:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
  113:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __RESTRICT
-ARM GAS  /tmp/ccM9DiHI.s 			page 28
+ARM GAS  /tmp/ccd6fuMZ.s 			page 28
 
 
  114:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __RESTRICT                             __restrict
@@ -1678,7 +1678,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  168:Drivers/CMSIS/Include/cmsis_gcc.h **** 
  169:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __INITIAL_SP
  170:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __INITIAL_SP              __StackTop
-ARM GAS  /tmp/ccM9DiHI.s 			page 29
+ARM GAS  /tmp/ccd6fuMZ.s 			page 29
 
 
  171:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
@@ -1738,7 +1738,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  988:Core/Src/main.c ****   }
  373              		.loc 1 988 3 view .LVU121
  986:Core/Src/main.c ****   while (1)
-ARM GAS  /tmp/ccM9DiHI.s 			page 30
+ARM GAS  /tmp/ccd6fuMZ.s 			page 30
 
 
  374              		.loc 1 986 9 view .LVU122
@@ -1798,7 +1798,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  410              		.loc 2 207 27 view .LVU141
  411              	.LBB121:
  412              		.loc 2 209 3 view .LVU142
-ARM GAS  /tmp/ccM9DiHI.s 			page 31
+ARM GAS  /tmp/ccd6fuMZ.s 			page 31
 
 
  413              		.syntax unified
@@ -1858,7 +1858,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  458              		.thumb_func
  460              	main:
  461              	.LFB329:
-ARM GAS  /tmp/ccM9DiHI.s 			page 32
+ARM GAS  /tmp/ccd6fuMZ.s 			page 32
 
 
  140:Core/Src/main.c **** 
@@ -1918,7 +1918,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  167:Core/Src/main.c **** 
  503              		.loc 1 167 13 view .LVU164
  504 0024 B049     		ldr	r1, .L100+20
-ARM GAS  /tmp/ccM9DiHI.s 			page 33
+ARM GAS  /tmp/ccd6fuMZ.s 			page 33
 
 
  505 0026 0F91     		str	r1, [sp, #60]	@ float
@@ -1978,7 +1978,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  543 0062 CDF89CC0 		str	ip, [sp, #156]	@ float
  166:Core/Src/main.c ****   Complex_t ki3 = {0.0508f, -0.8f}; //real, complex
  544              		.loc 1 166 13 view .LVU181
-ARM GAS  /tmp/ccM9DiHI.s 			page 34
+ARM GAS  /tmp/ccd6fuMZ.s 			page 34
 
 
  545 0066 0D92     		str	r2, [sp, #52]	@ float
@@ -2038,7 +2038,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  178:Core/Src/main.c ****   Complex_t ki11 = {0.05f, 1.0025f}; //real, complex
  581              		.loc 1 178 3 view .LVU200
  179:Core/Src/main.c **** 
-ARM GAS  /tmp/ccM9DiHI.s 			page 35
+ARM GAS  /tmp/ccd6fuMZ.s 			page 35
 
 
  582              		.loc 1 179 3 view .LVU201
@@ -2098,7 +2098,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  624              	.LVL25:
  194:Core/Src/main.c ****   HCA_Add_Channel(&hca, 11, kp11, ki11);  
  625              		.loc 1 194 3 view .LVU214
-ARM GAS  /tmp/ccM9DiHI.s 			page 36
+ARM GAS  /tmp/ccd6fuMZ.s 			page 36
 
 
  626 00e8 7C48     		ldr	r0, .L100+8
@@ -2158,7 +2158,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  671              		.loc 1 550 3 view .LVU223
  672 014c 704B     		ldr	r3, .L100+60
  673 014e D86C     		ldr	r0, [r3, #76]
-ARM GAS  /tmp/ccM9DiHI.s 			page 37
+ARM GAS  /tmp/ccd6fuMZ.s 			page 37
 
 
  674 0150 40F00400 		orr	r0, r0, #4
@@ -2218,7 +2218,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  713              		.loc 1 552 3 view .LVU238
  553:Core/Src/main.c **** 
  714              		.loc 1 553 3 view .LVU239
-ARM GAS  /tmp/ccM9DiHI.s 			page 38
+ARM GAS  /tmp/ccd6fuMZ.s 			page 38
 
 
  715              	.LBB207:
@@ -2278,7 +2278,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  753              		.loc 1 523 3 view .LVU255
  754 01a8 9C6C     		ldr	r4, [r3, #72]
  755 01aa 44F00104 		orr	r4, r4, #1
-ARM GAS  /tmp/ccM9DiHI.s 			page 39
+ARM GAS  /tmp/ccd6fuMZ.s 			page 39
 
 
  756 01ae 9C64     		str	r4, [r3, #72]
@@ -2338,7 +2338,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  798              	.LBE208:
  799              	.LBB215:
  800              	.LBB216:
-ARM GAS  /tmp/ccM9DiHI.s 			page 40
+ARM GAS  /tmp/ccd6fuMZ.s 			page 40
 
 
  332:Core/Src/main.c ****   ADC_ChannelConfTypeDef sConfig = {0};
@@ -2398,7 +2398,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  840              		.loc 1 346 27 view .LVU282
  841 0204 C3E90444 		strd	r4, r4, [r3, #16]
  348:Core/Src/main.c ****   hadc1.Init.ContinuousConvMode = DISABLE;
-ARM GAS  /tmp/ccM9DiHI.s 			page 41
+ARM GAS  /tmp/ccd6fuMZ.s 			page 41
 
 
  842              		.loc 1 348 31 view .LVU283
@@ -2458,7 +2458,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  877              		.loc 1 351 3 view .LVU302
  352:Core/Src/main.c ****   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
  878              		.loc 1 352 3 view .LVU303
-ARM GAS  /tmp/ccM9DiHI.s 			page 42
+ARM GAS  /tmp/ccd6fuMZ.s 			page 42
 
 
  354:Core/Src/main.c ****   hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
@@ -2518,7 +2518,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  917              		.loc 1 364 18 is_stmt 0 view .LVU322
  918 0244 2C90     		str	r0, [sp, #176]
  365:Core/Src/main.c ****   {
-ARM GAS  /tmp/ccM9DiHI.s 			page 43
+ARM GAS  /tmp/ccd6fuMZ.s 			page 43
 
 
  919              		.loc 1 365 3 is_stmt 1 view .LVU323
@@ -2578,7 +2578,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  372:Core/Src/main.c ****   sConfig.Rank = ADC_REGULAR_RANK_1;
  960              		.loc 1 372 19 view .LVU340
  961 025a 2F4B     		ldr	r3, .L100+68
-ARM GAS  /tmp/ccM9DiHI.s 			page 44
+ARM GAS  /tmp/ccd6fuMZ.s 			page 44
 
 
  377:Core/Src/main.c ****   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -2638,7 +2638,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  997              		.loc 2 209 3 view .LVU360
  998              		.syntax unified
  999              	@ 209 "Drivers/CMSIS/Include/cmsis_gcc.h" 1
-ARM GAS  /tmp/ccM9DiHI.s 			page 45
+ARM GAS  /tmp/ccd6fuMZ.s 			page 45
 
 
  1000 0272 72B6     		cpsid i
@@ -2698,7 +2698,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  1040 0290 FFF7FEFF 		bl	memset
  1041              	.LVL41:
  458:Core/Src/main.c ****   htim8.Init.Prescaler = 0;
-ARM GAS  /tmp/ccM9DiHI.s 			page 46
+ARM GAS  /tmp/ccd6fuMZ.s 			page 46
 
 
  1042              		.loc 1 458 3 is_stmt 1 view .LVU377
@@ -2758,7 +2758,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  981:Core/Src/main.c **** {
  1078              		.loc 1 981 6 view .LVU396
  985:Core/Src/main.c ****   while (1)
-ARM GAS  /tmp/ccM9DiHI.s 			page 47
+ARM GAS  /tmp/ccd6fuMZ.s 			page 47
 
 
  1079              		.loc 1 985 3 view .LVU397
@@ -2818,7 +2818,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  1119              		.loc 1 472 6 discriminator 1 view .LVU414
  1120 02ce 68B3     		cbz	r0, .L35
  474:Core/Src/main.c ****   }
-ARM GAS  /tmp/ccM9DiHI.s 			page 48
+ARM GAS  /tmp/ccd6fuMZ.s 			page 48
 
 
  1121              		.loc 1 474 5 is_stmt 1 view .LVU415
@@ -2878,7 +2878,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  1168 031c 00007F40 		.word	1082064896
  1169 0320 00000000 		.word	htim8
  1170 0324 00340140 		.word	1073820672
-ARM GAS  /tmp/ccM9DiHI.s 			page 49
+ARM GAS  /tmp/ccd6fuMZ.s 			page 49
 
 
  1171 0328 CDCC4C3D 		.word	1028443341
@@ -2938,7 +2938,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  1209              	@ 0 "" 2
  1210              		.thumb
  1211              		.syntax unified
-ARM GAS  /tmp/ccM9DiHI.s 			page 50
+ARM GAS  /tmp/ccd6fuMZ.s 			page 50
 
 
  1212              	.L38:
@@ -2998,7 +2998,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  1254              		.loc 1 988 3 view .LVU458
  986:Core/Src/main.c ****   {
  1255              		.loc 1 986 9 view .LVU459
-ARM GAS  /tmp/ccM9DiHI.s 			page 51
+ARM GAS  /tmp/ccd6fuMZ.s 			page 51
 
 
  986:Core/Src/main.c ****   {
@@ -3058,7 +3058,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  1291              		.loc 1 502 37 is_stmt 0 view .LVU479
  1292 0384 CDE93D22 		strd	r2, r2, [sp, #244]
  503:Core/Src/main.c ****   if (HAL_TIMEx_ConfigBreakDeadTime(&htim8, &sBreakDeadTimeConfig) != HAL_OK)
-ARM GAS  /tmp/ccM9DiHI.s 			page 52
+ARM GAS  /tmp/ccd6fuMZ.s 			page 52
 
 
  1293              		.loc 1 503 3 is_stmt 1 view .LVU480
@@ -3118,7 +3118,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  1334              		.loc 1 403 21 is_stmt 0 view .LVU496
  1335 0394 894C     		ldr	r4, .L102+4
  1336              	.LBE248:
-ARM GAS  /tmp/ccM9DiHI.s 			page 53
+ARM GAS  /tmp/ccd6fuMZ.s 			page 53
 
 
  1337              	.LBE247:
@@ -3178,7 +3178,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  412:Core/Src/main.c ****   if (HAL_UART_Init(&hlpuart1) != HAL_OK)
  1374              		.loc 1 412 3 is_stmt 1 view .LVU514
  412:Core/Src/main.c ****   if (HAL_UART_Init(&hlpuart1) != HAL_OK)
-ARM GAS  /tmp/ccM9DiHI.s 			page 54
+ARM GAS  /tmp/ccd6fuMZ.s 			page 54
 
 
  1375              		.loc 1 412 40 is_stmt 0 view .LVU515
@@ -3238,7 +3238,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  1416              	.LVL49:
  417:Core/Src/main.c ****   {
  1417              		.loc 1 417 6 discriminator 1 view .LVU532
-ARM GAS  /tmp/ccM9DiHI.s 			page 55
+ARM GAS  /tmp/ccd6fuMZ.s 			page 55
 
 
  1418 03ca 08B1     		cbz	r0, .L45
@@ -3298,7 +3298,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  985:Core/Src/main.c ****   while (1)
  1459              		.loc 1 985 3 view .LVU549
  1460              	.LBB256:
-ARM GAS  /tmp/ccM9DiHI.s 			page 56
+ARM GAS  /tmp/ccd6fuMZ.s 			page 56
 
 
  1461              	.LBI256:
@@ -3358,7 +3358,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  1503              	@ 0 "" 2
  1504              		.thumb
  1505              		.syntax unified
-ARM GAS  /tmp/ccM9DiHI.s 			page 57
+ARM GAS  /tmp/ccd6fuMZ.s 			page 57
 
 
  1506              	.L50:
@@ -3418,7 +3418,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  1548              		.loc 1 988 3 view .LVU581
  986:Core/Src/main.c ****   {
  1549              		.loc 1 986 9 view .LVU582
-ARM GAS  /tmp/ccM9DiHI.s 			page 58
+ARM GAS  /tmp/ccd6fuMZ.s 			page 58
 
 
  986:Core/Src/main.c ****   {
@@ -3478,7 +3478,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  234:Core/Src/main.c ****                                   - __HAL_DMA_GET_COUNTER(&hdma_lpuart1_rx));
  1594              		.loc 1 234 14 view .LVU594
  1595 0430 C3F14003 		rsb	r3, r3, #64
-ARM GAS  /tmp/ccM9DiHI.s 			page 59
+ARM GAS  /tmp/ccd6fuMZ.s 			page 59
 
 
  1596 0434 9FB2     		uxth	r7, r3
@@ -3538,7 +3538,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  1643 0476 2000     		.2byte	(.L56-.L65)/2
  1644 0478 2000     		.2byte	(.L56-.L65)/2
  1645 047a 2000     		.2byte	(.L56-.L65)/2
-ARM GAS  /tmp/ccM9DiHI.s 			page 60
+ARM GAS  /tmp/ccd6fuMZ.s 			page 60
 
 
  1646 047c 2000     		.2byte	(.L56-.L65)/2
@@ -3598,7 +3598,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  1689 04a4 FFF7FEFF 		bl	HAL_GetTick
  1690              	.LVL63:
  901:Core/Src/main.c ****             coeff_rx_active = 0;  // stale payload; fall through and read this byte as a command
-ARM GAS  /tmp/ccM9DiHI.s 			page 61
+ARM GAS  /tmp/ccd6fuMZ.s 			page 61
 
 
  1691              		.loc 1 901 28 discriminator 1 view .LVU613
@@ -3658,7 +3658,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  1731 04d6 1860     		str	r0, [r3]
  950:Core/Src/main.c **** 
  1732              		.loc 1 950 13 is_stmt 1 view .LVU628
-ARM GAS  /tmp/ccM9DiHI.s 			page 62
+ARM GAS  /tmp/ccd6fuMZ.s 			page 62
 
 
  1733 04d8 DCE7     		b	.L56
@@ -3718,7 +3718,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  1772 04f2 8045     		cmp	r8, r0
  835:Core/Src/main.c ****     }
  1773              		.loc 1 835 9 is_stmt 0 view .LVU644
-ARM GAS  /tmp/ccM9DiHI.s 			page 63
+ARM GAS  /tmp/ccd6fuMZ.s 			page 63
 
 
  1774 04f4 3246     		mov	r2, r6
@@ -3778,7 +3778,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  907:Core/Src/main.c ****                 coeff_rx_len = 0;
  1813              		.loc 1 907 17 is_stmt 1 view .LVU660
  907:Core/Src/main.c ****                 coeff_rx_len = 0;
-ARM GAS  /tmp/ccM9DiHI.s 			page 64
+ARM GAS  /tmp/ccd6fuMZ.s 			page 64
 
 
  1814              		.loc 1 907 33 is_stmt 0 view .LVU661
@@ -3838,7 +3838,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  1856              		.loc 1 787 13 view .LVU673
  1857 052e 1344     		add	r3, r3, r2
  1858              	.LVL78:
-ARM GAS  /tmp/ccM9DiHI.s 			page 65
+ARM GAS  /tmp/ccd6fuMZ.s 			page 65
 
 
  786:Core/Src/main.c ****         sum += p[i];
@@ -3898,7 +3898,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  644:Core/Src/main.c **** 
  1897              		.loc 1 644 5 is_stmt 1 view .LVU690
  1898 0556 DFED297A 		vldr.32	s15, .L102+68
-ARM GAS  /tmp/ccM9DiHI.s 			page 66
+ARM GAS  /tmp/ccd6fuMZ.s 			page 66
 
 
  1899 055a B4EEE77A 		vcmpe.f32	s14, s15
@@ -3958,7 +3958,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  1941 0582 9A42     		cmp	r2, r3
  1942 0584 3FF451AF 		beq	.L78
  1943              	.LBB308:
-ARM GAS  /tmp/ccM9DiHI.s 			page 67
+ARM GAS  /tmp/ccd6fuMZ.s 			page 67
 
 
  260:Core/Src/main.c ****       if (HAL_UART_Transmit(&hlpuart1, (uint8_t*)frame,
@@ -4018,7 +4018,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  1982              	.LBB309:
  1983              	.LBB306:
  961:Core/Src/main.c ****             break;
-ARM GAS  /tmp/ccM9DiHI.s 			page 68
+ARM GAS  /tmp/ccd6fuMZ.s 			page 68
 
 
  1984              		.loc 1 961 13 is_stmt 1 view .LVU719
@@ -4078,7 +4078,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  2031              		.loc 1 935 13 view .LVU726
  2032              	.LBB301:
  2033              	.LBI301:
-ARM GAS  /tmp/ccM9DiHI.s 			page 69
+ARM GAS  /tmp/ccd6fuMZ.s 			page 69
 
 
  830:Core/Src/main.c **** {
@@ -4138,7 +4138,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  2072 0642 4D46     		mov	r5, r9
  2073 0644 26E7     		b	.L56
  2074              	.LVL98:
-ARM GAS  /tmp/ccM9DiHI.s 			page 70
+ARM GAS  /tmp/ccd6fuMZ.s 			page 70
 
 
  2075              	.L72:
@@ -4198,7 +4198,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  2115              		.loc 1 786 28 discriminator 2 view .LVU756
  2116 065e F7D1     		bne	.L58
  2117              	.LBE281:
-ARM GAS  /tmp/ccM9DiHI.s 			page 71
+ARM GAS  /tmp/ccd6fuMZ.s 			page 71
 
 
  789:Core/Src/main.c **** }
@@ -4258,7 +4258,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  854:Core/Src/main.c **** 
  2156              		.loc 1 854 5 view .LVU773
  863:Core/Src/main.c ****     HCA_UpdateChannel(h, order, kp, ki);
-ARM GAS  /tmp/ccM9DiHI.s 			page 72
+ARM GAS  /tmp/ccd6fuMZ.s 			page 72
 
 
  2157              		.loc 1 863 5 view .LVU774
@@ -4318,7 +4318,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  2198              	.LBB299:
  2199              	.LBB297:
  2200              	.LBB296:
-ARM GAS  /tmp/ccM9DiHI.s 			page 73
+ARM GAS  /tmp/ccd6fuMZ.s 			page 73
 
 
  2201              	.LBB295:
@@ -4378,7 +4378,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  2252              		@ frame_needed = 0, uses_anonymous_args = 0
  567:Core/Src/main.c **** 
  2253              		.loc 1 567 5 view .LVU793
-ARM GAS  /tmp/ccM9DiHI.s 			page 74
+ARM GAS  /tmp/ccd6fuMZ.s 			page 74
 
 
  567:Core/Src/main.c **** 
@@ -4438,7 +4438,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  2298              	.LVL116:
  575:Core/Src/main.c **** }
  2299              		.loc 1 575 5 view .LVU804
-ARM GAS  /tmp/ccM9DiHI.s 			page 75
+ARM GAS  /tmp/ccd6fuMZ.s 			page 75
 
 
  575:Core/Src/main.c **** }
@@ -4498,7 +4498,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  727:Core/Src/main.c ****     {
  2349              		.loc 1 727 8 view .LVU812
  2350 000c 02D0     		beq	.L124
-ARM GAS  /tmp/ccM9DiHI.s 			page 76
+ARM GAS  /tmp/ccd6fuMZ.s 			page 76
 
 
  2351              	.LVL118:
@@ -4558,7 +4558,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  2393              		.loc 1 656 17 view .LVU824
  2394 001e 0868     		ldr	r0, [r1]
  2395              	.LVL121:
-ARM GAS  /tmp/ccM9DiHI.s 			page 77
+ARM GAS  /tmp/ccd6fuMZ.s 			page 77
 
 
  656:Core/Src/main.c **** 
@@ -4618,7 +4618,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  2436              		.loc 1 609 11 view .LVU838
  2437 0034 9FED517A 		vldr.32	s14, .L127+12
  610:Core/Src/main.c **** }
-ARM GAS  /tmp/ccM9DiHI.s 			page 78
+ARM GAS  /tmp/ccd6fuMZ.s 			page 78
 
 
  2438              		.loc 1 610 19 view .LVU839
@@ -4678,7 +4678,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  2479              	.LBB337:
  2480              	.LBI332:
  608:Core/Src/main.c ****     float v_adc = (float)adc_signed * (ADC_VREF / ADC_FULL_SCALE_CODES); // differential volts at t
-ARM GAS  /tmp/ccM9DiHI.s 			page 79
+ARM GAS  /tmp/ccd6fuMZ.s 			page 79
 
 
  2481              		.loc 1 608 21 view .LVU853
@@ -4738,7 +4738,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  2519              		.loc 1 661 23 view .LVU869
  2520 008c C318     		adds	r3, r0, r3
  663:Core/Src/main.c ****       USPWM(htim8.Instance, hca_out, ARR_VAL, MODULATION_INDEX);  // modulation_index=1.0, already 
-ARM GAS  /tmp/ccM9DiHI.s 			page 80
+ARM GAS  /tmp/ccd6fuMZ.s 			page 80
 
 
  2521              		.loc 1 663 8 view .LVU870
@@ -4798,7 +4798,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  2559 00a8 0029     		cmp	r1, #0
  2560 00aa 58D0     		beq	.L122
  2561 00ac 3E4A     		ldr	r2, .L127+56
-ARM GAS  /tmp/ccM9DiHI.s 			page 81
+ARM GAS  /tmp/ccd6fuMZ.s 			page 81
 
 
  2562              	.L114:
@@ -4858,7 +4858,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  2598 00d4 0133     		adds	r3, r3, #1
  708:Core/Src/main.c ****     if (next_head == stream_fifo_tail) {
  2599              		.loc 1 708 14 view .LVU905
-ARM GAS  /tmp/ccM9DiHI.s 			page 82
+ARM GAS  /tmp/ccd6fuMZ.s 			page 82
 
 
  2600 00d6 03F03F03 		and	r3, r3, #63
@@ -4918,7 +4918,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  2638 0102 0346     		mov	r3, r0
  715:Core/Src/main.c ****     f->sync1        = STREAM_SYNC1;
  2639              		.loc 1 715 5 is_stmt 1 view .LVU922
-ARM GAS  /tmp/ccM9DiHI.s 			page 83
+ARM GAS  /tmp/ccd6fuMZ.s 			page 83
 
 
  716:Core/Src/main.c ****     f->seq          = stream_seq++;
@@ -4978,7 +4978,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  717:Core/Src/main.c ****     f->checksum     = StreamChecksum(f);
  2678              		.loc 1 717 33 is_stmt 0 view .LVU939
  2679 0118 0131     		adds	r1, r1, #1
-ARM GAS  /tmp/ccM9DiHI.s 			page 84
+ARM GAS  /tmp/ccd6fuMZ.s 			page 84
 
 
  2680 011a 431E     		subs	r3, r0, #1
@@ -5038,7 +5038,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  2721 013c 83F84A20 		strb	r2, [r3, #74]
  720:Core/Src/main.c **** }
  2722              		.loc 1 720 5 is_stmt 1 view .LVU953
-ARM GAS  /tmp/ccM9DiHI.s 			page 85
+ARM GAS  /tmp/ccd6fuMZ.s 			page 85
 
 
  2723              	.LVL146:
@@ -5098,7 +5098,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  2767              		.loc 1 697 35 discriminator 1 view .LVU963
  2768 0162 114A     		ldr	r2, .L127+56
  700:Core/Src/main.c ****     stream_accum.samples[stream_accum_count].error   = error;
-ARM GAS  /tmp/ccM9DiHI.s 			page 86
+ARM GAS  /tmp/ccd6fuMZ.s 			page 86
 
 
  2769              		.loc 1 700 45 view .LVU964
@@ -5158,7 +5158,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  2822              		@ link register save eliminated.
  749:Core/Src/main.c ****     {
  2823              		.loc 1 749 5 view .LVU968
-ARM GAS  /tmp/ccM9DiHI.s 			page 87
+ARM GAS  /tmp/ccd6fuMZ.s 			page 87
 
 
  749:Core/Src/main.c ****     {
@@ -5218,7 +5218,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  2866              		.syntax unified
  2867              		.thumb
  2868              		.thumb_func
-ARM GAS  /tmp/ccM9DiHI.s 			page 88
+ARM GAS  /tmp/ccd6fuMZ.s 			page 88
 
 
  2870              	Error_Handler:
@@ -5278,7 +5278,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  2928              	coeff_rx_len:
  2929 0000 00       		.space	1
  2930              		.section	.bss.coeff_rx,"aw",%nobits
-ARM GAS  /tmp/ccM9DiHI.s 			page 89
+ARM GAS  /tmp/ccd6fuMZ.s 			page 89
 
 
  2931              		.align	2
@@ -5338,7 +5338,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  2995              		.section	.bss.uart_rx_tail,"aw",%nobits
  2996              		.align	1
  2999              	uart_rx_tail:
-ARM GAS  /tmp/ccM9DiHI.s 			page 90
+ARM GAS  /tmp/ccd6fuMZ.s 			page 90
 
 
  3000 0000 0000     		.space	2
@@ -5398,7 +5398,7 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  3048              		.global	hlpuart1
  3049              		.section	.bss.hlpuart1,"aw",%nobits
  3050              		.align	2
-ARM GAS  /tmp/ccM9DiHI.s 			page 91
+ARM GAS  /tmp/ccd6fuMZ.s 			page 91
 
 
  3053              	hlpuart1:
@@ -5447,98 +5447,98 @@ ARM GAS  /tmp/ccM9DiHI.s 			page 1
  3088              		.file 20 "Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_cortex.h"
  3089              		.file 21 "Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal.h"
  3090              		.file 22 "<built-in>"
-ARM GAS  /tmp/ccM9DiHI.s 			page 92
+ARM GAS  /tmp/ccd6fuMZ.s 			page 92
 
 
 DEFINED SYMBOLS
                             *ABS*:00000000 main.c
-     /tmp/ccM9DiHI.s:21     .text.SendCoeffFrame:00000000 $t
-     /tmp/ccM9DiHI.s:27     .text.SendCoeffFrame:00000000 SendCoeffFrame
-     /tmp/ccM9DiHI.s:156    .text.SendCoeffFrame:00000070 $d
-     /tmp/ccM9DiHI.s:2969   .bss.stream_tx_busy:00000000 stream_tx_busy
-     /tmp/ccM9DiHI.s:3053   .bss.hlpuart1:00000000 hlpuart1
-     /tmp/ccM9DiHI.s:162    .text.SendRefFrame:00000000 $t
-     /tmp/ccM9DiHI.s:168    .text.SendRefFrame:00000000 SendRefFrame
-     /tmp/ccM9DiHI.s:273    .text.SendRefFrame:00000050 $d
-     /tmp/ccM9DiHI.s:2958   .data.reference_multiplier:00000000 reference_multiplier
-     /tmp/ccM9DiHI.s:281    .text.SystemClock_Config:00000000 $t
-     /tmp/ccM9DiHI.s:288    .text.SystemClock_Config:00000000 SystemClock_Config
-     /tmp/ccM9DiHI.s:443    .text.SystemClock_Config:00000070 $d
-     /tmp/ccM9DiHI.s:449    .rodata.main.str1.4:00000000 $d
-     /tmp/ccM9DiHI.s:453    .text.startup.main:00000000 $t
-     /tmp/ccM9DiHI.s:460    .text.startup.main:00000000 main
-     /tmp/ccM9DiHI.s:1150   .text.startup.main:000002d4 $d
-     /tmp/ccM9DiHI.s:3018   .bss.hca:00000000 hca
-     /tmp/ccM9DiHI.s:3067   .bss.hadc1:00000000 hadc1
-     /tmp/ccM9DiHI.s:3032   .bss.htim8:00000000 htim8
-     /tmp/ccM9DiHI.s:1176   .text.startup.main:0000032c $t
-     /tmp/ccM9DiHI.s:1626   .text.startup.main:00000454 $d
-     /tmp/ccM9DiHI.s:1648   .text.startup.main:00000480 $t
-     /tmp/ccM9DiHI.s:1994   .text.startup.main:000005b8 $d
-     /tmp/ccM9DiHI.s:3005   .bss.uart_rx_dma:00000000 uart_rx_dma
-     /tmp/ccM9DiHI.s:3025   .bss.adc1_raw:00000000 adc1_raw
-     /tmp/ccM9DiHI.s:2934   .bss.coeff_rx:00000000 coeff_rx
-     /tmp/ccM9DiHI.s:3046   .bss.hdma_lpuart1_rx:00000000 hdma_lpuart1_rx
-     /tmp/ccM9DiHI.s:2999   .bss.uart_rx_tail:00000000 uart_rx_tail
-     /tmp/ccM9DiHI.s:2923   .bss.coeff_rx_active:00000000 coeff_rx_active
-     /tmp/ccM9DiHI.s:2913   .bss.coeff_rx_started_ms:00000000 coeff_rx_started_ms
-     /tmp/ccM9DiHI.s:2918   .bss.coeff_rx_expected:00000000 coeff_rx_expected
-     /tmp/ccM9DiHI.s:2928   .bss.coeff_rx_len:00000000 coeff_rx_len
-     /tmp/ccM9DiHI.s:2981   .bss.stream_fifo_tail:00000000 stream_fifo_tail
-     /tmp/ccM9DiHI.s:2987   .bss.stream_fifo_head:00000000 stream_fifo_head
-     /tmp/ccM9DiHI.s:2993   .bss.stream_fifo:00000000 stream_fifo
-     /tmp/ccM9DiHI.s:3011   .bss.streaming_enabled:00000000 streaming_enabled
-     /tmp/ccM9DiHI.s:2020   .text.startup.main:00000614 $t
-     /tmp/ccM9DiHI.s:2224   .text.startup.main:000006cc $d
-     /tmp/ccM9DiHI.s:2240   .text.HAL_RCC_CSSCallback:00000000 $t
-     /tmp/ccM9DiHI.s:2247   .text.HAL_RCC_CSSCallback:00000000 HAL_RCC_CSSCallback
-     /tmp/ccM9DiHI.s:2309   .text.HAL_RCC_CSSCallback:0000004c $d
-     /tmp/ccM9DiHI.s:2964   .bss.clock_fault_flag:00000000 clock_fault_flag
-     /tmp/ccM9DiHI.s:2315   .text.HAL_ADC_ConvCpltCallback:00000000 $t
-     /tmp/ccM9DiHI.s:2322   .text.HAL_ADC_ConvCpltCallback:00000000 HAL_ADC_ConvCpltCallback
-     /tmp/ccM9DiHI.s:2779   .text.HAL_ADC_ConvCpltCallback:00000170 $d
-     /tmp/ccM9DiHI.s:2941   .bss.tick_counter:00000000 tick_counter
-     /tmp/ccM9DiHI.s:2907   .bss.angle_fundamental.1:00000000 angle_fundamental.1
-     /tmp/ccM9DiHI.s:2946   .bss.stream_accum_count:00000000 stream_accum_count
-     /tmp/ccM9DiHI.s:2952   .bss.stream_accum:00000000 stream_accum
-     /tmp/ccM9DiHI.s:2975   .bss.stream_seq:00000000 stream_seq
-     /tmp/ccM9DiHI.s:2808   .text.HAL_UART_TxCpltCallback:00000000 $t
-     /tmp/ccM9DiHI.s:2815   .text.HAL_UART_TxCpltCallback:00000000 HAL_UART_TxCpltCallback
-     /tmp/ccM9DiHI.s:2856   .text.HAL_UART_TxCpltCallback:00000020 $d
-     /tmp/ccM9DiHI.s:2863   .text.Error_Handler:00000000 $t
-     /tmp/ccM9DiHI.s:2870   .text.Error_Handler:00000000 Error_Handler
-ARM GAS  /tmp/ccM9DiHI.s 			page 93
+     /tmp/ccd6fuMZ.s:21     .text.SendCoeffFrame:00000000 $t
+     /tmp/ccd6fuMZ.s:27     .text.SendCoeffFrame:00000000 SendCoeffFrame
+     /tmp/ccd6fuMZ.s:156    .text.SendCoeffFrame:00000070 $d
+     /tmp/ccd6fuMZ.s:2969   .bss.stream_tx_busy:00000000 stream_tx_busy
+     /tmp/ccd6fuMZ.s:3053   .bss.hlpuart1:00000000 hlpuart1
+     /tmp/ccd6fuMZ.s:162    .text.SendRefFrame:00000000 $t
+     /tmp/ccd6fuMZ.s:168    .text.SendRefFrame:00000000 SendRefFrame
+     /tmp/ccd6fuMZ.s:273    .text.SendRefFrame:00000050 $d
+     /tmp/ccd6fuMZ.s:2958   .data.reference_multiplier:00000000 reference_multiplier
+     /tmp/ccd6fuMZ.s:281    .text.SystemClock_Config:00000000 $t
+     /tmp/ccd6fuMZ.s:288    .text.SystemClock_Config:00000000 SystemClock_Config
+     /tmp/ccd6fuMZ.s:443    .text.SystemClock_Config:00000070 $d
+     /tmp/ccd6fuMZ.s:449    .rodata.main.str1.4:00000000 $d
+     /tmp/ccd6fuMZ.s:453    .text.startup.main:00000000 $t
+     /tmp/ccd6fuMZ.s:460    .text.startup.main:00000000 main
+     /tmp/ccd6fuMZ.s:1150   .text.startup.main:000002d4 $d
+     /tmp/ccd6fuMZ.s:3018   .bss.hca:00000000 hca
+     /tmp/ccd6fuMZ.s:3067   .bss.hadc1:00000000 hadc1
+     /tmp/ccd6fuMZ.s:3032   .bss.htim8:00000000 htim8
+     /tmp/ccd6fuMZ.s:1176   .text.startup.main:0000032c $t
+     /tmp/ccd6fuMZ.s:1626   .text.startup.main:00000454 $d
+     /tmp/ccd6fuMZ.s:1648   .text.startup.main:00000480 $t
+     /tmp/ccd6fuMZ.s:1994   .text.startup.main:000005b8 $d
+     /tmp/ccd6fuMZ.s:3005   .bss.uart_rx_dma:00000000 uart_rx_dma
+     /tmp/ccd6fuMZ.s:3025   .bss.adc1_raw:00000000 adc1_raw
+     /tmp/ccd6fuMZ.s:2934   .bss.coeff_rx:00000000 coeff_rx
+     /tmp/ccd6fuMZ.s:3046   .bss.hdma_lpuart1_rx:00000000 hdma_lpuart1_rx
+     /tmp/ccd6fuMZ.s:2999   .bss.uart_rx_tail:00000000 uart_rx_tail
+     /tmp/ccd6fuMZ.s:2923   .bss.coeff_rx_active:00000000 coeff_rx_active
+     /tmp/ccd6fuMZ.s:2913   .bss.coeff_rx_started_ms:00000000 coeff_rx_started_ms
+     /tmp/ccd6fuMZ.s:2918   .bss.coeff_rx_expected:00000000 coeff_rx_expected
+     /tmp/ccd6fuMZ.s:2928   .bss.coeff_rx_len:00000000 coeff_rx_len
+     /tmp/ccd6fuMZ.s:2981   .bss.stream_fifo_tail:00000000 stream_fifo_tail
+     /tmp/ccd6fuMZ.s:2987   .bss.stream_fifo_head:00000000 stream_fifo_head
+     /tmp/ccd6fuMZ.s:2993   .bss.stream_fifo:00000000 stream_fifo
+     /tmp/ccd6fuMZ.s:3011   .bss.streaming_enabled:00000000 streaming_enabled
+     /tmp/ccd6fuMZ.s:2020   .text.startup.main:00000614 $t
+     /tmp/ccd6fuMZ.s:2224   .text.startup.main:000006cc $d
+     /tmp/ccd6fuMZ.s:2240   .text.HAL_RCC_CSSCallback:00000000 $t
+     /tmp/ccd6fuMZ.s:2247   .text.HAL_RCC_CSSCallback:00000000 HAL_RCC_CSSCallback
+     /tmp/ccd6fuMZ.s:2309   .text.HAL_RCC_CSSCallback:0000004c $d
+     /tmp/ccd6fuMZ.s:2964   .bss.clock_fault_flag:00000000 clock_fault_flag
+     /tmp/ccd6fuMZ.s:2315   .text.HAL_ADC_ConvCpltCallback:00000000 $t
+     /tmp/ccd6fuMZ.s:2322   .text.HAL_ADC_ConvCpltCallback:00000000 HAL_ADC_ConvCpltCallback
+     /tmp/ccd6fuMZ.s:2779   .text.HAL_ADC_ConvCpltCallback:00000170 $d
+     /tmp/ccd6fuMZ.s:2941   .bss.tick_counter:00000000 tick_counter
+     /tmp/ccd6fuMZ.s:2907   .bss.angle_fundamental.1:00000000 angle_fundamental.1
+     /tmp/ccd6fuMZ.s:2946   .bss.stream_accum_count:00000000 stream_accum_count
+     /tmp/ccd6fuMZ.s:2952   .bss.stream_accum:00000000 stream_accum
+     /tmp/ccd6fuMZ.s:2975   .bss.stream_seq:00000000 stream_seq
+     /tmp/ccd6fuMZ.s:2808   .text.HAL_UART_TxCpltCallback:00000000 $t
+     /tmp/ccd6fuMZ.s:2815   .text.HAL_UART_TxCpltCallback:00000000 HAL_UART_TxCpltCallback
+     /tmp/ccd6fuMZ.s:2856   .text.HAL_UART_TxCpltCallback:00000020 $d
+     /tmp/ccd6fuMZ.s:2863   .text.Error_Handler:00000000 $t
+     /tmp/ccd6fuMZ.s:2870   .text.Error_Handler:00000000 Error_Handler
+ARM GAS  /tmp/ccd6fuMZ.s 			page 93
 
 
-     /tmp/ccM9DiHI.s:2904   .bss.angle_fundamental.1:00000000 $d
-     /tmp/ccM9DiHI.s:2910   .bss.coeff_rx_started_ms:00000000 $d
-     /tmp/ccM9DiHI.s:2919   .bss.coeff_rx_expected:00000000 $d
-     /tmp/ccM9DiHI.s:2924   .bss.coeff_rx_active:00000000 $d
-     /tmp/ccM9DiHI.s:2929   .bss.coeff_rx_len:00000000 $d
-     /tmp/ccM9DiHI.s:2931   .bss.coeff_rx:00000000 $d
-     /tmp/ccM9DiHI.s:2938   .bss.tick_counter:00000000 $d
-     /tmp/ccM9DiHI.s:2947   .bss.stream_accum_count:00000000 $d
-     /tmp/ccM9DiHI.s:2949   .bss.stream_accum:00000000 $d
-     /tmp/ccM9DiHI.s:2955   .data.reference_multiplier:00000000 $d
-     /tmp/ccM9DiHI.s:2965   .bss.clock_fault_flag:00000000 $d
-     /tmp/ccM9DiHI.s:2970   .bss.stream_tx_busy:00000000 $d
-     /tmp/ccM9DiHI.s:2972   .bss.stream_seq:00000000 $d
-     /tmp/ccM9DiHI.s:2978   .bss.stream_fifo_tail:00000000 $d
-     /tmp/ccM9DiHI.s:2984   .bss.stream_fifo_head:00000000 $d
-     /tmp/ccM9DiHI.s:2990   .bss.stream_fifo:00000000 $d
-     /tmp/ccM9DiHI.s:2996   .bss.uart_rx_tail:00000000 $d
-     /tmp/ccM9DiHI.s:3002   .bss.uart_rx_dma:00000000 $d
-     /tmp/ccM9DiHI.s:3012   .bss.streaming_enabled:00000000 $d
-     /tmp/ccM9DiHI.s:3015   .bss.hca:00000000 $d
-     /tmp/ccM9DiHI.s:3022   .bss.adc1_raw:00000000 $d
-     /tmp/ccM9DiHI.s:3029   .bss.htim8:00000000 $d
-     /tmp/ccM9DiHI.s:3039   .bss.hdma_lpuart1_tx:00000000 hdma_lpuart1_tx
-     /tmp/ccM9DiHI.s:3036   .bss.hdma_lpuart1_tx:00000000 $d
-     /tmp/ccM9DiHI.s:3043   .bss.hdma_lpuart1_rx:00000000 $d
-     /tmp/ccM9DiHI.s:3050   .bss.hlpuart1:00000000 $d
-     /tmp/ccM9DiHI.s:3060   .bss.hdma_adc1:00000000 hdma_adc1
-     /tmp/ccM9DiHI.s:3057   .bss.hdma_adc1:00000000 $d
-     /tmp/ccM9DiHI.s:3064   .bss.hadc1:00000000 $d
+     /tmp/ccd6fuMZ.s:2904   .bss.angle_fundamental.1:00000000 $d
+     /tmp/ccd6fuMZ.s:2910   .bss.coeff_rx_started_ms:00000000 $d
+     /tmp/ccd6fuMZ.s:2919   .bss.coeff_rx_expected:00000000 $d
+     /tmp/ccd6fuMZ.s:2924   .bss.coeff_rx_active:00000000 $d
+     /tmp/ccd6fuMZ.s:2929   .bss.coeff_rx_len:00000000 $d
+     /tmp/ccd6fuMZ.s:2931   .bss.coeff_rx:00000000 $d
+     /tmp/ccd6fuMZ.s:2938   .bss.tick_counter:00000000 $d
+     /tmp/ccd6fuMZ.s:2947   .bss.stream_accum_count:00000000 $d
+     /tmp/ccd6fuMZ.s:2949   .bss.stream_accum:00000000 $d
+     /tmp/ccd6fuMZ.s:2955   .data.reference_multiplier:00000000 $d
+     /tmp/ccd6fuMZ.s:2965   .bss.clock_fault_flag:00000000 $d
+     /tmp/ccd6fuMZ.s:2970   .bss.stream_tx_busy:00000000 $d
+     /tmp/ccd6fuMZ.s:2972   .bss.stream_seq:00000000 $d
+     /tmp/ccd6fuMZ.s:2978   .bss.stream_fifo_tail:00000000 $d
+     /tmp/ccd6fuMZ.s:2984   .bss.stream_fifo_head:00000000 $d
+     /tmp/ccd6fuMZ.s:2990   .bss.stream_fifo:00000000 $d
+     /tmp/ccd6fuMZ.s:2996   .bss.uart_rx_tail:00000000 $d
+     /tmp/ccd6fuMZ.s:3002   .bss.uart_rx_dma:00000000 $d
+     /tmp/ccd6fuMZ.s:3012   .bss.streaming_enabled:00000000 $d
+     /tmp/ccd6fuMZ.s:3015   .bss.hca:00000000 $d
+     /tmp/ccd6fuMZ.s:3022   .bss.adc1_raw:00000000 $d
+     /tmp/ccd6fuMZ.s:3029   .bss.htim8:00000000 $d
+     /tmp/ccd6fuMZ.s:3039   .bss.hdma_lpuart1_tx:00000000 hdma_lpuart1_tx
+     /tmp/ccd6fuMZ.s:3036   .bss.hdma_lpuart1_tx:00000000 $d
+     /tmp/ccd6fuMZ.s:3043   .bss.hdma_lpuart1_rx:00000000 $d
+     /tmp/ccd6fuMZ.s:3050   .bss.hlpuart1:00000000 $d
+     /tmp/ccd6fuMZ.s:3060   .bss.hdma_adc1:00000000 hdma_adc1
+     /tmp/ccd6fuMZ.s:3057   .bss.hdma_adc1:00000000 $d
+     /tmp/ccd6fuMZ.s:3064   .bss.hadc1:00000000 $d
 
 UNDEFINED SYMBOLS
 HAL_UART_Transmit
@@ -5567,7 +5567,7 @@ HAL_UARTEx_DisableFifoMode
 HAL_UART_Receive_DMA
 HAL_ADC_Start_DMA
 HAL_TIMEx_PWMN_Start
-ARM GAS  /tmp/ccM9DiHI.s 			page 94
+ARM GAS  /tmp/ccd6fuMZ.s 			page 94
 
 
 HAL_TIM_PWM_Start

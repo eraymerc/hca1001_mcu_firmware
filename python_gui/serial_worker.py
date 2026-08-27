@@ -26,6 +26,10 @@ from PyQt5.QtCore import QThread, pyqtSignal
 import serial
 
 from protocol import (
+    CAL_FRAME_SIZE,
+    CAL_SYNC1,
+    CMD_CAL_DEFAULT,
+    CMD_GET_CAL,
     CMD_GET_COEFFS,
     CMD_GET_REF,
     CMD_PING,
@@ -40,8 +44,10 @@ from protocol import (
     REF_SYNC1,
     SYNC0,
     SYNC1,
+    build_calibrate_command,
     build_set_coeff_command,
     build_set_ref_command,
+    parse_cal_frame,
     parse_coeff_frame,
     parse_frame,
     parse_ref_frame,
@@ -68,6 +74,7 @@ class SerialWorker(QThread):
         self._frame_queue: "queue.Queue" = queue.Queue()  # AdcFrame items, GUI-thread pulls
         self._coeff_queue: "queue.Queue" = queue.Queue()  # CoeffFrame items, likewise
         self._ref_queue: "queue.Queue" = queue.Queue()    # RefFrame items, likewise
+        self._cal_queue: "queue.Queue" = queue.Queue()    # CalFrame items, likewise
         # Plain ints, written here and read from the GUI thread. Only ever
         # incremented, so a torn read just shows a slightly stale count.
         self._bytes_read = 0
@@ -112,6 +119,19 @@ class SerialWorker(QThread):
         call -- says what is actually in force."""
         self._cmd_queue.put(build_set_ref_command(value))
 
+    def calibrate(self, vdc: float):
+        """Run the sensor self-calibration against a known DC bus voltage. Takes
+        the device ~0.6s; the CalFrame it replies with carries the outcome."""
+        self._cmd_queue.put(build_calibrate_command(vdc))
+
+    def request_calibration(self):
+        """Ask the device for the sensor calibration it is running."""
+        self._cmd_queue.put(CMD_GET_CAL)
+
+    def restore_default_calibration(self):
+        """Put the build-time sensor calibration back."""
+        self._cmd_queue.put(CMD_CAL_DEFAULT)
+
     def stop(self):
         self._running = False
 
@@ -132,6 +152,10 @@ class SerialWorker(QThread):
     def drain_ref_frames(self):
         """Non-blocking pull of every RefFrame parsed since the last call."""
         return self._drain(self._ref_queue)
+
+    def drain_cal_frames(self):
+        """Non-blocking pull of every CalFrame parsed since the last call."""
+        return self._drain(self._cal_queue)
 
     @staticmethod
     def _drain(q):
@@ -205,7 +229,8 @@ class SerialWorker(QThread):
 
                 # Resync on SYNC0, then let the following byte pick the frame
                 # type: SYNC1 is an ADC sample, COEFF_SYNC1 a coefficient
-                # report, REF_SYNC1 the reference multiplier. All are
+                # report, REF_SYNC1 the reference multiplier, CAL_SYNC1 a
+                # calibration report. All are
                 # fixed-size and checksummed, so a sync-byte
                 # collision inside float payload data just fails to parse and
                 # the loop slides forward a byte.
@@ -236,6 +261,10 @@ class SerialWorker(QThread):
                     elif buf[1] == REF_SYNC1:
                         size, parse, sink, batched = (
                             REF_FRAME_SIZE, parse_ref_frame, self._ref_queue, False
+                        )
+                    elif buf[1] == CAL_SYNC1:
+                        size, parse, sink, batched = (
+                            CAL_FRAME_SIZE, parse_cal_frame, self._cal_queue, False
                         )
                     else:
                         del buf[:1]  # 0xA5 that starts no frame

@@ -37,6 +37,7 @@ from PyQt5.QtWidgets import (
 )
 from serial.tools import list_ports
 
+from calibration_dialog import CalibrationDialog
 from coefficients_window import CoefficientsWindow
 from dark_theme import apply_dark_theme
 from export_worker import CsvExportWorker
@@ -110,7 +111,7 @@ class SignalRow(QWidget):
         plot_col = QVBoxLayout()
         plot_col.setContentsMargins(0, 0, 0, 0)
 
-        self.stats_label = QLabel("Mean: -   Pk-Pk: -")
+        self.stats_label = QLabel("Mean: -   RMS: -   Pk-Pk: -")
         self.stats_label.setObjectName("statsLabel")
         plot_col.addWidget(self.stats_label)
 
@@ -133,8 +134,10 @@ class SignalRow(QWidget):
     def window_samples(self):
         return max(1, int(round(self.window_spin.value() * STREAM_RATE_HZ)))
 
-    def set_stats(self, mean: float, peak_to_peak: float):
-        self.stats_label.setText(f"Mean: {mean:.4g}   Pk-Pk: {peak_to_peak:.4g}")
+    def set_stats(self, mean: float, rms: float, peak_to_peak: float):
+        self.stats_label.setText(
+            f"Mean: {mean:.4g}   RMS: {rms:.4g}   Pk-Pk: {peak_to_peak:.4g}"
+        )
 
     def set_trigger_marker(self, x: float | None):
         if x is None:
@@ -154,6 +157,7 @@ class MainWindow(QMainWindow):
         self._csv_worker: CsvExportWorker | None = None
         self._fft_windows = []
         self._coeff_window: CoefficientsWindow | None = None
+        self._cal_dialog: CalibrationDialog | None = None
         self._session_capped = False
         self._t0_ms = None
 
@@ -218,6 +222,17 @@ class MainWindow(QMainWindow):
         self.coeff_btn.setToolTip("Read, edit and send the HCA Kp/Ki gains per harmonic")
         self.coeff_btn.clicked.connect(self._open_coefficients_window)
         conn_layout.addWidget(self.coeff_btn)
+
+        # Gated on a connection, unlike the coefficient editor: everything this
+        # does happens on the device, against the live output.
+        self.calibrate_btn = QPushButton("Calibrate")
+        self.calibrate_btn.setEnabled(False)
+        self.calibrate_btn.setToolTip(
+            "Solve the voltage sensor's gain and offset on the device, against a\n"
+            "known DC bus voltage and the modulator's own commanded duty"
+        )
+        self.calibrate_btn.clicked.connect(self._open_calibration_dialog)
+        conn_layout.addWidget(self.calibrate_btn)
 
         conn_layout.addStretch(1)
         self.rate_label = QLabel("")
@@ -382,6 +397,7 @@ class MainWindow(QMainWindow):
         self.stream_btn.setEnabled(True)
         self.ref_apply_btn.setEnabled(True)
         self.ref_read_btn.setEnabled(True)
+        self.calibrate_btn.setEnabled(True)
         self.statusBar().showMessage(f"Connected to {port_name}.")
         self._gui_update_timer.start(GUI_UPDATE_INTERVAL_MS)
         # Show what the device is running rather than whatever the box was left at.
@@ -400,6 +416,7 @@ class MainWindow(QMainWindow):
         self.stream_btn.setText("Start Streaming")
         self.ref_apply_btn.setEnabled(False)
         self.ref_read_btn.setEnabled(False)
+        self.calibrate_btn.setEnabled(False)
         self.ref_status_label.setText("")
         self.worker = None
 
@@ -460,6 +477,11 @@ class MainWindow(QMainWindow):
         for frame in self.worker.drain_ref_frames():
             self._on_ref_frame(frame)
 
+        cal_frames = self.worker.drain_cal_frames()
+        if cal_frames and self._cal_dialog is not None:
+            for frame in cal_frames:
+                self._cal_dialog.on_cal_frame(frame)
+
     def _on_frames(self, frames):
         if not frames:
             return
@@ -516,7 +538,13 @@ class MainWindow(QMainWindow):
             row.set_trigger_marker(0.0 if trig_idx is not None else None)
 
             if y_window.size:
-                row.set_stats(float(y_window.mean()), float(y_window.max() - y_window.min()))
+                # True RMS over the plotted window: sqrt of the mean square of
+                # the samples themselves, so any DC offset counts towards it
+                # (an AC-coupled reading would subtract the mean first).
+                rms = float(np.sqrt(np.mean(np.square(y_window, dtype=np.float64))))
+                row.set_stats(
+                    float(y_window.mean()), rms, float(y_window.max() - y_window.min())
+                )
 
         self.samples_label.setText(f"{len(self.session_records):,} samples captured")
 
@@ -631,6 +659,22 @@ class MainWindow(QMainWindow):
             )
         else:
             self.statusBar().showMessage(f"Reference multiplier is {frame.value:.4f}.")
+
+    # -------------------------------------------------------- Calibration
+    def _open_calibration_dialog(self):
+        if self._cal_dialog is None:
+            self._cal_dialog = CalibrationDialog(lambda: self.worker, parent=self)
+            self._cal_dialog.destroyed.connect(self._on_cal_dialog_closed)
+            self._cal_dialog.setAttribute(Qt.WA_DeleteOnClose)
+        self._cal_dialog.show()
+        self._cal_dialog.raise_()
+        self._cal_dialog.activateWindow()
+        # Open on what the device is actually running rather than a blank panel.
+        if self.worker is not None:
+            self.worker.request_calibration()
+
+    def _on_cal_dialog_closed(self):
+        self._cal_dialog = None
 
     # ------------------------------------------------------- Coefficients
     def _open_coefficients_window(self):

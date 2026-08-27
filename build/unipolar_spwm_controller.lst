@@ -1,4 +1,4 @@
-ARM GAS  /tmp/ccTvpQJB.s 			page 1
+ARM GAS  /tmp/ccAFDIwS.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -58,7 +58,7 @@ ARM GAS  /tmp/ccTvpQJB.s 			page 1
   33              		@ args = 0, pretend = 0, frame = 0
   34              		@ frame_needed = 0, uses_anonymous_args = 0
   35              		@ link register save eliminated.
-ARM GAS  /tmp/ccTvpQJB.s 			page 2
+ARM GAS  /tmp/ccAFDIwS.s 			page 2
 
 
   24:Core/Src/unipolar_spwm_controller.c ****     /* 1. Guvenlik Sinirlamasi (Saturation) */
@@ -118,7 +118,7 @@ ARM GAS  /tmp/ccTvpQJB.s 			page 1
   73              	.LVL5:
   36:Core/Src/unipolar_spwm_controller.c **** 
   37:Core/Src/unipolar_spwm_controller.c ****     /* 4. Unipolar Mantigi (Leg B Hesabi) */
-ARM GAS  /tmp/ccTvpQJB.s 			page 3
+ARM GAS  /tmp/ccAFDIwS.s 			page 3
 
 
   38:Core/Src/unipolar_spwm_controller.c ****     /* Leg B (CH2), Leg A (CH1) ile zıt çalışmalıdır.
@@ -154,12 +154,12 @@ ARM GAS  /tmp/ccTvpQJB.s 			page 1
   92              		.file 2 "/usr/arm-none-eabi/include/machine/_default_types.h"
   93              		.file 3 "/usr/arm-none-eabi/include/sys/_stdint.h"
   94              		.file 4 "Drivers/CMSIS/Device/ST/STM32G4xx/Include/stm32g474xx.h"
-ARM GAS  /tmp/ccTvpQJB.s 			page 4
+ARM GAS  /tmp/ccAFDIwS.s 			page 4
 
 
 DEFINED SYMBOLS
                             *ABS*:00000000 unipolar_spwm_controller.c
-     /tmp/ccTvpQJB.s:21     .text.USPWM:00000000 $t
-     /tmp/ccTvpQJB.s:28     .text.USPWM:00000000 USPWM
+     /tmp/ccAFDIwS.s:21     .text.USPWM:00000000 $t
+     /tmp/ccAFDIwS.s:28     .text.USPWM:00000000 USPWM
 
 NO UNDEFINED SYMBOLS

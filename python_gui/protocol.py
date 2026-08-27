@@ -32,6 +32,9 @@ CMD_RESET_INTEGRATORS = b"R"  # zero every channel's integrator + the disperser 
 CMD_SET_COEFF = b"C"    # followed by COEFF_CMD_PAYLOAD, see build_set_coeff_command
 CMD_SET_REF = b"M"      # followed by REF_CMD_PAYLOAD, see build_set_ref_command
 CMD_GET_REF = b"N"      # ask the device to report the reference multiplier in force
+CMD_CALIBRATE = b"K"    # followed by CAL_CMD_PAYLOAD, see build_calibrate_command
+CMD_GET_CAL = b"Q"      # ask the device to report the sensor calibration in force
+CMD_CAL_DEFAULT = b"D"  # restore the build-time sensor calibration
 PING_REPLY_PREFIX = b"HCA1001_ADC_STREAM_V1"
 
 # --- HCA coefficient frames (device -> host), see HcaCoeffFrame_t in main.h ---
@@ -56,6 +59,41 @@ REF_FRAME_SIZE = struct.calcsize(REF_FRAME_FORMAT)  # 12
 # additive checksum over those 4 bytes.
 REF_CMD_FORMAT = "<fB"
 REF_CMD_SIZE = struct.calcsize(REF_CMD_FORMAT)  # 5
+
+# --- sensor calibration frames (device -> host), see HcaCalFrame_t in main.h ---
+CAL_SYNC1 = 0x5D
+CAL_FRAME_FORMAT = "<BBBffffffB"  # sync0 sync1 status vdc gain offset raw_peak raw_dc exp_peak chk
+CAL_FRAME_SIZE = struct.calcsize(CAL_FRAME_FORMAT)  # 28
+
+# Payload following the CMD_CALIBRATE byte: the DC bus voltage, then an 8-bit
+# additive checksum over those 4 bytes.
+CAL_CMD_FORMAT = "<fB"
+CAL_CMD_SIZE = struct.calcsize(CAL_CMD_FORMAT)  # 5
+
+# HcaCalFrame_t.status -- must match the CAL_STATUS_* defines in main.h.
+CAL_STATUS_OK = 0
+CAL_STATUS_REPORT = 1
+CAL_STATUS_RESTORED = 2
+CAL_STATUS_BUSY = 3
+CAL_STATUS_BAD_VDC = 4
+CAL_STATUS_NO_SIGNAL = 5
+CAL_STATUS_OUT_OF_RANGE = 6
+
+CAL_STATUS_TEXT = {
+    CAL_STATUS_OK: "Calibration applied.",
+    CAL_STATUS_REPORT: "Calibration currently in force.",
+    CAL_STATUS_RESTORED: "Build-time calibration restored.",
+    CAL_STATUS_BUSY: "A calibration is already running -- wait for it to finish.",
+    CAL_STATUS_BAD_VDC: "Vdc outside the accepted 10-1000 V range; nothing changed.",
+    CAL_STATUS_NO_SIGNAL: (
+        "No usable signal: the output was not switching, the reference is at "
+        "zero, or the sensor is disconnected. Nothing changed."
+    ),
+    CAL_STATUS_OUT_OF_RANGE: (
+        "Result implausible (more than 4x off nominal) -- check Vdc and the "
+        "sensor wiring. Nothing changed."
+    ),
+}
 
 # Highest harmonic order the GUI offers. MAX_HARMONICS in Core/Inc/hca_lib.h
 # must be at least this large or the device runs out of channel slots.
@@ -95,6 +133,25 @@ class RefFrame(NamedTuple):
     value: float
     open_loop: bool
     limit: float
+
+
+class CalFrame(NamedTuple):
+    """Sensor calibration state as reported by the device.
+
+    ``gain``/``offset`` are the coefficients now in force (volts = raw*gain +
+    offset). ``raw_peak``/``raw_dc`` are what the sensor measured uncalibrated
+    and ``expected_peak`` what the modulator must have produced given the Vdc
+    supplied -- their ratio is the gain, and showing both is what makes a bad
+    run (dead output, wrong Vdc) obvious rather than silently accepted.
+    Only CAL_STATUS_OK and CAL_STATUS_RESTORED changed anything.
+    """
+    status: int
+    vdc: float
+    gain: float
+    offset: float
+    raw_peak: float
+    raw_dc: float
+    expected_peak: float
 
 
 class AdcFrame(NamedTuple):
@@ -179,3 +236,23 @@ def build_set_ref_command(value: float) -> bytes:
     """CMD_SET_REF plus its payload, ready to write to the port."""
     body = struct.pack("<f", value)
     return CMD_SET_REF + body + bytes([checksum8(body)])
+
+
+def parse_cal_frame(buf: bytes) -> Optional[CalFrame]:
+    """Parse and validate one CAL_FRAME_SIZE-byte buffer. Returns None if invalid."""
+    if len(buf) != CAL_FRAME_SIZE:
+        return None
+    (sync0, sync1, status, vdc, gain, offset,
+     raw_peak, raw_dc, expected_peak, chk) = struct.unpack(CAL_FRAME_FORMAT, buf)
+    if sync0 != SYNC0 or sync1 != CAL_SYNC1:
+        return None
+    payload = buf[2:-1]  # status .. expected_peak, matches SendCalFrame() in firmware
+    if checksum8(payload) != chk:
+        return None
+    return CalFrame(status, vdc, gain, offset, raw_peak, raw_dc, expected_peak)
+
+
+def build_calibrate_command(vdc: float) -> bytes:
+    """CMD_CALIBRATE plus its payload, ready to write to the port."""
+    body = struct.pack("<f", vdc)
+    return CMD_CALIBRATE + body + bytes([checksum8(body)])

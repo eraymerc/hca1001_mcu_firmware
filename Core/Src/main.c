@@ -643,11 +643,32 @@ static inline float normaliseVoltage(int16_t adc_signed){
 /**
  * @param adc_signed ADC1 differential reading, zero-centered (see DifferentialCode)
  */
-/** Scales the sine reference before it reaches the modulator. Written from the
- *  main loop (SetReferenceMultiplier), read by the 40kHz ISR -- volatile so the
- *  ISR cannot cache a stale copy. A 32-bit aligned float is written atomically
- *  on Cortex-M4, so the ISR never sees a half-updated value. */
-static volatile float reference_multiplier = 0.85f;
+/** Reference multiplier the device boots to, and ramps up to over
+ *  REF_RAMP_MS. Must be inside ReferenceMultiplierLimit() for the loop mode
+ *  this is built for; 0.85 is legal both open and closed loop. */
+#define REF_MULT_BOOT 0.85f
+
+/** Startup ramp: the reference is walked from zero to its target rather than
+ *  applied as a step, so the bridge does not see full modulation depth on its
+ *  first switching cycle while the controller's integrators are still empty.
+ *  Also covers a later change from the host, which is a step of the same kind. */
+#define REF_RAMP_MS      10.0f
+#define REF_RAMP_SAMPLES ((float)((REF_RAMP_MS / 1000.0f) * (2.0f * SWITCH_RATE)))
+
+/** Where the reference is heading. Written by the main loop
+ *  (SetReferenceMultiplier), read by the 40kHz ISR. */
+static volatile float reference_target = REF_MULT_BOOT;
+
+/** How far the ramp moves per ISR sample, sized so any change reaches its
+ *  target in REF_RAMP_MS regardless of how far it has to travel. */
+static volatile float reference_ramp_step = (REF_MULT_BOOT / REF_RAMP_SAMPLES);
+
+/** Scales the sine reference before it reaches the modulator. Owned by the
+ *  40kHz ISR, which walks it toward reference_target one step per sample --
+ *  volatile so neither side caches a stale copy. A 32-bit aligned float is
+ *  written atomically on Cortex-M4, so no reader sees a half-updated value.
+ *  Starts at zero: the boot ramp is just the first target being applied. */
+static volatile float reference_multiplier = 0.0f;
 
 /** Largest reference multiplier this build accepts, see IS_OPENLOOP above. */
 static inline float ReferenceMultiplierLimit(void)
@@ -661,7 +682,8 @@ static inline float ReferenceMultiplierLimit(void)
 
 /** Range-check happens here, on the way in -- Execute_HCA_Control stays a pure
  *  hot path and just uses whatever value is standing.
- *  @return the value actually applied, which is the request clamped to range. */
+ *  @return the value actually applied, which is the request clamped to range.
+ *          The ISR takes REF_RAMP_MS to walk the live multiplier to it. */
 static float SetReferenceMultiplier(float value)
 {
     const float limit = ReferenceMultiplierLimit();
@@ -669,8 +691,57 @@ static float SetReferenceMultiplier(float value)
     if (value < 0.0f)  { value = 0.0f; }
     if (value > limit) { value = limit; }
 
-    reference_multiplier = value;
+    /* Step first, then the target: the ISR reading between the two writes gets
+     * the new step against the old target, which is one sample of a slightly
+     * wrong rate on a ramp lasting 400 of them. The reverse order could leave
+     * a stale (possibly zero) step chasing a new target. */
+    float distance = value - reference_multiplier;
+    if (distance < 0.0f) { distance = -distance; }
+    reference_ramp_step = distance / REF_RAMP_SAMPLES;
+    reference_target = value;
     return value;
+}
+
+/** Send the reference back to zero so it ramps up again over REF_RAMP_MS.
+ *  Used where the controller's state is thrown away underneath a live output:
+ *  the integrators come back empty, so letting the reference walk back up gives
+ *  them the same gentle start the boot ramp gives them. */
+static void RestartReferenceRamp(void)
+{
+    /* Step first, then the value -- same ordering argument as
+     * SetReferenceMultiplier, and here the step is the full-travel one. */
+    float distance = reference_target;
+    if (distance < 0.0f) { distance = -distance; }
+    reference_ramp_step = distance / REF_RAMP_SAMPLES;
+    reference_multiplier = 0.0f;
+}
+
+/** One ramp step, called from the ADC ISR before the reference is used.
+ *  Converges exactly: the final step is clamped to the target rather than
+ *  overshooting it, so the comparison settles and stops costing anything. */
+static inline void StepReferenceRamp(void)
+{
+    const float target = reference_target;
+    float value = reference_multiplier;
+
+    if (value == target) {
+        return;
+    }
+
+    const float step = reference_ramp_step;
+    if (step <= 0.0f) {
+        reference_multiplier = target;  // nowhere to walk from; apply directly
+        return;
+    }
+
+    if (value < target) {
+        value += step;
+        if (value > target) { value = target; }
+    } else {
+        value -= step;
+        if (value < target) { value = target; }
+    }
+    reference_multiplier = value;
 }
 
 /* Last unit sine and last modulator command, published for the calibrator
@@ -683,6 +754,8 @@ static inline float Execute_HCA_Control(int16_t adc_signed, uint8_t update)
 {
     static uint32_t step_fundamental = (uint32_t)((50.0f / (2.0f*SWITCH_RATE)) * 4294967296.0f);
     static uint32_t angle_fundamental = 0;
+
+    StepReferenceRamp();
 
     uint32_t theta = angle_fundamental;
     float sin_theta = HCA_fastSin(theta);
@@ -962,7 +1035,7 @@ static void SendRefFrame(void)
     HcaRefFrame_t f;
     f.sync0     = STREAM_SYNC0;
     f.sync1     = REF_SYNC1;
-    f.value     = reference_multiplier;
+    f.value     = reference_target;  // the commanded value; the live one is mid-ramp
     f.open_loop = IS_OPENLOOP ? 1U : 0U;
     f.limit     = ReferenceMultiplierLimit();
     /* Covers value..limit: everything but the two sync bytes and itself. */
@@ -1200,8 +1273,13 @@ static void HandleStreamCommand(uint8_t cmd)
              * put a transient on the output. The ~16KB memset costs roughly one
              * 40kHz ISR period.
              *
+             * The reference restarts from zero with it (RestartReferenceRamp),
+             * so the emptied integrators are not handed a full-amplitude
+             * reference on their first sample.
+             *
              * Gains are untouched, so echoing them back doubles as the ack. */
             HCA_reset_accumulators((HCA_Handle_t*)&hca);
+            RestartReferenceRamp();
             SendAllCoeffFrames();
             break;
 

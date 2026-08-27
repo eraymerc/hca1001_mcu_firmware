@@ -44,6 +44,7 @@ from export_worker import CsvExportWorker
 from fft_window import FFTWindow
 from protocol import SIGNAL_LABELS, SIGNAL_NAMES, STREAM_RATE_HZ
 from serial_worker import SerialWorker
+from tuner_window import TunerWindow
 
 DEFAULT_LIVE_WINDOW_SECONDS = 5.0
 MIN_LIVE_WINDOW_SECONDS = 0.005
@@ -158,6 +159,7 @@ class MainWindow(QMainWindow):
         self._fft_windows = []
         self._coeff_window: CoefficientsWindow | None = None
         self._cal_dialog: CalibrationDialog | None = None
+        self._tuner_window: TunerWindow | None = None
         self._session_capped = False
         self._t0_ms = None
 
@@ -233,6 +235,15 @@ class MainWindow(QMainWindow):
         )
         self.calibrate_btn.clicked.connect(self._open_calibration_dialog)
         conn_layout.addWidget(self.calibrate_btn)
+
+        self.tuner_btn = QPushButton("Tuner")
+        self.tuner_btn.setEnabled(False)
+        self.tuner_btn.setToolTip(
+            "Grey Wolf search over the HCA integral gains, scored on the live\n"
+            "system with the ITAE of the streamed error"
+        )
+        self.tuner_btn.clicked.connect(self._open_tuner_window)
+        conn_layout.addWidget(self.tuner_btn)
 
         conn_layout.addStretch(1)
         self.rate_label = QLabel("")
@@ -398,6 +409,7 @@ class MainWindow(QMainWindow):
         self.ref_apply_btn.setEnabled(True)
         self.ref_read_btn.setEnabled(True)
         self.calibrate_btn.setEnabled(True)
+        self.tuner_btn.setEnabled(True)
         self.statusBar().showMessage(f"Connected to {port_name}.")
         self._gui_update_timer.start(GUI_UPDATE_INTERVAL_MS)
         # Show what the device is running rather than whatever the box was left at.
@@ -418,6 +430,7 @@ class MainWindow(QMainWindow):
         self.ref_read_btn.setEnabled(False)
         self.calibrate_btn.setEnabled(False)
         self.ref_status_label.setText("")
+        self.tuner_btn.setEnabled(False)
         self.worker = None
 
     def _on_error(self, message):
@@ -467,12 +480,19 @@ class MainWindow(QMainWindow):
         frames = self.worker.drain_frames()
         if frames:
             self._on_frames(frames)
+            # The tuner scores each candidate from these same samples, so it
+            # needs them at the GUI's update rate, not the plot's.
+            if self._tuner_window is not None:
+                self._tuner_window.on_frames(frames)
 
         # Drained unconditionally so the queue cannot grow while the
         # coefficients window is closed.
         coeff_frames = self.worker.drain_coeff_frames()
-        if coeff_frames and self._coeff_window is not None:
-            self._coeff_window.on_coeff_frames(coeff_frames)
+        if coeff_frames:
+            if self._coeff_window is not None:
+                self._coeff_window.on_coeff_frames(coeff_frames)
+            if self._tuner_window is not None:
+                self._tuner_window.on_coeff_frames(coeff_frames)
 
         for frame in self.worker.drain_ref_frames():
             self._on_ref_frame(frame)
@@ -659,6 +679,19 @@ class MainWindow(QMainWindow):
             )
         else:
             self.statusBar().showMessage(f"Reference multiplier is {frame.value:.4f}.")
+
+    # -------------------------------------------------------------- Tuner
+    def _open_tuner_window(self):
+        if self._tuner_window is None:
+            self._tuner_window = TunerWindow(lambda: self.worker, parent=self)
+            self._tuner_window.setAttribute(Qt.WA_DeleteOnClose)
+            self._tuner_window.destroyed.connect(self._on_tuner_window_closed)
+        self._tuner_window.show()
+        self._tuner_window.raise_()
+        self._tuner_window.activateWindow()
+
+    def _on_tuner_window_closed(self):
+        self._tuner_window = None
 
     # -------------------------------------------------------- Calibration
     def _open_calibration_dialog(self):

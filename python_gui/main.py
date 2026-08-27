@@ -273,6 +273,45 @@ class MainWindow(QMainWindow):
 
         root.addWidget(trig_box)
 
+        # --- reference bar ---
+        # The device owns the valid range (it depends on how the firmware was
+        # built, open loop or closed), so the spin box stays wide open and the
+        # label reports what the device says it applied.
+        ref_box = QGroupBox("Reference")
+        ref_layout = QHBoxLayout(ref_box)
+
+        ref_layout.addWidget(QLabel("Multiplier:"))
+        self.ref_spin = QDoubleSpinBox()
+        self.ref_spin.setDecimals(4)
+        self.ref_spin.setRange(0.0, 2.0)
+        self.ref_spin.setSingleStep(0.01)
+        self.ref_spin.setValue(0.85)
+        self.ref_spin.setToolTip(
+            "Scales the sine reference before the modulator.\n\n"
+            "Open-loop builds accept values above the modulation index\n"
+            "(overmodulation); closed-loop builds cap at it so the controller\n"
+            "keeps headroom to correct with. The device clamps and echoes back\n"
+            "what it actually applied."
+        )
+        ref_layout.addWidget(self.ref_spin)
+
+        self.ref_apply_btn = QPushButton("Apply")
+        self.ref_apply_btn.setEnabled(False)
+        self.ref_apply_btn.clicked.connect(self._on_ref_apply_clicked)
+        ref_layout.addWidget(self.ref_apply_btn)
+
+        self.ref_read_btn = QPushButton("Read")
+        self.ref_read_btn.setEnabled(False)
+        self.ref_read_btn.clicked.connect(self._on_ref_read_clicked)
+        ref_layout.addWidget(self.ref_read_btn)
+
+        ref_layout.addStretch(1)
+        self.ref_status_label = QLabel("")
+        self.ref_status_label.setObjectName("statsLabel")
+        ref_layout.addWidget(self.ref_status_label)
+
+        root.addWidget(ref_box)
+
         # --- signal rows ---
         self.rows = {}
         signals_box = QGroupBox("Monitored Signals")
@@ -341,8 +380,12 @@ class MainWindow(QMainWindow):
         self.connect_btn.setEnabled(True)
         self.ping_btn.setEnabled(True)
         self.stream_btn.setEnabled(True)
+        self.ref_apply_btn.setEnabled(True)
+        self.ref_read_btn.setEnabled(True)
         self.statusBar().showMessage(f"Connected to {port_name}.")
         self._gui_update_timer.start(GUI_UPDATE_INTERVAL_MS)
+        # Show what the device is running rather than whatever the box was left at.
+        self.worker.request_reference_multiplier()
 
     def _on_disconnected(self):
         self._gui_update_timer.stop()
@@ -355,6 +398,9 @@ class MainWindow(QMainWindow):
         self.stream_btn.setEnabled(False)
         self.stream_btn.setChecked(False)
         self.stream_btn.setText("Start Streaming")
+        self.ref_apply_btn.setEnabled(False)
+        self.ref_read_btn.setEnabled(False)
+        self.ref_status_label.setText("")
         self.worker = None
 
     def _on_error(self, message):
@@ -410,6 +456,9 @@ class MainWindow(QMainWindow):
         coeff_frames = self.worker.drain_coeff_frames()
         if coeff_frames and self._coeff_window is not None:
             self._coeff_window.on_coeff_frames(coeff_frames)
+
+        for frame in self.worker.drain_ref_frames():
+            self._on_ref_frame(frame)
 
     def _on_frames(self, frames):
         if not frames:
@@ -549,6 +598,39 @@ class MainWindow(QMainWindow):
         if buf is None or len(buf) < n:
             return np.fromiter(buf, dtype=np.float64) if buf else None
         return np.fromiter(buf, dtype=np.float64)[-n:]
+
+    # -------------------------------------------------- Reference multiplier
+    def _on_ref_apply_clicked(self):
+        if self.worker is None:
+            return
+        self.worker.set_reference_multiplier(self.ref_spin.value())
+        self.statusBar().showMessage(
+            f"Sent reference multiplier {self.ref_spin.value():.4f}, waiting for the device echo..."
+        )
+
+    def _on_ref_read_clicked(self):
+        if self.worker is None:
+            return
+        self.worker.request_reference_multiplier()
+
+    def _on_ref_frame(self, frame):
+        """The device reports the value it actually runs, which is the request
+        clamped to what this firmware build allows."""
+        loop = "open loop" if frame.open_loop else "closed loop"
+        self.ref_status_label.setText(
+            f"device: {frame.value:.4f}   ({loop}, max {frame.limit:.4f})"
+        )
+        requested = self.ref_spin.value()
+        self.ref_spin.blockSignals(True)
+        self.ref_spin.setValue(frame.value)
+        self.ref_spin.blockSignals(False)
+        if abs(requested - frame.value) > 1e-6:
+            self.statusBar().showMessage(
+                f"Device clamped {requested:.4f} to {frame.value:.4f} "
+                f"({loop} limit is {frame.limit:.4f})."
+            )
+        else:
+            self.statusBar().showMessage(f"Reference multiplier is {frame.value:.4f}.")
 
     # ------------------------------------------------------- Coefficients
     def _open_coefficients_window(self):

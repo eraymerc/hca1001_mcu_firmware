@@ -27,6 +27,7 @@ import serial
 
 from protocol import (
     CMD_GET_COEFFS,
+    CMD_GET_REF,
     CMD_PING,
     CMD_RESET_INTEGRATORS,
     CMD_START,
@@ -35,11 +36,15 @@ from protocol import (
     COEFF_SYNC1,
     FRAME_SIZE,
     PING_REPLY_PREFIX,
+    REF_FRAME_SIZE,
+    REF_SYNC1,
     SYNC0,
     SYNC1,
     build_set_coeff_command,
+    build_set_ref_command,
     parse_coeff_frame,
     parse_frame,
+    parse_ref_frame,
 )
 
 BAUDRATE = 2097000  # must match hlpuart1.Init.BaudRate in Core/Src/main.c
@@ -62,6 +67,7 @@ class SerialWorker(QThread):
         self._cmd_queue: "queue.Queue[bytes]" = queue.Queue()
         self._frame_queue: "queue.Queue" = queue.Queue()  # AdcFrame items, GUI-thread pulls
         self._coeff_queue: "queue.Queue" = queue.Queue()  # CoeffFrame items, likewise
+        self._ref_queue: "queue.Queue" = queue.Queue()    # RefFrame items, likewise
         # Plain ints, written here and read from the GUI thread. Only ever
         # incremented, so a torn read just shows a slightly stale count.
         self._bytes_read = 0
@@ -96,6 +102,16 @@ class SerialWorker(QThread):
         back once applied, so the reply -- not this call -- is the confirmation."""
         self._cmd_queue.put(build_set_coeff_command(order, kp, ki))
 
+    def request_reference_multiplier(self):
+        """Ask the device for the reference multiplier it is running."""
+        self._cmd_queue.put(CMD_GET_REF)
+
+    def set_reference_multiplier(self, value: float):
+        """Push a new reference multiplier. The device clamps it to what this
+        build allows and echoes the applied value back, so the reply -- not this
+        call -- says what is actually in force."""
+        self._cmd_queue.put(build_set_ref_command(value))
+
     def stop(self):
         self._running = False
 
@@ -112,6 +128,10 @@ class SerialWorker(QThread):
     def drain_coeff_frames(self):
         """Non-blocking pull of every CoeffFrame parsed since the last call."""
         return self._drain(self._coeff_queue)
+
+    def drain_ref_frames(self):
+        """Non-blocking pull of every RefFrame parsed since the last call."""
+        return self._drain(self._ref_queue)
 
     @staticmethod
     def _drain(q):
@@ -185,7 +205,8 @@ class SerialWorker(QThread):
 
                 # Resync on SYNC0, then let the following byte pick the frame
                 # type: SYNC1 is an ADC sample, COEFF_SYNC1 a coefficient
-                # report. Both are fixed-size and checksummed, so a sync-byte
+                # report, REF_SYNC1 the reference multiplier. All are
+                # fixed-size and checksummed, so a sync-byte
                 # collision inside float payload data just fails to parse and
                 # the loop slides forward a byte.
                 while True:
@@ -211,6 +232,10 @@ class SerialWorker(QThread):
                     elif buf[1] == COEFF_SYNC1:
                         size, parse, sink, batched = (
                             COEFF_FRAME_SIZE, parse_coeff_frame, self._coeff_queue, False
+                        )
+                    elif buf[1] == REF_SYNC1:
+                        size, parse, sink, batched = (
+                            REF_FRAME_SIZE, parse_ref_frame, self._ref_queue, False
                         )
                     else:
                         del buf[:1]  # 0xA5 that starts no frame

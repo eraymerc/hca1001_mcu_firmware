@@ -30,6 +30,8 @@ CMD_PING = b"P"
 CMD_GET_COEFFS = b"G"   # ask the device to report every channel's Kp/Ki
 CMD_RESET_INTEGRATORS = b"R"  # zero every channel's integrator + the disperser window
 CMD_SET_COEFF = b"C"    # followed by COEFF_CMD_PAYLOAD, see build_set_coeff_command
+CMD_SET_REF = b"M"      # followed by REF_CMD_PAYLOAD, see build_set_ref_command
+CMD_GET_REF = b"N"      # ask the device to report the reference multiplier in force
 PING_REPLY_PREFIX = b"HCA1001_ADC_STREAM_V1"
 
 # --- HCA coefficient frames (device -> host), see HcaCoeffFrame_t in main.h ---
@@ -43,6 +45,17 @@ COEFF_FRAME_SIZE = struct.calcsize(COEFF_FRAME_FORMAT)  # 22
 # gain components, then an 8-bit additive checksum over those 17 bytes.
 COEFF_CMD_FORMAT = "<BffffB"
 COEFF_CMD_SIZE = struct.calcsize(COEFF_CMD_FORMAT)  # 18
+
+# --- reference multiplier frames (device -> host), see HcaRefFrame_t in main.h ---
+# A third second-sync-byte variant on the same link.
+REF_SYNC1 = 0x5C
+REF_FRAME_FORMAT = "<BBfBfB"  # sync0 sync1 value open_loop limit chk
+REF_FRAME_SIZE = struct.calcsize(REF_FRAME_FORMAT)  # 12
+
+# Payload following the CMD_SET_REF byte: the multiplier, then an 8-bit
+# additive checksum over those 4 bytes.
+REF_CMD_FORMAT = "<fB"
+REF_CMD_SIZE = struct.calcsize(REF_CMD_FORMAT)  # 5
 
 # Highest harmonic order the GUI offers. MAX_HARMONICS in Core/Inc/hca_lib.h
 # must be at least this large or the device runs out of channel slots.
@@ -68,6 +81,20 @@ class CoeffFrame(NamedTuple):
     kp_imag: float
     ki_real: float
     ki_imag: float
+
+
+class RefFrame(NamedTuple):
+    """The reference multiplier the device is actually running.
+
+    ``limit`` is the largest value this firmware build accepts: open-loop
+    builds allow overmodulation (above the modulation index), closed-loop ones
+    cap at the modulation index so the controller keeps headroom to correct
+    with. The device clamps, so ``value`` is what is really in force -- it may
+    be below what was sent.
+    """
+    value: float
+    open_loop: bool
+    limit: float
 
 
 class AdcFrame(NamedTuple):
@@ -133,3 +160,22 @@ def build_set_coeff_command(order: int, kp: complex, ki: complex) -> bytes:
         "<Bffff", order, kp.real, kp.imag, ki.real, ki.imag
     )
     return CMD_SET_COEFF + body + bytes([checksum8(body)])
+
+
+def parse_ref_frame(buf: bytes) -> Optional[RefFrame]:
+    """Parse and validate one REF_FRAME_SIZE-byte buffer. Returns None if invalid."""
+    if len(buf) != REF_FRAME_SIZE:
+        return None
+    sync0, sync1, value, open_loop, limit, chk = struct.unpack(REF_FRAME_FORMAT, buf)
+    if sync0 != SYNC0 or sync1 != REF_SYNC1:
+        return None
+    payload = buf[2:-1]  # value .. limit, matches SendRefFrame() in firmware
+    if checksum8(payload) != chk:
+        return None
+    return RefFrame(value, bool(open_loop), limit)
+
+
+def build_set_ref_command(value: float) -> bytes:
+    """CMD_SET_REF plus its payload, ready to write to the port."""
+    body = struct.pack("<f", value)
+    return CMD_SET_REF + body + bytes([checksum8(body)])

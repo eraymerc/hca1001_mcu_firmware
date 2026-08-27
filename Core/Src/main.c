@@ -64,6 +64,15 @@
 #define UART_RX_DMA_LEN  64U
 #define UART_RX_DMA_MASK (UART_RX_DMA_LEN - 1U)
 #define MODULATION_INDEX 0.85f
+
+#define IS_OPENLOOP 0
+
+/** Ceiling on reference_multiplier when running open loop. The reference is
+ *  fed straight to the modulator there, so it may exceed MODULATION_INDEX --
+ *  overmodulation is a legitimate open-loop test point. Closed loop the
+ *  controller needs headroom above the reference to correct with, so the
+ *  limit is MODULATION_INDEX itself; see SetReferenceMultiplier. */
+#define REF_MULT_OPENLOOP_MAX 1.0f
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -608,13 +617,43 @@ static inline float normaliseVoltage(int16_t adc_signed){
 /**
  * @param adc_signed ADC1 differential reading, zero-centered (see DifferentialCode)
  */
+/** Scales the sine reference before it reaches the modulator. Written from the
+ *  main loop (SetReferenceMultiplier), read by the 40kHz ISR -- volatile so the
+ *  ISR cannot cache a stale copy. A 32-bit aligned float is written atomically
+ *  on Cortex-M4, so the ISR never sees a half-updated value. */
+static volatile float reference_multiplier = 0.85f;
+
+/** Largest reference multiplier this build accepts, see IS_OPENLOOP above. */
+static inline float ReferenceMultiplierLimit(void)
+{
+#if IS_OPENLOOP
+    return REF_MULT_OPENLOOP_MAX;
+#else
+    return MODULATION_INDEX;
+#endif
+}
+
+/** Range-check happens here, on the way in -- Execute_HCA_Control stays a pure
+ *  hot path and just uses whatever value is standing.
+ *  @return the value actually applied, which is the request clamped to range. */
+static float SetReferenceMultiplier(float value)
+{
+    const float limit = ReferenceMultiplierLimit();
+
+    if (value < 0.0f)  { value = 0.0f; }
+    if (value > limit) { value = limit; }
+
+    reference_multiplier = value;
+    return value;
+}
+
 static inline float Execute_HCA_Control(int16_t adc_signed, uint8_t update)
 {
     static uint32_t step_fundamental = (uint32_t)((50.0f / (2.0f*SWITCH_RATE)) * 4294967296.0f);
     static uint32_t angle_fundamental = 0;
 
     uint32_t theta = angle_fundamental;
-    float r_t = HCA_fastSin(theta)*0.8f;
+    float r_t = HCA_fastSin(theta)*reference_multiplier;
 
     float error = r_t - (float)normaliseVoltage(adc_signed);
     float hca_out = HCA_Process(&hca, error);
@@ -734,8 +773,12 @@ static void StreamTxWaitIdle(void)
  * stall the stream pump for as long as the host took to finish the command. */
 static uint8_t  coeff_rx[COEFF_CMD_PAYLOAD_LEN];
 static uint8_t  coeff_rx_len = 0;
-static uint8_t  coeff_rx_active = 0;
+static uint8_t  coeff_rx_active = 0;      /**< command byte being collected for, 0 when idle */
+static uint8_t  coeff_rx_expected = 0;    /**< payload length of that command */
 static uint32_t coeff_rx_started_ms = 0;
+
+_Static_assert(REF_CMD_PAYLOAD_LEN <= COEFF_CMD_PAYLOAD_LEN,
+               "coeff_rx doubles as the SET_REF payload buffer");
 
 static uint8_t CoeffChecksum(const uint8_t *p, uint16_t len)
 {
@@ -762,6 +805,23 @@ static void SendCoeffFrame(uint8_t index, uint8_t count, const HCA_Channel_t *ch
     /* Covers index..ki_imag: everything but the two sync bytes and itself. */
     f.checksum = CoeffChecksum((const uint8_t*)&f.index,
                                (uint16_t)(sizeof(f) - 3U));
+
+    StreamTxWaitIdle();
+    HAL_UART_Transmit(&hlpuart1, (uint8_t*)&f, (uint16_t)sizeof(f), 10);
+}
+
+/** Emit the reference multiplier in force, plus the limit this build enforces. */
+static void SendRefFrame(void)
+{
+    HcaRefFrame_t f;
+    f.sync0     = STREAM_SYNC0;
+    f.sync1     = REF_SYNC1;
+    f.value     = reference_multiplier;
+    f.open_loop = IS_OPENLOOP ? 1U : 0U;
+    f.limit     = ReferenceMultiplierLimit();
+    /* Covers value..limit: everything but the two sync bytes and itself. */
+    f.checksum  = CoeffChecksum((const uint8_t*)&f.value,
+                                (uint16_t)(sizeof(f) - 3U));
 
     StreamTxWaitIdle();
     HAL_UART_Transmit(&hlpuart1, (uint8_t*)&f, (uint16_t)sizeof(f), 10);
@@ -811,6 +871,28 @@ static void ApplyCoeffCommand(void)
     }
 }
 
+/** Validate a fully received SET_REF payload and apply it. */
+static void ApplyRefCommand(void)
+{
+    if (CoeffChecksum(coeff_rx, REF_CMD_PAYLOAD_LEN - 1U)
+            != coeff_rx[REF_CMD_PAYLOAD_LEN - 1U]) {
+        return; // corrupted on the wire; the host re-sends after its ack times out
+    }
+
+    float value;
+    /* memcpy rather than a cast: coeff_rx is byte-aligned, see ApplyCoeffCommand. */
+    memcpy(&value, &coeff_rx[0], sizeof(float));
+
+    /* Rejects NaN too -- both comparisons in SetReferenceMultiplier are false
+     * for it, so screen it out here rather than letting it reach the ISR. */
+    if (value != value) {
+        return;
+    }
+
+    SetReferenceMultiplier(value);
+    SendRefFrame();  // echoes the clamped value, which is the host's ack
+}
+
 /** Command byte polled from LPUART1 in the main loop (see HAL_UART_Receive call in USER CODE 3). */
 static void HandleStreamCommand(uint8_t cmd)
 {
@@ -820,10 +902,15 @@ static void HandleStreamCommand(uint8_t cmd)
             coeff_rx_active = 0;  // stale payload; fall through and read this byte as a command
         } else {
             coeff_rx[coeff_rx_len++] = cmd;
-            if (coeff_rx_len >= COEFF_CMD_PAYLOAD_LEN) {
+            if (coeff_rx_len >= coeff_rx_expected) {
+                uint8_t pending = coeff_rx_active;
                 coeff_rx_active = 0;
                 coeff_rx_len = 0;
-                ApplyCoeffCommand();
+                if (pending == STREAM_CMD_SET_COEFF) {
+                    ApplyCoeffCommand();
+                } else {
+                    ApplyRefCommand();
+                }
             }
             return;
         }
@@ -849,9 +936,21 @@ static void HandleStreamCommand(uint8_t cmd)
             break;
 
         case STREAM_CMD_SET_COEFF:
-            coeff_rx_active = 1;
+            coeff_rx_active = STREAM_CMD_SET_COEFF;
+            coeff_rx_expected = COEFF_CMD_PAYLOAD_LEN;
             coeff_rx_len = 0;
             coeff_rx_started_ms = HAL_GetTick();
+            break;
+
+        case STREAM_CMD_SET_REF:
+            coeff_rx_active = STREAM_CMD_SET_REF;
+            coeff_rx_expected = REF_CMD_PAYLOAD_LEN;
+            coeff_rx_len = 0;
+            coeff_rx_started_ms = HAL_GetTick();
+            break;
+
+        case STREAM_CMD_GET_REF:
+            SendRefFrame();
             break;
 
         case STREAM_CMD_START:

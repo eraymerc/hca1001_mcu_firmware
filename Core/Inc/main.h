@@ -105,6 +105,28 @@ typedef struct __attribute__((packed)) {
 
 _Static_assert(sizeof(HcaCoeffFrame_t) == 22, "HcaCoeffFrame_t must stay 22 bytes");
 
+/**
+ * @brief Reference-multiplier report sent over LPUART1.
+ *
+ * Sent in reply to STREAM_CMD_GET_REF and as an echo of a STREAM_CMD_SET_REF,
+ * carrying the value the device *actually* runs after clamping -- the host
+ * cannot know the limit on its own because it depends on IS_OPENLOOP, so it
+ * displays what comes back here rather than what it asked for.
+ *
+ * Third sync byte variant (REF_SYNC1), demultiplexed the same way as
+ * HcaCoeffFrame_t. Packed for struct.unpack('<BBfBfB', ...) -- 12 bytes.
+ */
+typedef struct __attribute__((packed)) {
+    uint8_t  sync0;      /**< 0xA5 */
+    uint8_t  sync1;      /**< 0x5C */
+    float    value;      /**< Reference multiplier in effect, after clamping */
+    uint8_t  open_loop;  /**< 1 when the firmware was built open loop */
+    float    limit;      /**< Largest value this build accepts */
+    uint8_t  checksum;   /**< 8-bit additive checksum over value..limit */
+} HcaRefFrame_t;
+
+_Static_assert(sizeof(HcaRefFrame_t) == 12, "HcaRefFrame_t must stay 12 bytes");
+
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -120,9 +142,14 @@ _Static_assert(sizeof(HcaCoeffFrame_t) == 22, "HcaCoeffFrame_t must stay 22 byte
 #define STREAM_CMD_GET_COEFF 'G'   /**< Report every channel's Kp/Ki as HcaCoeffFrame_t */
 #define STREAM_CMD_SET_COEFF 'C'   /**< Followed by COEFF_CMD_PAYLOAD_LEN payload bytes, see below */
 #define STREAM_CMD_RESET_INT 'R'   /**< Clear every channel's integrator and the disperser window */
+#define STREAM_CMD_SET_REF   'M'   /**< Followed by REF_CMD_PAYLOAD_LEN payload bytes, see below */
+#define STREAM_CMD_GET_REF   'N'   /**< Report the reference multiplier as HcaRefFrame_t */
 
 /** Second sync byte of HcaCoeffFrame_t; distinguishes it from an AdcStreamFrame_t */
 #define COEFF_SYNC1         0x5BU
+
+/** Second sync byte of HcaRefFrame_t */
+#define REF_SYNC1           0x5CU
 
 /**
  * Payload following a STREAM_CMD_SET_COEFF byte, little-endian and packed:
@@ -134,6 +161,13 @@ _Static_assert(sizeof(HcaCoeffFrame_t) == 22, "HcaCoeffFrame_t must stay 22 byte
 /** A half-sent SET_COEFF payload is abandoned after this long, so a host that
  *  dies mid-command cannot leave the parser swallowing later S/X/P bytes. */
 #define COEFF_CMD_TIMEOUT_MS   100U
+
+/**
+ * Payload following a STREAM_CMD_SET_REF byte, little-endian and packed:
+ *   float multiplier; uint8_t checksum;
+ * The checksum is the 8-bit additive sum over the preceding 4 bytes.
+ */
+#define REF_CMD_PAYLOAD_LEN    5U
 
 #define STREAM_PING_REPLY    "HCA1001_ADC_STREAM_V1\n"
 

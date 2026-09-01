@@ -100,6 +100,68 @@ typedef struct {
 } Complex_t;
 
 
+/* ============================================================================
+ * MAGNITUDE / PHASE GAIN NOTATION
+ * ============================================================================
+ *
+ * Tuning is done in polar form -- "how much gain, at what angle" -- while the
+ * controller consumes rectangular Complex_t values.  The macros below let the
+ * gains be written the way they are reasoned about and converted to
+ * real/imaginary at compile time, so the ISR pays nothing for the notation.
+ *
+ * On GCC/Clang the __builtin_ trig functions of constant arguments are folded
+ * by the front end, even at -O0, which is what makes these usable in static
+ * initializers.  On other toolchains they fall back to libm cosf/sinf, which
+ * still works for automatic variables but is then a runtime call to cos/sin.
+ */
+
+#if defined(__GNUC__) || defined(__clang__)
+  #define HCA_COS_(x) __builtin_cos(x)
+  #define HCA_SIN_(x) __builtin_sin(x)
+#else
+  #define HCA_COS_(x) cos(x)
+  #define HCA_SIN_(x) sin(x)
+#endif
+
+/** @brief Degrees-to-radians conversion factor (double, for compile-time math) */
+#define HCA_DEG2RAD 0.017453292519943295
+
+/**
+ * @brief Brace initializer for a Complex_t gain given in magnitude and degrees.
+ *
+ * Example:
+ * @code
+ * Complex_t kp1 = HCA_POLAR_DEG(0.5010f, -3.43f);   // |Kp| = 0.501, angle -3.43 deg
+ * Complex_t ki1 = HCA_POLAR_DEG(0.8433f,  4.47f);
+ * @endcode
+ *
+ * @param mag     Gain magnitude (>= 0)
+ * @param deg     Gain phase in degrees
+ */
+#define HCA_POLAR_DEG(mag, deg)                                                \
+    { (float)((double)(mag) * HCA_COS_((double)(deg) * HCA_DEG2RAD)),           \
+      (float)((double)(mag) * HCA_SIN_((double)(deg) * HCA_DEG2RAD)) }
+
+/**
+ * @brief Brace initializer for a Complex_t gain given in magnitude and radians.
+ */
+#define HCA_POLAR_RAD(mag, rad)                                                \
+    { (float)((double)(mag) * HCA_COS_((double)(rad))),                        \
+      (float)((double)(mag) * HCA_SIN_((double)(rad))) }
+
+/**
+ * @brief Compound-literal forms, usable directly as function arguments.
+ *
+ * Example:
+ * @code
+ * HCA_Add_Channel(&hca, 1, HCA_POLAR_DEG_C(0.501f, -3.43f),
+ *                          HCA_POLAR_DEG_C(0.843f,  4.47f));
+ * @endcode
+ */
+#define HCA_POLAR_DEG_C(mag, deg) ((Complex_t)HCA_POLAR_DEG(mag, deg))
+#define HCA_POLAR_RAD_C(mag, rad) ((Complex_t)HCA_POLAR_RAD(mag, rad))
+
+
 /**
  * @brief Per-harmonic HCA channel structure.
  *

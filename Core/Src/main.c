@@ -21,7 +21,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <math.h>
 #include <stdbool.h>
 #include <string.h>
 #include "hca_lib.h"
@@ -126,7 +125,6 @@ static void MX_TIM8_Init(void);
 static void MX_LPUART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 static void HandleStreamCommand(uint8_t cmd);
-static void PollCalibration(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -163,31 +161,35 @@ int main(void)
           output_limit);
 
   Complex_t kp1 = {0.5f, -0.03f}; //real, complex
-  Complex_t ki1 = {0.8407f, 0.0657f}; //real, complex
+  Complex_t ki1 = HCA_POLAR_RAD_C(0.7126, 0.0438412); //mag, phase (rad)
   
   Complex_t kp3 = {0.001f, -0.4f}; //real, complex
-  Complex_t ki3 = {0.0508f, -0.8f}; //real, complex
+  Complex_t ki3 = HCA_POLAR_RAD_C(0.679748, 0.138029); //mag, phase (rad)
 
   Complex_t kp5 = {0.010f, 0.01f}; //real, complex
-  Complex_t ki5 = {0.01f, 0.02f}; //real, complex
+  Complex_t ki5 = HCA_POLAR_RAD_C(0.594597, -0.167159); //mag, phase (rad)
 
   Complex_t kp7 = {0.001f, 0.001f}; //real, complex
-  Complex_t ki7 = {0.25f, 3.005f}; //real, complex
+  Complex_t ki7 = HCA_POLAR_RAD_C(0.491187, 0.3601); //mag, phase (rad)
 
   Complex_t kp9 = {0.001f, 0.01f}; //real, complex
-  Complex_t ki9 = {0.5f, 3.0025f}; //real, complex
+  Complex_t ki9 = HCA_POLAR_RAD_C(0.1889, 0.5541); //mag, phase (rad)
 
   Complex_t kp11 = {0.001f, 0.01f}; //real, complex
-  Complex_t ki11 = {0.05f, 1.0025f}; //real, complex
+  Complex_t ki11 = HCA_POLAR_RAD_C(0.1178, 0.9764); //mag, phase (rad)
 
   Complex_t kp13 = {0.001f, 0.01f}; //real, complex
-  Complex_t ki13 = {0.05f, 1.0025f}; //real, complex
+  Complex_t ki13 = HCA_POLAR_RAD_C(0.111466, 2.12544); //mag, phase (rad)
 
   Complex_t kp15 = {0.001f, 0.01f}; //real, complex
-  Complex_t ki15 = {0.05f, 1.0025f}; //real, complex
+  Complex_t ki15 = HCA_POLAR_RAD_C(0.18502, 2.80559); //mag, phase (rad)
 
-  //Complex_t kp17 = {0.001f, 0.01f}; //real, complex
-  //Complex_t ki17 = {0.05f, 1.0025f}; //real, complex
+  Complex_t kp17 = {0.001f, 0.01f}; //real, complex
+  Complex_t ki17 = HCA_POLAR_RAD_C(0.18502, 2.80559); //mag, phase (rad)
+
+  Complex_t kp19 = {0.001f, 0.01f}; //real, complex
+  Complex_t ki19 = HCA_POLAR_RAD_C(0.18502, 2.80559); //mag, phase (rad)
+
 
   HCA_Add_Channel(&hca, 1, kp1, ki1);  // Fundamental
   HCA_Add_Channel(&hca, 3, kp3, ki3);  
@@ -197,7 +199,9 @@ int main(void)
   HCA_Add_Channel(&hca, 11, kp11, ki11);  
   HCA_Add_Channel(&hca, 13, kp13, ki13);
   HCA_Add_Channel(&hca, 15, kp15, ki15);
-  //HCA_Add_Channel(&hca, 17, kp17, ki17);    
+  HCA_Add_Channel(&hca, 17, kp17, ki17);
+  HCA_Add_Channel(&hca, 19, kp19, ki19);    
+    
   
   /* USER CODE END Init */
 
@@ -240,10 +244,6 @@ int main(void)
       HandleStreamCommand(uart_rx_dma[uart_rx_tail]);
       uart_rx_tail = (uint16_t)((uart_rx_tail + 1U) & UART_RX_DMA_MASK);
     }
-
-    /* Finishes a calibration once the ISR has filled its window. Polled rather
-     * than waited on, so the stream keeps pumping for the ~0.6s it takes. */
-    PollCalibration();
 
     /* DMA transmit is wired up (HAL_UART_TxCpltCallback below) but stays off
      * until the LPUART1 global interrupt is enabled in CubeMX: HAL signals a
@@ -597,20 +597,8 @@ void HAL_RCC_CSSCallback(void)
  * cancels out in the subtraction -- no bias removal needed in software.
  */
 #define SENSOR_GAIN (2.0f * (250.0f / 44000.0f) * 0.4779f)
-/* Build-time calibration, used at boot and restored by STREAM_CMD_CAL_DEFAULT.
- * The live values live in dc_cal/gain_cal below and the host can re-derive
- * them at runtime; see RunCalibration. */
-#define DC_CAL_DEFAULT   21.5f
-#define GAIN_CAL_DEFAULT (172.0f/159.0f)
-
-/** Live sensor correction: volts = raw*gain_cal + dc_cal. Written by the main
- *  loop when a calibration finishes, read by the 40kHz ISR every sample --
- *  volatile for the same reason as reference_multiplier. The two are written
- *  separately, so the ISR can see a new gain against an old offset for one
- *  sample; harmless here, both are only ever a few percent apart from their
- *  predecessors. */
-static volatile float gain_cal = GAIN_CAL_DEFAULT;
-static volatile float dc_cal   = DC_CAL_DEFAULT;
+#define DC_CAL 21.5f
+#define GAIN_CAL 172.0f/159.0f
 
 /**
  * ADC1 in differential mode reports Vinp-Vinn as a 12-bit *straight offset
@@ -623,17 +611,9 @@ static inline int16_t DifferentialCode(uint16_t raw12)
     return (int16_t)raw12 - (int16_t)ADC_FULL_SCALE_CODES;
 }
 
-/** Line volts as the sensor's nominal transfer function alone reports them,
- *  before any calibration correction. This is what the calibration measures --
- *  correcting a signal that already carries the old correction would fold it
- *  in twice. */
-static inline float adcToVoltsRaw(int16_t adc_signed){
-    float v_adc = (float)adc_signed * (ADC_VREF / ADC_FULL_SCALE_CODES); // differential volts at the ADC pins
-    return v_adc / SENSOR_GAIN;                                          // invert sensor formula -> HV line volts
-}
-
 static inline float adcToVoltsActual(int16_t adc_signed){
-    return adcToVoltsRaw(adc_signed) * gain_cal + dc_cal;
+    float v_adc = (float)adc_signed * (ADC_VREF / ADC_FULL_SCALE_CODES); // differential volts at the ADC pins
+    return (v_adc / SENSOR_GAIN)*GAIN_CAL + DC_CAL;                                          // invert sensor formula -> HV line volts
 }
 
 static inline float normaliseVoltage(int16_t adc_signed){
@@ -643,32 +623,11 @@ static inline float normaliseVoltage(int16_t adc_signed){
 /**
  * @param adc_signed ADC1 differential reading, zero-centered (see DifferentialCode)
  */
-/** Reference multiplier the device boots to, and ramps up to over
- *  REF_RAMP_MS. Must be inside ReferenceMultiplierLimit() for the loop mode
- *  this is built for; 0.85 is legal both open and closed loop. */
-#define REF_MULT_BOOT 0.85f
-
-/** Startup ramp: the reference is walked from zero to its target rather than
- *  applied as a step, so the bridge does not see full modulation depth on its
- *  first switching cycle while the controller's integrators are still empty.
- *  Also covers a later change from the host, which is a step of the same kind. */
-#define REF_RAMP_MS      10.0f
-#define REF_RAMP_SAMPLES ((float)((REF_RAMP_MS / 1000.0f) * (2.0f * SWITCH_RATE)))
-
-/** Where the reference is heading. Written by the main loop
- *  (SetReferenceMultiplier), read by the 40kHz ISR. */
-static volatile float reference_target = REF_MULT_BOOT;
-
-/** How far the ramp moves per ISR sample, sized so any change reaches its
- *  target in REF_RAMP_MS regardless of how far it has to travel. */
-static volatile float reference_ramp_step = (REF_MULT_BOOT / REF_RAMP_SAMPLES);
-
-/** Scales the sine reference before it reaches the modulator. Owned by the
- *  40kHz ISR, which walks it toward reference_target one step per sample --
- *  volatile so neither side caches a stale copy. A 32-bit aligned float is
- *  written atomically on Cortex-M4, so no reader sees a half-updated value.
- *  Starts at zero: the boot ramp is just the first target being applied. */
-static volatile float reference_multiplier = 0.0f;
+/** Scales the sine reference before it reaches the modulator. Written from the
+ *  main loop (SetReferenceMultiplier), read by the 40kHz ISR -- volatile so the
+ *  ISR cannot cache a stale copy. A 32-bit aligned float is written atomically
+ *  on Cortex-M4, so the ISR never sees a half-updated value. */
+static volatile float reference_multiplier = 0.85f;
 
 /** Largest reference multiplier this build accepts, see IS_OPENLOOP above. */
 static inline float ReferenceMultiplierLimit(void)
@@ -682,8 +641,7 @@ static inline float ReferenceMultiplierLimit(void)
 
 /** Range-check happens here, on the way in -- Execute_HCA_Control stays a pure
  *  hot path and just uses whatever value is standing.
- *  @return the value actually applied, which is the request clamped to range.
- *          The ISR takes REF_RAMP_MS to walk the live multiplier to it. */
+ *  @return the value actually applied, which is the request clamped to range. */
 static float SetReferenceMultiplier(float value)
 {
     const float limit = ReferenceMultiplierLimit();
@@ -691,75 +649,17 @@ static float SetReferenceMultiplier(float value)
     if (value < 0.0f)  { value = 0.0f; }
     if (value > limit) { value = limit; }
 
-    /* Step first, then the target: the ISR reading between the two writes gets
-     * the new step against the old target, which is one sample of a slightly
-     * wrong rate on a ramp lasting 400 of them. The reverse order could leave
-     * a stale (possibly zero) step chasing a new target. */
-    float distance = value - reference_multiplier;
-    if (distance < 0.0f) { distance = -distance; }
-    reference_ramp_step = distance / REF_RAMP_SAMPLES;
-    reference_target = value;
+    reference_multiplier = value;
     return value;
 }
-
-/** Send the reference back to zero so it ramps up again over REF_RAMP_MS.
- *  Used where the controller's state is thrown away underneath a live output:
- *  the integrators come back empty, so letting the reference walk back up gives
- *  them the same gentle start the boot ramp gives them. */
-static void RestartReferenceRamp(void)
-{
-    /* Step first, then the value -- same ordering argument as
-     * SetReferenceMultiplier, and here the step is the full-travel one. */
-    float distance = reference_target;
-    if (distance < 0.0f) { distance = -distance; }
-    reference_ramp_step = distance / REF_RAMP_SAMPLES;
-    reference_multiplier = 0.0f;
-}
-
-/** One ramp step, called from the ADC ISR before the reference is used.
- *  Converges exactly: the final step is clamped to the target rather than
- *  overshooting it, so the comparison settles and stops costing anything. */
-static inline void StepReferenceRamp(void)
-{
-    const float target = reference_target;
-    float value = reference_multiplier;
-
-    if (value == target) {
-        return;
-    }
-
-    const float step = reference_ramp_step;
-    if (step <= 0.0f) {
-        reference_multiplier = target;  // nowhere to walk from; apply directly
-        return;
-    }
-
-    if (value < target) {
-        value += step;
-        if (value > target) { value = target; }
-    } else {
-        value -= step;
-        if (value < target) { value = target; }
-    }
-    reference_multiplier = value;
-}
-
-/* Last unit sine and last modulator command, published for the calibrator
- * below. Written and read only inside the ADC ISR, so they need no guarding --
- * the calibration accumulator runs from that same ISR. */
-static float cal_last_sin = 0.0f;
-static float cal_last_command = 0.0f;
 
 static inline float Execute_HCA_Control(int16_t adc_signed, uint8_t update)
 {
     static uint32_t step_fundamental = (uint32_t)((50.0f / (2.0f*SWITCH_RATE)) * 4294967296.0f);
     static uint32_t angle_fundamental = 0;
 
-    StepReferenceRamp();
-
     uint32_t theta = angle_fundamental;
-    float sin_theta = HCA_fastSin(theta);
-    float r_t = sin_theta*reference_multiplier;
+    float r_t = HCA_fastSin(theta)*reference_multiplier;
 
     float error = r_t - (float)normaliseVoltage(adc_signed);
     float hca_out = HCA_Process(&hca, error);
@@ -770,117 +670,7 @@ static inline float Execute_HCA_Control(int16_t adc_signed, uint8_t update)
       USPWM(htim8.Instance, hca_out, ARR_VAL, MODULATION_INDEX);  // modulation_index=1.0, already applied above
     }
 
-    /* The command the modulator is standing on this sample. USPWM only updates
-     * every other sample, but hca_out is what it will carry, so correlating
-     * against it costs nothing in accuracy and keeps the calibrator agnostic
-     * about which sample actually wrote the compare register. */
-    cal_last_sin     = sin_theta;
-    cal_last_command = hca_out;
-
     return error;
-}
-
-/* ---- Sensor calibration ---------------------------------------------------
- *
- * What it solves for: the two coefficients in
- *
- *     volts = adcToVoltsRaw(adc) * gain_cal + dc_cal
- *
- * The nominal sensor transfer function (SENSOR_GAIN) is derived from resistor
- * values and an amplifier gain, so it is off by a few percent in any real
- * build -- which is exactly what the hand-tuned GAIN_CAL_DEFAULT/DC_CAL_DEFAULT
- * were compensating for. This measures them instead.
- *
- * The reference it calibrates against is the modulator itself. Over one
- * fundamental cycle the bridge's average output is
- *
- *     v_true(t) = Vdc * MODULATION_INDEX * u(t)
- *
- * where u(t) is the command USPWM was given (cal_last_command). Vdc is the one
- * quantity the firmware cannot observe, which is why the host has to supply it.
- * Correlating both u(t) and the uncalibrated measurement against the same sine
- * the control loop runs on gives the fundamental component of each:
- *
- *     peak = 2 * mean(x(t) * sin(theta)),   dc = mean(x(t))
- *
- * and the two coefficients follow directly:
- *
- *     gain_cal = Vdc*MODULATION_INDEX*u_peak / raw_peak
- *     dc_cal   = Vdc*MODULATION_INDEX*u_dc - gain_cal*raw_dc
- *
- * Because it correlates the *command*, it works identically open loop (where
- * u is the reference straight through) and closed loop (where the controller
- * has already moved u to whatever the load needs) -- in both cases u is what
- * the bridge actually switched on. Closed loop the result is only as good as
- * the loop's tracking, so run it on a settled loop.
- *
- * The window is a whole number of fundamental cycles: that is what makes the
- * sine correlation orthogonal to the harmonics and the mean orthogonal to the
- * fundamental. A settling stretch is discarded first so a reference multiplier
- * that changed a moment ago is not averaged in half-applied. */
-
-#define CAL_FUNDAMENTAL_HZ    50.0f
-#define CAL_SAMPLE_RATE_HZ    (2.0f * SWITCH_RATE)  /**< the ADC ISR rate, 40kHz */
-#define CAL_SAMPLES_PER_CYCLE ((uint32_t)(CAL_SAMPLE_RATE_HZ / CAL_FUNDAMENTAL_HZ))
-#define CAL_SETTLE_CYCLES     10U
-#define CAL_MEASURE_CYCLES    20U   /**< 0.4s of averaging, plus 0.2s settling */
-
-/** Plausible DC bus range. Outside this the operator has fat-fingered the
- *  entry, and a wrong Vdc scales the gain wrong by exactly that factor. */
-#define CAL_VDC_MIN            10.0f
-#define CAL_VDC_MAX          1000.0f
-
-/** A commanded or sensed fundamental smaller than this is noise, not a
- *  measurement -- dividing by it would produce a nonsense gain. Sensed is in
- *  volts at the (uncalibrated) sensor, commanded is in per-unit duty. */
-#define CAL_MIN_RAW_PEAK       5.0f
-#define CAL_MIN_CMD_PEAK       0.05f
-
-/** Correction the result must land inside. The nominal transfer function is
- *  derived from real component values, so anything beyond a 4x disagreement
- *  means the setup is wrong (wrong Vdc, sensor on the wrong node, output not
- *  switching), not that the sensor needs that much correction. */
-#define CAL_GAIN_MIN           0.25f
-#define CAL_GAIN_MAX           4.0f
-
-enum { CAL_IDLE = 0, CAL_SETTLING, CAL_MEASURING, CAL_COMPLETE };
-
-/** Written by the ISR, polled by the main loop -- volatile so the poll loop
- *  cannot hoist the read. */
-static volatile uint8_t  cal_state = CAL_IDLE;
-static volatile uint32_t cal_samples_left = 0;
-
-/* Accumulators. ISR-owned while measuring; the main loop only reads them once
- * cal_state has become CAL_COMPLETE, which the ISR sets last. Plain floats:
- * ~16000 samples of a few hundred volts sum to ~1e6, and float carries that
- * with ~1e-7 relative error -- four orders of magnitude below the sensor
- * tolerance being measured. */
-static float cal_sum_raw, cal_sum_raw_sin, cal_sum_cmd, cal_sum_cmd_sin;
-
-/** Runs in the ADC ISR, once per sample. Costs four multiply-accumulates while
- *  a calibration is in flight and a single compare otherwise. */
-static inline void CalibrationSample(float raw_volts)
-{
-    if (cal_state == CAL_IDLE || cal_state == CAL_COMPLETE) {
-        return;
-    }
-
-    if (cal_state == CAL_MEASURING) {
-        cal_sum_raw     += raw_volts;
-        cal_sum_raw_sin += raw_volts * cal_last_sin;
-        cal_sum_cmd     += cal_last_command;
-        cal_sum_cmd_sin += cal_last_command * cal_last_sin;
-    }
-
-    if (--cal_samples_left == 0U) {
-        if (cal_state == CAL_SETTLING) {
-            cal_sum_raw = cal_sum_raw_sin = cal_sum_cmd = cal_sum_cmd_sin = 0.0f;
-            cal_samples_left = CAL_MEASURE_CYCLES * CAL_SAMPLES_PER_CYCLE;
-            cal_state = CAL_MEASURING;
-        } else {
-            cal_state = CAL_COMPLETE;  // set last: it is what releases the results
-        }
-    }
 }
 
 static uint8_t StreamChecksum(const AdcStreamFrame_t *f)
@@ -948,8 +738,6 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 
         float error = Execute_HCA_Control(v_adc_signed, tick_counter);
 
-        CalibrationSample(adcToVoltsRaw(v_adc_signed));
-
         if (streaming_enabled && ((tick_counter % ADC_STREAM_DECIMATION) == 0U))
         {
             float voltage_v = adcToVoltsActual(v_adc_signed);
@@ -995,9 +783,8 @@ static uint8_t  coeff_rx_active = 0;      /**< command byte being collected for,
 static uint8_t  coeff_rx_expected = 0;    /**< payload length of that command */
 static uint32_t coeff_rx_started_ms = 0;
 
-_Static_assert(REF_CMD_PAYLOAD_LEN <= COEFF_CMD_PAYLOAD_LEN
-               && CAL_CMD_PAYLOAD_LEN <= COEFF_CMD_PAYLOAD_LEN,
-               "coeff_rx doubles as the SET_REF and CALIBRATE payload buffer");
+_Static_assert(REF_CMD_PAYLOAD_LEN <= COEFF_CMD_PAYLOAD_LEN,
+               "coeff_rx doubles as the SET_REF payload buffer");
 
 static uint8_t CoeffChecksum(const uint8_t *p, uint16_t len)
 {
@@ -1035,7 +822,7 @@ static void SendRefFrame(void)
     HcaRefFrame_t f;
     f.sync0     = STREAM_SYNC0;
     f.sync1     = REF_SYNC1;
-    f.value     = reference_target;  // the commanded value; the live one is mid-ramp
+    f.value     = reference_multiplier;
     f.open_loop = IS_OPENLOOP ? 1U : 0U;
     f.limit     = ReferenceMultiplierLimit();
     /* Covers value..limit: everything but the two sync bytes and itself. */
@@ -1090,128 +877,6 @@ static void ApplyCoeffCommand(void)
     }
 }
 
-/* ---- Calibration command side (main loop) -------------------------------- */
-
-/** Vdc for the run in flight, and its deadline. Main-loop only. */
-static float    cal_vdc = 0.0f;
-static uint8_t  cal_pending = 0;
-static uint32_t cal_deadline_ms = 0;
-
-/** Enough for the settle plus measure window with room to spare. If the ADC
- *  ISR has stopped (clock fault, PWM off) the sample counter never runs out,
- *  so the poll below needs its own way out. */
-#define CAL_TIMEOUT_MS  3000U
-
-static void SendCalFrame(uint8_t status, float vdc,
-                         float raw_peak, float raw_dc, float expected_peak)
-{
-    HcaCalFrame_t f;
-    f.sync0         = STREAM_SYNC0;
-    f.sync1         = CAL_SYNC1;
-    f.status        = status;
-    f.vdc           = vdc;
-    f.gain          = gain_cal;
-    f.offset        = dc_cal;
-    f.raw_peak      = raw_peak;
-    f.raw_dc        = raw_dc;
-    f.expected_peak = expected_peak;
-    /* Covers status..expected_peak: everything but the two sync bytes and itself. */
-    f.checksum = CoeffChecksum((const uint8_t*)&f.status, (uint16_t)(sizeof(f) - 3U));
-
-    StreamTxWaitIdle();
-    HAL_UART_Transmit(&hlpuart1, (uint8_t*)&f, (uint16_t)sizeof(f), 10);
-}
-
-/** Arm the ISR-side accumulator. Nothing is measured or applied here -- the
- *  run takes CAL_SETTLE_CYCLES + CAL_MEASURE_CYCLES fundamental periods, and
- *  PollCalibration finishes it without blocking the stream pump. */
-static void StartCalibration(float vdc)
-{
-    if (cal_pending) {
-        SendCalFrame(CAL_STATUS_BUSY, cal_vdc, 0.0f, 0.0f, 0.0f);
-        return;
-    }
-    if (!(vdc >= CAL_VDC_MIN && vdc <= CAL_VDC_MAX)) {  // false for NaN too
-        SendCalFrame(CAL_STATUS_BAD_VDC, vdc, 0.0f, 0.0f, 0.0f);
-        return;
-    }
-
-    cal_vdc = vdc;
-    cal_pending = 1;
-    cal_deadline_ms = HAL_GetTick() + CAL_TIMEOUT_MS;
-
-    cal_samples_left = CAL_SETTLE_CYCLES * CAL_SAMPLES_PER_CYCLE;
-    cal_state = CAL_SETTLING;  // set last, it is what starts the ISR accumulating
-}
-
-/** Polled from the main loop. Does the arithmetic, applies the result and
- *  reports it -- the reply frame is the host's completion notice. */
-static void PollCalibration(void)
-{
-    if (!cal_pending) {
-        return;
-    }
-
-    if (cal_state != CAL_COMPLETE) {
-        if ((int32_t)(HAL_GetTick() - cal_deadline_ms) >= 0) {
-            cal_state = CAL_IDLE;   // the ADC ISR is not running; nothing was measured
-            cal_pending = 0;
-            SendCalFrame(CAL_STATUS_NO_SIGNAL, cal_vdc, 0.0f, 0.0f, 0.0f);
-        }
-        return;
-    }
-
-    const float n = (float)(CAL_MEASURE_CYCLES * CAL_SAMPLES_PER_CYCLE);
-
-    /* Fundamental component of each signal, from its correlation with the
-     * loop's own sine over a whole number of cycles. */
-    const float raw_dc   = cal_sum_raw / n;
-    const float raw_peak = 2.0f * cal_sum_raw_sin / n;
-    const float cmd_dc   = cal_sum_cmd / n;
-    const float cmd_peak = 2.0f * cal_sum_cmd_sin / n;
-
-    /* What the bridge must have put out to have been commanded that duty. */
-    const float expected_peak = cal_vdc * MODULATION_INDEX * cmd_peak;
-    const float expected_dc   = cal_vdc * MODULATION_INDEX * cmd_dc;
-
-    cal_state = CAL_IDLE;
-    cal_pending = 0;
-
-    if (fabsf(cmd_peak) < CAL_MIN_CMD_PEAK || fabsf(raw_peak) < CAL_MIN_RAW_PEAK) {
-        /* Output not switching, sensor disconnected, or the reference is at
-         * zero -- in all three the gain would be a ratio of two noise floors. */
-        SendCalFrame(CAL_STATUS_NO_SIGNAL, cal_vdc, raw_peak, raw_dc, expected_peak);
-        return;
-    }
-
-    const float gain = expected_peak / raw_peak;
-    if (!(gain >= CAL_GAIN_MIN && gain <= CAL_GAIN_MAX)) {  // false for NaN too
-        SendCalFrame(CAL_STATUS_OUT_OF_RANGE, cal_vdc, raw_peak, raw_dc, expected_peak);
-        return;
-    }
-
-    /* Offset last, so it cancels whatever DC the freshly solved gain leaves. */
-    gain_cal = gain;
-    dc_cal   = expected_dc - gain * raw_dc;
-
-    SendCalFrame(CAL_STATUS_OK, cal_vdc, raw_peak, raw_dc, expected_peak);
-}
-
-/** Validate a fully received CALIBRATE payload and kick the run off. */
-static void ApplyCalCommand(void)
-{
-    if (CoeffChecksum(coeff_rx, CAL_CMD_PAYLOAD_LEN - 1U)
-            != coeff_rx[CAL_CMD_PAYLOAD_LEN - 1U]) {
-        return; // corrupted on the wire; the host re-sends after its ack times out
-    }
-
-    float vdc;
-    /* memcpy rather than a cast: coeff_rx is byte-aligned, see ApplyCoeffCommand. */
-    memcpy(&vdc, &coeff_rx[0], sizeof(float));
-
-    StartCalibration(vdc);
-}
-
 /** Validate a fully received SET_REF payload and apply it. */
 static void ApplyRefCommand(void)
 {
@@ -1249,10 +914,8 @@ static void HandleStreamCommand(uint8_t cmd)
                 coeff_rx_len = 0;
                 if (pending == STREAM_CMD_SET_COEFF) {
                     ApplyCoeffCommand();
-                } else if (pending == STREAM_CMD_SET_REF) {
-                    ApplyRefCommand();
                 } else {
-                    ApplyCalCommand();
+                    ApplyRefCommand();
                 }
             }
             return;
@@ -1273,13 +936,8 @@ static void HandleStreamCommand(uint8_t cmd)
              * put a transient on the output. The ~16KB memset costs roughly one
              * 40kHz ISR period.
              *
-             * The reference restarts from zero with it (RestartReferenceRamp),
-             * so the emptied integrators are not handed a full-amplitude
-             * reference on their first sample.
-             *
              * Gains are untouched, so echoing them back doubles as the ack. */
             HCA_reset_accumulators((HCA_Handle_t*)&hca);
-            RestartReferenceRamp();
             SendAllCoeffFrames();
             break;
 
@@ -1299,23 +957,6 @@ static void HandleStreamCommand(uint8_t cmd)
 
         case STREAM_CMD_GET_REF:
             SendRefFrame();
-            break;
-
-        case STREAM_CMD_CALIBRATE:
-            coeff_rx_active = STREAM_CMD_CALIBRATE;
-            coeff_rx_expected = CAL_CMD_PAYLOAD_LEN;
-            coeff_rx_len = 0;
-            coeff_rx_started_ms = HAL_GetTick();
-            break;
-
-        case STREAM_CMD_GET_CAL:
-            SendCalFrame(CAL_STATUS_REPORT, cal_vdc, 0.0f, 0.0f, 0.0f);
-            break;
-
-        case STREAM_CMD_CAL_DEFAULT:
-            gain_cal = GAIN_CAL_DEFAULT;
-            dc_cal   = DC_CAL_DEFAULT;
-            SendCalFrame(CAL_STATUS_RESTORED, cal_vdc, 0.0f, 0.0f, 0.0f);
             break;
 
         case STREAM_CMD_START:

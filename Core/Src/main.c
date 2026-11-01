@@ -71,7 +71,7 @@
 #define UART_RX_DMA_MASK (UART_RX_DMA_LEN - 1U)
 #define MODULATION_INDEX 0.85f
 
-#define IS_OPENLOOP 1
+#define IS_OPENLOOP 1 
 
 /** Ceiling on reference_multiplier when running open loop. The reference is
  *  fed straight to the modulator there, so it may exceed MODULATION_INDEX --
@@ -672,7 +672,11 @@ static inline float Execute_HCA_Control(int16_t adc_signed, uint8_t update, floa
     angle_fundamental += step_fundamental;
 
     if ((update & 0x1) == 0) {
+#if IS_OPENLOOP
       USPWM(htim8.Instance, r_t, ARR_VAL, MODULATION_INDEX);  // modulation_index=1.0, already applied above
+#else
+      USPWM(htim8.Instance, hca_out, ARR_VAL, MODULATION_INDEX);
+#endif
     }
 
     *ref_out = r_t;

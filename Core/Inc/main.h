@@ -45,29 +45,30 @@ extern "C" {
 /**
  * @brief Binary frame sent over LPUART1 for ADC1/HCA live monitoring.
  *
- * Carries STREAM_BATCH_SAMPLES samples, not one. Sending a frame per sample
- * cost 19 bytes for 8 bytes of payload, and at the 5kHz stream rate that
- * 95,000 B/s exceeded what the ST-LINK's virtual COM port would carry: roughly
- * one sample in five went missing, and the host -- which derives frequency from
- * an assumed sample rate -- read a 50Hz fundamental as 62.5Hz.
+ * Carries STREAM_BATCH_SAMPLES samples, not one, so the 11 bytes of framing
+ * are amortised over 8 samples. Every 40kHz sample is streamed: 59 bytes per
+ * batch at 5,000 frames/s is 295,000 B/s, about 37% of the 8,000,000 baud link.
  *
- * Batching amortises the 11 bytes of framing over 8 samples: 75 bytes per
- * batch is 9.4 B/sample, so 5kHz now needs 46,900 B/s, half of what it did. It
- * also drops the transmit rate from 5,000 to 625 frames/s, which cuts the time
- * the main loop spends inside the blocking HAL_UART_Transmit by the same
- * factor.
+ * Samples are int16 fixed point rather than float -- 6 bytes instead of 12 --
+ * at a resolution finer than one ADC code (see STREAM_VOLT_SCALE and
+ * STREAM_PU_SCALE in main.c):
+ *   voltage   = counts / 16   [V]
+ *   reference = counts / 2048 [p.u.]
+ *   error     = counts / 2048 [p.u.]
+ * Values outside the int16 range saturate rather than wrap.
  *
  * Layout is fixed and packed so the Python host can parse it with
- * struct.unpack('<BBII' + 'ff'*8 + 'B', ...) without any padding surprises.
+ * struct.unpack('<BBII' + 'hhh'*8 + 'B', ...) without any padding surprises.
  */
 typedef struct __attribute__((packed)) {
     uint8_t  sync0;         /**< 0xA5 */
     uint8_t  sync1;         /**< 0x5A */
-    uint32_t seq;           /**< Batch sequence number, increments every pushed frame */
+    uint32_t seq;           /**< Batch sequence number, increments every batch -- including dropped ones */
     uint32_t timestamp_ms;  /**< HAL_GetTick() when samples[0] was taken */
     struct {
-        float voltage;      /**< ADC1 channel, scaled to actual sense volts */
-        float error;        /**< HCA control loop error signal (r_t - measured) */
+        int16_t voltage;    /**< ADC1 channel, actual sense volts * 16 */
+        int16_t reference;  /**< HCA reference r_t, p.u. * 2048 */
+        int16_t error;      /**< HCA control loop error (r_t - measured), p.u. * 2048 */
     } samples[STREAM_BATCH_SAMPLES];
     uint8_t  checksum;      /**< 8-bit additive checksum over seq..samples */
 } AdcStreamFrame_t;
@@ -75,7 +76,7 @@ typedef struct __attribute__((packed)) {
 /* The host hard-codes these sizes in its struct format strings (python_gui/
  * protocol.py). Catch any padding or layout drift here rather than as garbled
  * samples on the wire. */
-_Static_assert(sizeof(AdcStreamFrame_t) == 75, "AdcStreamFrame_t must stay 75 bytes");
+_Static_assert(sizeof(AdcStreamFrame_t) == 59, "AdcStreamFrame_t must stay 59 bytes");
 
 /**
  * @brief Coefficient report frame sent over LPUART1, one per active HCA channel.

@@ -19,7 +19,10 @@ from PyQt5.QtWidgets import (
 
 from protocol import STREAM_RATE_HZ
 
-FFT_WINDOW_SAMPLES = 8192     # ~1.6s of history at 5kHz -> ~0.6Hz bins
+# ~0.41s of history at 40kHz -> ~2.4Hz bins. Harmonics are measured by direct
+# projection at the refined f0, not read off bins, so the coarser bins cost no
+# accuracy -- and each projection's cost grows with the window length.
+FFT_WINDOW_SAMPLES = 16384
 UPDATE_INTERVAL_MS = 250
 DB_FLOOR = 1e-12              # clamp before log10 so a true-zero bin doesn't give -inf
 
@@ -55,8 +58,8 @@ class FFTWindow(QMainWindow):
     Below the plot, harmonics H1..H50 of the detected fundamental are
     tabulated with amplitude, share of the fundamental and phase. Orders
     whose frequency lands above the Nyquist of the stream are listed with
-    their frequency but no measurement; at the 5 kHz stream rate Nyquist is
-    2.5 kHz, so all 50 orders of a 50 Hz fundamental are measurable.
+    their frequency but no measurement; at the 40 kHz stream rate Nyquist is
+    20 kHz, so all 50 orders of a 50 Hz fundamental are measurable.
 
     Phase is reported as phi_h - h*phi_1 against the fundamental of
     PHASE_REF_SIGNAL, which makes it independent of where the analysis window
@@ -110,9 +113,9 @@ class FFTWindow(QMainWindow):
         self.thd_label.setObjectName("statsLabel")
         self.thd_label.setToolTip(
             "THD-F: sqrt(sum of squared harmonic amplitudes, orders 2..N) / fundamental.\n"
-            f"N is capped by the {STREAM_RATE_HZ / 2:.0f} Hz Nyquist of the "
-            f"{STREAM_RATE_HZ / 1000:.1f} kHz stream, so at 50 Hz nothing above "
-            f"H{int((STREAM_RATE_HZ / 2) // DEFAULT_F0_HZ)} is measured."
+            f"N is H{MAX_HARMONIC_ORDER}, or lower if that would exceed the "
+            f"{STREAM_RATE_HZ / 2:.0f} Hz Nyquist of the "
+            f"{STREAM_RATE_HZ / 1000:.1f} kHz stream."
         )
         controls.addWidget(self.thd_label)
 
@@ -190,7 +193,7 @@ class FFTWindow(QMainWindow):
         """Complex amplitude at an arbitrary frequency, using the same
         peak calibration as the plotted curve (coherent gain of the window,
         plus the one-sided factor of 2). A single-frequency DFT rather than a
-        bin lookup: at ~0.49 Hz bin spacing a harmonic almost never lands on a
+        bin lookup: at ~2.4 Hz bin spacing a harmonic almost never lands on a
         bin centre, and the resulting leakage would wreck the phase."""
         n = len(data)
         t = np.arange(n) / STREAM_RATE_HZ
@@ -199,16 +202,17 @@ class FFTWindow(QMainWindow):
 
     @classmethod
     def _compute_thd(cls, data, window, f0, fundamental_amp, nyquist, bin_width):
-        """THD-F in percent from every integer harmonic that fits below Nyquist
-        -- even orders included, since they flag DC offset or half-cycle
+        """THD-F in percent from every integer harmonic up to MAX_HARMONIC_ORDER
+        that fits below Nyquist -- even orders included, since they flag DC offset or half-cycle
         asymmetry. Returns (percent, h_max); percent is None when the
         fundamental is too small to divide by.
 
         Computed from linear peak amplitudes, so the figure is invariant to
         the dB and RMS toggles (both would scale numerator and denominator
-        alike). At 5 kHz the sum reaches about H50 for a 50 Hz
-        fundamental -- h_max is reported so the readout can say so."""
-        h_max = int(nyquist // f0)
+        alike). At 40 kHz Nyquist would allow H400 for a 50 Hz fundamental, but
+        the sum stops at H50 -- the usual THD definition, and each order is a
+        full-window projection. h_max is reported so the readout can say so."""
+        h_max = min(int(nyquist // f0), MAX_HARMONIC_ORDER)
         squares = 0.0
         highest = 0
         for h in range(THD_MIN_ORDER, h_max + 1):
@@ -224,7 +228,7 @@ class FFTWindow(QMainWindow):
     @classmethod
     def _detect_f0(cls, data, window, freqs, amplitude):
         """Largest peak inside the fundamental search band, refined to well
-        below the ~0.49 Hz bin spacing. None if the band is empty or the peak
+        below the ~2.4 Hz bin spacing. None if the band is empty or the peak
         sits on its edge.
 
         The coarse bin index is refined by maximising the projection magnitude

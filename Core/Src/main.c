@@ -37,18 +37,24 @@
 #define ARR_VAL 4249
 #define SWITCH_RATE 20000.0f // Hz, TIM8 carrier frequency (170MHz / (2*(ARR_VAL+1)))
 
-/** ADC ISR runs at 40kHz; only push every Nth sample -> 40kHz/8 = 5kHz stream rate.
- *  5kHz puts Nyquist at 2.5kHz, so the host FFT resolves harmonics up to H50 of a
- *  50Hz fundamental. Costs 19 bytes * 5000 Hz = 95,000 B/s on a link good for
- *  209,700 B/s (2,097,000 baud, 8N1), i.e. about 45% of the wire. */
-#define ADC_STREAM_DECIMATION 8U
+/** Every 40kHz ADC sample is streamed, no decimation: 59-byte frames of 8
+ *  samples at 5,000 frames/s is 295,000 B/s on a link good for 800,000 B/s
+ *  (8,000,000 baud, 8N1), i.e. about 37% of the wire. A frame takes ~74us to
+ *  send against the 200us it takes to fill, so the blocking transmit in the
+ *  main loop keeps well ahead of the ISR. */
 
 /** Streaming frame ring buffer depth (must be a power of two) */
-/* Each frame now carries STREAM_BATCH_SAMPLES samples, so 64 frames is 512
- * samples -- ~102ms of slack at the 5kHz stream rate, more than the 256
- * single-sample frames it replaces, for 4.8KB of RAM. */
-#define STREAM_FIFO_LEN  64U
+/* 256 frames is 2048 samples -- ~51ms of slack at 40kHz, for 15KB of RAM. It
+ * only has to ride out main-loop stalls (command replies); a host that stops
+ * reading loses bytes in the ST-LINK, which no device-side buffer can help. */
+#define STREAM_FIFO_LEN  256U
 #define STREAM_FIFO_MASK (STREAM_FIFO_LEN - 1U)
+
+/** Fixed-point scales of the int16 stream fields (see AdcStreamFrame_t). Both
+ *  are finer than one ADC code -- ~0.31V, or ~0.0015 p.u. at V_PEAK_NOM -- so
+ *  quantising to them loses nothing the ADC resolved. */
+#define STREAM_VOLT_SCALE 16.0f    /**< voltage: 1/16 V per count, +-2048V range */
+#define STREAM_PU_SCALE   2048.0f  /**< reference, error: 1/2048 p.u. per count, +-16 p.u. range */
 
 /** LPUART1 RX ring filled by DMA, drained in the main loop (must be a power of two).
  *
@@ -65,7 +71,7 @@
 #define UART_RX_DMA_MASK (UART_RX_DMA_LEN - 1U)
 #define MODULATION_INDEX 0.85f
 
-#define IS_OPENLOOP 0
+#define IS_OPENLOOP 1
 
 /** Ceiling on reference_multiplier when running open loop. The reference is
  *  fed straight to the modulator there, so it may exceed MODULATION_INDEX --
@@ -189,7 +195,6 @@ int main(void)
 
   Complex_t kp19 = {0.001f, 0.01f}; //real, complex
   Complex_t ki19 = HCA_POLAR_RAD_C(0.18502, 2.80559); //mag, phase (rad)
-
 
   HCA_Add_Channel(&hca, 1, kp1, ki1);  // Fundamental
   HCA_Add_Channel(&hca, 3, kp3, ki3);  
@@ -407,7 +412,7 @@ static void MX_LPUART1_UART_Init(void)
 
   /* USER CODE END LPUART1_Init 1 */
   hlpuart1.Instance = LPUART1;
-  hlpuart1.Init.BaudRate = 2097000;
+  hlpuart1.Init.BaudRate = 8000000;
   hlpuart1.Init.WordLength = UART_WORDLENGTH_8B;
   hlpuart1.Init.StopBits = UART_STOPBITS_1;
   hlpuart1.Init.Parity = UART_PARITY_NONE;
@@ -597,8 +602,8 @@ void HAL_RCC_CSSCallback(void)
  * cancels out in the subtraction -- no bias removal needed in software.
  */
 #define SENSOR_GAIN (2.0f * (250.0f / 44000.0f) * 0.4779f)
-#define DC_CAL 21.5f
-#define GAIN_CAL 172.0f/159.0f
+#define DC_CAL 2.6f
+#define GAIN_CAL 1.0f
 
 /**
  * ADC1 in differential mode reports Vinp-Vinn as a 12-bit *straight offset
@@ -653,7 +658,7 @@ static float SetReferenceMultiplier(float value)
     return value;
 }
 
-static inline float Execute_HCA_Control(int16_t adc_signed, uint8_t update)
+static inline float Execute_HCA_Control(int16_t adc_signed, uint8_t update, float *ref_out)
 {
     static uint32_t step_fundamental = (uint32_t)((50.0f / (2.0f*SWITCH_RATE)) * 4294967296.0f);
     static uint32_t angle_fundamental = 0;
@@ -667,10 +672,21 @@ static inline float Execute_HCA_Control(int16_t adc_signed, uint8_t update)
     angle_fundamental += step_fundamental;
 
     if ((update & 0x1) == 0) {
-      USPWM(htim8.Instance, hca_out, ARR_VAL, MODULATION_INDEX);  // modulation_index=1.0, already applied above
+      USPWM(htim8.Instance, r_t, ARR_VAL, MODULATION_INDEX);  // modulation_index=1.0, already applied above
     }
 
+    *ref_out = r_t;
     return error;
+}
+
+/** Round to the nearest count and saturate, so an out-of-range value pins at
+ *  the rail instead of wrapping to the opposite sign. */
+static inline int16_t ToStreamFixed(float value, float scale)
+{
+    float scaled = value * scale;
+    if (scaled >=  32767.0f) { return  32767; }
+    if (scaled <= -32768.0f) { return -32768; }
+    return (int16_t)(scaled + ((scaled >= 0.0f) ? 0.5f : -0.5f));
 }
 
 static uint8_t StreamChecksum(const AdcStreamFrame_t *f)
@@ -693,23 +709,27 @@ static uint8_t          stream_accum_count = 0;
  * Producer side (called from ADC ISR). Accumulates STREAM_BATCH_SAMPLES samples
  * and pushes them as one frame; drops the whole batch if the FIFO is full.
  *
- * seq is advanced only on a successful push, which is what lets the host tell
- * the two loss modes apart: a FIFO overflow here leaves seq contiguous but
- * slower than wall-clock, while bytes lost on the wire leave holes in seq.
+ * seq advances for every completed batch, pushed or dropped, so any missing
+ * samples -- FIFO overflow here or bytes lost on the wire -- show up on the
+ * host as a hole in seq. At 40kHz a dropped frame is only 0.2ms, too short
+ * for the 1ms timestamp to reveal, so seq is the only reliable gap marker.
  */
-static inline void PushStreamFrame(float voltage, float error)
+static inline void PushStreamFrame(float voltage, float reference, float error)
 {
     if (stream_accum_count == 0U) {
         stream_accum.timestamp_ms = HAL_GetTick();
     }
 
-    stream_accum.samples[stream_accum_count].voltage = voltage;
-    stream_accum.samples[stream_accum_count].error   = error;
+    stream_accum.samples[stream_accum_count].voltage   = ToStreamFixed(voltage,   STREAM_VOLT_SCALE);
+    stream_accum.samples[stream_accum_count].reference = ToStreamFixed(reference, STREAM_PU_SCALE);
+    stream_accum.samples[stream_accum_count].error     = ToStreamFixed(error,     STREAM_PU_SCALE);
 
     if (++stream_accum_count < STREAM_BATCH_SAMPLES) {
         return; // batch still filling
     }
     stream_accum_count = 0;
+
+    uint32_t seq = stream_seq++;
 
     uint16_t next_head = (uint16_t)((stream_fifo_head + 1U) & STREAM_FIFO_MASK);
     if (next_head == stream_fifo_tail) {
@@ -720,13 +740,13 @@ static inline void PushStreamFrame(float voltage, float error)
     *f              = stream_accum;
     f->sync0        = STREAM_SYNC0;
     f->sync1        = STREAM_SYNC1;
-    f->seq          = stream_seq++;
+    f->seq          = seq;
     f->checksum     = StreamChecksum(f);
 
     stream_fifo_head = next_head;
 }
 
-// Manages the HCA loop 40kHz sample rate and 5kHz telemetry rate
+// Manages the HCA loop and the telemetry stream, both at the 40kHz sample rate
 volatile uint32_t tick_counter = 0;
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
@@ -736,12 +756,13 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 
         tick_counter++;
 
-        float error = Execute_HCA_Control(v_adc_signed, tick_counter);
+        float reference;
+        float error = Execute_HCA_Control(v_adc_signed, tick_counter, &reference);
 
-        if (streaming_enabled && ((tick_counter % ADC_STREAM_DECIMATION) == 0U))
+        if (streaming_enabled)
         {
             float voltage_v = adcToVoltsActual(v_adc_signed);
-            PushStreamFrame(voltage_v, error);
+            PushStreamFrame(voltage_v, reference, error);
         }
     }
 }

@@ -1,9 +1,9 @@
 """HCA1001 ADC Monitor - dark-mode PyQt5 GUI.
 
 Connects to the STM32G474RE over the ST-LINK's virtual COM port (LPUART1,
-2,097,000 baud, see Core/Src/main.c) -- a single USB cable, no external
+8,000,000 baud, see Core/Src/main.c) -- a single USB cable, no external
 UART adapter needed. Streams the single ADC1 Voltage reading plus the
-HCA-error signal, plots them live, and can save the captured data as CSV
+HCA reference and error signals at the full 40kHz loop rate, plots them live, and can save the captured data as CSV
 and the plots as PNG. Each signal has its own button to open a live FFT
 window.
 
@@ -15,6 +15,7 @@ Run:
 import sys
 import time
 from collections import deque
+from itertools import islice
 
 import numpy as np
 import pyqtgraph as pg
@@ -42,20 +43,41 @@ from coefficients_window import CoefficientsWindow
 from dark_theme import apply_dark_theme
 from export_worker import CsvExportWorker
 from fft_window import FFTWindow
-from protocol import SIGNAL_LABELS, SIGNAL_NAMES, STREAM_RATE_HZ
+from protocol import SIGNAL_LABELS, SIGNAL_NAMES, STREAM_RATE_HZ, V_PEAK_NOM
+from recorder import ARMING, DONE, FAILED, Recorder
 from serial_worker import SerialWorker
 from tuner_window import TunerWindow
 
-DEFAULT_LIVE_WINDOW_SECONDS = 5.0
+DEFAULT_LIVE_WINDOW_SECONDS = 0.1  # five 50Hz periods
 MIN_LIVE_WINDOW_SECONDS = 0.005
-MAX_LIVE_WINDOW_SECONDS = 30.0
+MAX_LIVE_WINDOW_SECONDS = 5.0  # 200,000 samples a row at 40kHz
 # Capture buffer is sized for the largest window any row could ask for;
 # each row's spinbox just controls how much of that trailing history it
 # displays, so changing a spinbox never needs to resize a deque.
 MAX_LIVE_SAMPLES = int(MAX_LIVE_WINDOW_SECONDS * STREAM_RATE_HZ)
-MAX_SESSION_SAMPLES = 2_000_000  # ~6.7 min at 5kHz, bounds RAM use for CSV export
+MAX_SESSION_SAMPLES = 2_000_000  # 50s at 40kHz, bounds RAM use for CSV export
+# Record button: capture length range. The top end matches the session buffer.
+DEFAULT_RECORD_SECONDS = 0.1
+MIN_RECORD_SECONDS = 0.005
+MAX_RECORD_SECONDS = MAX_SESSION_SAMPLES / STREAM_RATE_HZ
+# Pixel size of the PNG drawn for each recorded signal.
+RECORD_PNG_SIZE = (1600, 500)
 
-# GUI redraw cadence. Deliberately decoupled from the 5kHz data rate: the
+# Display-only ideal low-pass filter (connection bar, top right). The cutoff
+# tops out at the stream's Nyquist frequency, where the filter is a no-op.
+DEFAULT_LPF_CUTOFF_HZ = 3000.0
+MIN_LPF_CUTOFF_HZ = 10.0
+MAX_LPF_CUTOFF_HZ = STREAM_RATE_HZ / 2
+# Mirrored samples added on each side before the FFT. The FFT treats its input
+# as periodic, so an unpadded window would wrap its last sample onto its first
+# and ring (Gibbs) at both edges; mirroring keeps the wrap far from the data.
+LPF_PAD_SECONDS = 0.02  # one 50Hz period
+
+# Extra history the trigger search may look back through beyond the widest
+# row's window -- a few periods of the slowest fundamental it will see.
+TRIGGER_LOOKBACK_SECONDS = 0.1
+
+# GUI redraw cadence. Deliberately decoupled from the 40kHz data rate: the
 # worker thread just buffers parsed frames (see serial_worker.drain_frames),
 # and this timer pulls+redraws on its own schedule. If a redraw ever takes
 # longer than this interval, the next pull just picks up a bigger batch -
@@ -121,6 +143,10 @@ class SignalRow(QWidget):
         self.plot.setLabel("left", label)
         self.plot.setLabel("bottom", "Time", units="s")
         self.curve = self.plot.plot(pen=pg.mkPen("#00d0ff", width=1.2))
+        # Drawn over the raw trace, like a scope's math channel; hidden while
+        # the Ideal LPF checkbox is off.
+        self.lpf_curve = self.plot.plot(pen=pg.mkPen("#ff9f1c", width=1.8))
+        self.lpf_curve.setVisible(False)
 
         self.trigger_line = pg.InfiniteLine(angle=90, pen=pg.mkPen("#ffd400", width=1.5))
         self.trigger_line.setVisible(False)
@@ -135,10 +161,20 @@ class SignalRow(QWidget):
     def window_samples(self):
         return max(1, int(round(self.window_spin.value() * STREAM_RATE_HZ)))
 
-    def set_stats(self, mean: float, rms: float, peak_to_peak: float):
-        self.stats_label.setText(
-            f"Mean: {mean:.4g}   RMS: {rms:.4g}   Pk-Pk: {peak_to_peak:.4g}"
-        )
+    def set_stats(self, y: np.ndarray, y_lpf: np.ndarray | None = None,
+                  extra: str = "", extra_lpf: str = ""):
+        text = self._format_stats(y) + extra
+        if y_lpf is not None:
+            text += "      LPF  " + self._format_stats(y_lpf) + extra_lpf
+        self.stats_label.setText(text)
+
+    @staticmethod
+    def _format_stats(y: np.ndarray) -> str:
+        # True RMS: sqrt of the mean square of the samples themselves, so any
+        # DC offset counts towards it (an AC-coupled reading would subtract
+        # the mean first).
+        rms = float(np.sqrt(np.mean(np.square(y, dtype=np.float64))))
+        return f"Mean: {y.mean():.4g}   RMS: {rms:.4g}   Pk-Pk: {np.ptp(y):.4g}"
 
     def set_trigger_marker(self, x: float | None):
         if x is None:
@@ -156,12 +192,15 @@ class MainWindow(QMainWindow):
 
         self.worker: SerialWorker | None = None
         self._csv_worker: CsvExportWorker | None = None
+        self._rec_csv_worker: CsvExportWorker | None = None
+        self._recorder: Recorder | None = None
+        self._rec_target = None  # (directory, stamp, selected signals) of the running capture
         self._fft_windows = []
         self._coeff_window: CoefficientsWindow | None = None
         self._cal_dialog: CalibrationDialog | None = None
         self._tuner_window: TunerWindow | None = None
         self._session_capped = False
-        self._t0_ms = None
+        self._seq0 = None
 
         # Rolling stream-integrity estimate, see _update_rate_stats
         self._rate_window_start_ms = None
@@ -170,7 +209,7 @@ class MainWindow(QMainWindow):
 
         self.live_t = deque(maxlen=MAX_LIVE_SAMPLES)
         self.live_buffers = {name: deque(maxlen=MAX_LIVE_SAMPLES) for name in SIGNAL_NAMES}
-        # Full-session record for CSV export: list of (seq, timestamp_ms, voltage, error)
+        # Full-session record for CSV export: list of (seq, timestamp_ms, voltage, reference, error)
         self.session_records = []
 
         self._build_ui()
@@ -263,6 +302,25 @@ class MainWindow(QMainWindow):
         self.status_label = QLabel("Disconnected")
         self.status_label.setObjectName("statusLabel")
         conn_layout.addWidget(self.status_label)
+
+        lpf_tip = (
+            "Ideal (brick-wall) low-pass on the plotted signals: every FFT bin\n"
+            "above the cutoff is zeroed, everything below passes untouched.\n"
+            "Drawn in orange over the raw trace, with its own stats. Display\n"
+            "only -- CSV, Record and the FFT windows keep the raw samples."
+        )
+        self.lpf_enable = QCheckBox("Ideal LPF")
+        self.lpf_enable.setToolTip(lpf_tip)
+        conn_layout.addWidget(self.lpf_enable)
+
+        self.lpf_cutoff = QDoubleSpinBox()
+        self.lpf_cutoff.setDecimals(2)
+        self.lpf_cutoff.setRange(MIN_LPF_CUTOFF_HZ / 1000, MAX_LPF_CUTOFF_HZ / 1000)
+        self.lpf_cutoff.setSingleStep(0.5)
+        self.lpf_cutoff.setValue(DEFAULT_LPF_CUTOFF_HZ / 1000)
+        self.lpf_cutoff.setSuffix(" kHz")
+        self.lpf_cutoff.setToolTip(lpf_tip)
+        conn_layout.addWidget(self.lpf_cutoff)
 
         root.addWidget(conn_box)
 
@@ -358,6 +416,38 @@ class MainWindow(QMainWindow):
         save_png_btn = QPushButton("Save Selected as PNG")
         save_png_btn.clicked.connect(self._save_png)
         export_layout.addWidget(save_png_btn)
+
+        export_layout.addSpacing(24)
+        export_layout.addWidget(QLabel("Record:"))
+        self.record_spin = QDoubleSpinBox()
+        self.record_spin.setDecimals(3)
+        self.record_spin.setSingleStep(0.02)
+        self.record_spin.setRange(MIN_RECORD_SECONDS, MAX_RECORD_SECONDS)
+        self.record_spin.setValue(DEFAULT_RECORD_SECONDS)
+        self.record_spin.setSuffix(" s")
+        self.record_spin.setFixedWidth(90)
+        self.record_spin.setToolTip("Length of the capture, starting when Record is pressed")
+        export_layout.addWidget(self.record_spin)
+
+        self.record_align = QCheckBox("Start at ref. zero crossing")
+        self.record_align.setToolTip(
+            "Wait for the HCA reference's rising zero crossing before capturing,\n"
+            "so every capture starts at 0 degrees of the fundamental"
+        )
+        export_layout.addWidget(self.record_align)
+
+        self.record_btn = QPushButton("Record")
+        self.record_btn.setToolTip(
+            "Capture the selected signals for the set time, then save them as\n"
+            "one CSV plus one PNG per signal. A gap in the stream restarts the\n"
+            "capture, so a saved recording never has missing samples."
+        )
+        self.record_btn.clicked.connect(self._on_record_clicked)
+        export_layout.addWidget(self.record_btn)
+
+        self.record_status = QLabel("")
+        self.record_status.setObjectName("statsLabel")
+        export_layout.addWidget(self.record_status)
         export_layout.addStretch(1)
 
         self.samples_label = QLabel("0 samples captured")
@@ -431,6 +521,7 @@ class MainWindow(QMainWindow):
         self.calibrate_btn.setEnabled(False)
         self.ref_status_label.setText("")
         self.tuner_btn.setEnabled(False)
+        self._cancel_recording("Recording cancelled: disconnected.")
         self.worker = None
 
     def _on_error(self, message):
@@ -472,6 +563,7 @@ class MainWindow(QMainWindow):
         else:
             self.worker.stop_streaming()
             self.stream_btn.setText("Start Streaming")
+            self._cancel_recording("Recording cancelled: streaming stopped.")
 
     # -------------------------------------------------------------- Data
     def _pull_and_update(self):
@@ -505,26 +597,51 @@ class MainWindow(QMainWindow):
     def _on_frames(self, frames):
         if not frames:
             return
-        if self._t0_ms is None:
-            self._t0_ms = frames[0].timestamp_ms
+        if self._seq0 is None:
+            self._seq0 = frames[0].seq
 
         self._update_rate_stats(frames)
+        if self._recorder is not None:
+            self._feed_recorder(frames)
 
         for f in frames:
-            t = (f.timestamp_ms - self._t0_ms) / 1000.0
+            # From the sample index, not timestamp_ms: the device stamps each
+            # 8-sample batch with a 1ms tick, so the five batches of every
+            # millisecond share one stamp and would be drawn on top of each
+            # other -- the trace came out as 1ms-wide steps.
+            t = (f.seq - self._seq0) / STREAM_RATE_HZ
             self.live_t.append(t)
             self.live_buffers["voltage"].append(f.voltage)
+            self.live_buffers["reference"].append(f.reference)
             self.live_buffers["error"].append(f.error)
 
             if not self._session_capped:
-                self.session_records.append((f.seq, f.timestamp_ms, f.voltage, f.error))
+                self.session_records.append(
+                    (f.seq, f.timestamp_ms, f.voltage, f.reference, f.error)
+                )
                 if len(self.session_records) >= MAX_SESSION_SAMPLES:
                     self._session_capped = True
                     self.statusBar().showMessage(
                         "Session buffer full (2,000,000 samples) - save and reconnect to continue capturing."
                     )
 
-        t_arr = np.fromiter(self.live_t, dtype=np.float64)
+        # Convert only the trailing history this redraw can use, not the whole
+        # deque: at 40kHz that is up to 200,000 samples per signal, 20 times a
+        # second. Every array below has the same length, so indices into one
+        # are indices into all of them.
+        max_window = max(row.window_samples() for row in self.rows.values())
+        if self.trigger_enable.isChecked():
+            max_window += int(TRIGGER_LOOKBACK_SECONDS * STREAM_RATE_HZ)
+        t_arr = self._tail(self.live_t, max_window)
+
+        # Filtered over the whole tail, not just the plotted window, so the
+        # filter's edge effects mostly fall outside what is drawn.
+        lpf_hz = self.lpf_cutoff.value() * 1000 if self.lpf_enable.isChecked() else None
+        y_arrs = {name: self._tail(self.live_buffers[name], len(t_arr)) for name in self.rows}
+        lpf_arrs = (
+            {name: self._ideal_lowpass(y, lpf_hz) for name, y in y_arrs.items()}
+            if lpf_hz is not None else {}
+        )
 
         # Trigger: find the most recent edge crossing that still leaves a
         # full window's worth of samples after it, so every row -- each of
@@ -533,40 +650,85 @@ class MainWindow(QMainWindow):
         trig_idx = None
         if self.trigger_enable.isChecked() and len(t_arr) > 1:
             source_name = self.trigger_source.currentData()
-            source_y = np.fromiter(self.live_buffers[source_name], dtype=np.float64)
-            max_window = max(row.window_samples() for row in self.rows.values())
+            source_y = y_arrs[source_name]
+            row_window = max(row.window_samples() for row in self.rows.values())
             trig_idx = self._find_trigger_index(
-                source_y, self.trigger_edge.currentText(), self.trigger_level.value(), max_window
+                source_y, self.trigger_edge.currentText(), self.trigger_level.value(), row_window
             )
             self.trigger_status_label.setText("Triggered" if trig_idx is not None else "Waiting for trigger...")
         else:
             self.trigger_status_label.setText("")
 
         for name, row in self.rows.items():
-            y_arr = np.fromiter(self.live_buffers[name], dtype=np.float64)
+            y_arr = y_arrs[name]
             n = min(len(t_arr), row.window_samples())
 
             if trig_idx is not None:
                 end = min(trig_idx + n, len(y_arr))
-                y_window = y_arr[trig_idx:end]
-                t_window = t_arr[trig_idx:end] - t_arr[trig_idx]
+                window = slice(trig_idx, end)
+                t_window = t_arr[window] - t_arr[trig_idx]
             else:
-                y_window = y_arr[-n:] if n < len(y_arr) else y_arr
-                t_window = t_arr[-n:] if n < len(t_arr) else t_arr
+                window = slice(-n, None) if n < len(y_arr) else slice(None)
+                t_window = t_arr[window]
+            y_window = y_arr[window]
+            lpf_window = lpf_arrs[name][window] if lpf_arrs else None
+
+            # The error row also reports Erms, rebuilt from the voltage and
+            # reference streams over this row's own window.
+            erms, erms_lpf = "", ""
+            if name == "error":
+                erms = self._format_erms(y_arrs["voltage"][window], y_arrs["reference"][window])
+                if lpf_arrs:
+                    erms_lpf = self._format_erms(
+                        lpf_arrs["voltage"][window], lpf_arrs["reference"][window]
+                    )
 
             row.curve.setData(t_window, y_window)
+            row.lpf_curve.setVisible(lpf_window is not None)
+            if lpf_window is not None:
+                row.lpf_curve.setData(t_window, lpf_window)
             row.set_trigger_marker(0.0 if trig_idx is not None else None)
 
             if y_window.size:
-                # True RMS over the plotted window: sqrt of the mean square of
-                # the samples themselves, so any DC offset counts towards it
-                # (an AC-coupled reading would subtract the mean first).
-                rms = float(np.sqrt(np.mean(np.square(y_window, dtype=np.float64))))
-                row.set_stats(
-                    float(y_window.mean()), rms, float(y_window.max() - y_window.min())
-                )
+                row.set_stats(y_window, lpf_window, erms, erms_lpf)
 
         self.samples_label.setText(f"{len(self.session_records):,} samples captured")
+
+    @staticmethod
+    def _tail(buf, n: int) -> np.ndarray:
+        """The last n items of a deque as a float64 array, in O(n) rather than
+        O(len(buf)) -- a deque cannot be sliced, but it can be walked backward."""
+        n = min(n, len(buf))
+        return np.fromiter(islice(reversed(buf), n), dtype=np.float64, count=n)[::-1]
+
+    @staticmethod
+    def _format_erms(voltage: np.ndarray, reference: np.ndarray) -> str:
+        """Erms as the paper's eq. (10) defines it: RMS(vref - vout) / RMS(vref).
+
+        DC excluded, unlike the RMS stats: the mean of each signal is removed
+        first, so the sensor's DC offset does not swamp the AC tracking error.
+        Same quantity as the error stream scaled to volts, but taken from the
+        voltage stream's finer 1/16V resolution rather than the error's
+        1/2048 p.u. (0.1V).
+        """
+        if voltage.size == 0:
+            return ""
+        vref = reference * V_PEAK_NOM
+        erms = float(np.std(vref - voltage))
+        vref_rms = float(np.std(vref))
+        pct = f"{100.0 * erms / vref_rms:.3g} %" if vref_rms > 0 else "-"
+        return f"   Erms: {erms:.4g} V   Erms: {pct}"
+
+    @staticmethod
+    def _ideal_lowpass(y: np.ndarray, cutoff_hz: float) -> np.ndarray:
+        """Zero every spectral component of y above cutoff_hz."""
+        if y.size < 2:
+            return y
+        pad = min(int(LPF_PAD_SECONDS * STREAM_RATE_HZ), y.size - 1)
+        padded = np.pad(y, pad, mode="reflect")
+        spectrum = np.fft.rfft(padded)
+        spectrum[np.fft.rfftfreq(padded.size, 1.0 / STREAM_RATE_HZ) > cutoff_hz] = 0
+        return np.fft.irfft(spectrum, n=padded.size)[pad:pad + y.size]
 
     @staticmethod
     def _find_trigger_index(y: np.ndarray, edge: str, level: float, min_post: int):
@@ -592,11 +754,10 @@ class MainWindow(QMainWindow):
         """Estimate the true stream rate and the in-transit loss from the frames
         themselves, rather than trusting STREAM_RATE_HZ.
 
-        The two failure modes are separable because of how the firmware drops.
-        PushStreamFrame returns *before* incrementing stream_seq when its FIFO is
-        full, so a device that cannot keep up emits fewer frames but a contiguous
-        seq; bytes lost on the wire instead leave holes in seq. Comparing the seq
-        span against the timestamp span therefore gives the device's true push
+        PushStreamFrame advances stream_seq for every batch, including one it
+        drops because its FIFO is full, so both failure modes -- the device
+        falling behind and bytes lost on the wire -- leave holes in seq. Comparing
+        the seq span against the timestamp span gives the device's true sample
         rate, and comparing the received count against that span gives the loss.
         """
         last = frames[-1]
@@ -629,11 +790,11 @@ class MainWindow(QMainWindow):
 
         if not healthy:
             culprit = (
-                "frames are being lost in transit (seq gaps) - the link or the "
-                "ST-LINK VCP cannot carry the byte rate"
+                "frames are being lost (seq gaps) - the device FIFO overflowed, "
+                "the ST-LINK VCP dropped bytes, or the host fell behind reading"
                 if lost > 0.01
-                else "the device is pushing below nominal (no seq gaps) - its "
-                "stream FIFO is overflowing because the UART cannot drain it"
+                else "the device is sampling off nominal (no seq gaps) - check "
+                "the ADC trigger and timer clock"
             )
             self.statusBar().showMessage(
                 f"Stream is {host_hz:.0f} Hz, not the {STREAM_RATE_HZ:.0f} Hz the FFT "
@@ -643,9 +804,9 @@ class MainWindow(QMainWindow):
 
     def _get_live_buffer(self, name: str, n: int):
         buf = self.live_buffers.get(name)
-        if buf is None or len(buf) < n:
-            return np.fromiter(buf, dtype=np.float64) if buf else None
-        return np.fromiter(buf, dtype=np.float64)[-n:]
+        if not buf:
+            return None
+        return self._tail(buf, n)
 
     # -------------------------------------------------- Reference multiplier
     def _on_ref_apply_clicked(self):
@@ -751,7 +912,7 @@ class MainWindow(QMainWindow):
         if not path:
             return
 
-        col_index = {"voltage": 2, "error": 3}
+        col_index = {"voltage": 2, "reference": 3, "error": 4}
         header = ["seq", "timestamp_ms"] + [SIGNAL_LABELS[n] for n in selected]
         col_indices = [0, 1] + [col_index[n] for n in selected]
 
@@ -798,11 +959,129 @@ class MainWindow(QMainWindow):
 
         self.statusBar().showMessage(f"Saved {len(saved)} PNG file(s) to {directory}")
 
+    # ------------------------------------------------------------ Record
+    def _on_record_clicked(self):
+        if self._recorder is not None:
+            self._cancel_recording("Recording cancelled.")
+            return
+        if self._rec_csv_worker is not None:
+            QMessageBox.information(self, "Save in progress", "The previous recording is still being saved.")
+            return
+        if self.worker is None or not self.stream_btn.isChecked():
+            QMessageBox.information(self, "Not streaming", "Start streaming before recording.")
+            return
+        selected = self._selected_signals()
+        if not selected:
+            QMessageBox.information(self, "Nothing selected", "Check at least one signal to record.")
+            return
+
+        directory = QFileDialog.getExistingDirectory(self, "Choose folder for the recording")
+        if not directory:
+            return
+
+        n_samples = max(1, int(round(self.record_spin.value() * STREAM_RATE_HZ)))
+        self._recorder = Recorder(n_samples, self.record_align.isChecked())
+        self._rec_target = (directory, time.strftime("%Y%m%d_%H%M%S"), selected)
+        self.record_btn.setText("Cancel")
+        self._show_record_progress()
+
+    def _feed_recorder(self, frames):
+        rec = self._recorder
+        rec.feed(frames)
+        if rec.state == DONE:
+            self._recorder = None
+            self.record_btn.setText("Record")
+            self._save_recording(rec)
+        elif rec.state == FAILED:
+            self._cancel_recording(f"Recording failed: {rec.message}")
+        else:
+            self._show_record_progress()
+
+    def _show_record_progress(self):
+        rec = self._recorder
+        if rec.state == ARMING:
+            text = "Waiting for zero crossing..."
+        else:
+            text = f"Recording {rec.progress * 100:.0f}%"
+        if rec.restarts:
+            text += f"  ({rec.message})"
+        self.record_status.setText(text)
+
+    def _cancel_recording(self, message):
+        if self._recorder is None:
+            return
+        self._recorder = None
+        self._rec_target = None
+        self.record_btn.setText("Record")
+        self.record_status.setText("")
+        self.statusBar().showMessage(message)
+
+    def _save_recording(self, rec):
+        directory, stamp, selected = self._rec_target
+        self._rec_target = None
+        base = f"{directory}/rec_{stamp}"
+        records = rec.records
+
+        # PNGs are drawn on the GUI thread (pyqtgraph needs it) and are quick;
+        # the CSV can run to two million rows, so it goes to a worker thread.
+        t = np.fromiter((r[2] for r in records), dtype=np.float64, count=len(records))
+        col_index = {"voltage": 3, "reference": 4, "error": 5}
+        for name in selected:
+            y = np.fromiter((r[col_index[name]] for r in records), dtype=np.float64, count=len(records))
+            self._export_record_png(f"{base}_{name}.png", SIGNAL_LABELS[name], t, y)
+
+        header = ["seq", "timestamp_ms", "t_s"] + [SIGNAL_LABELS[n] for n in selected]
+        col_indices = [0, 1, 2] + [col_index[n] for n in selected]
+        self._rec_csv_worker = CsvExportWorker(f"{base}.csv", header, records, col_indices)
+        self._rec_csv_worker.finished_ok.connect(
+            lambda path, rows: self._on_recording_saved(path, rows, len(selected), rec.restarts)
+        )
+        self._rec_csv_worker.failed.connect(self._on_recording_save_failed)
+        self.record_status.setText("Saving...")
+        self._rec_csv_worker.start()
+
+    @staticmethod
+    def _export_record_png(path, label, t, y):
+        """Draw one recorded signal on an off-screen plot styled like the live
+        rows and export it. Peak downsampling keeps a long capture's envelope
+        intact without handing the renderer millions of points."""
+        plot = pg.PlotWidget()
+        plot.showGrid(x=True, y=True, alpha=0.3)
+        plot.setLabel("left", label)
+        plot.setLabel("bottom", "Time", units="s")
+        plot.setDownsampling(auto=True, mode="peak")
+        plot.plot(t, y, pen=pg.mkPen("#00d0ff", width=1.2))
+        # A never-shown widget is never laid out, and the exporter would scale
+        # up its 640x480 default -- fonts and all. Showing it off-screen lays
+        # it out at the real size without a window flashing up.
+        plot.setAttribute(Qt.WA_DontShowOnScreen)
+        plot.resize(*RECORD_PNG_SIZE)
+        plot.show()
+        QApplication.processEvents()
+        exporter = pg.exporters.ImageExporter(plot.plotItem)
+        exporter.export(path)
+        plot.close()
+        plot.deleteLater()
+
+    def _on_recording_saved(self, path, row_count, png_count, restarts):
+        self._rec_csv_worker = None
+        self.record_status.setText("")
+        note = f" ({restarts} restart(s) after lost samples)" if restarts else ""
+        self.statusBar().showMessage(
+            f"Recorded {row_count:,} samples to {path} + {png_count} PNG{note}"
+        )
+
+    def _on_recording_save_failed(self, message):
+        self._rec_csv_worker = None
+        self.record_status.setText("")
+        QMessageBox.critical(self, "Save failed", message)
+
     def closeEvent(self, event):
         if self.worker is not None:
             self._disconnect()
-        if self._csv_worker is not None:
-            self._csv_worker.wait(3000)
+        for worker in (self._csv_worker, self._rec_csv_worker):
+            if worker is not None:
+                worker.wait(3000)
         super().closeEvent(event)
 
 

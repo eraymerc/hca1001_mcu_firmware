@@ -12,16 +12,25 @@ SYNC0 = 0xA5
 SYNC1 = 0x5A
 
 # Samples carried by one wire frame. Must match STREAM_BATCH_SAMPLES in main.h.
-# Batching amortises the 11 bytes of framing over 8 samples (9.4 B/sample rather
-# than 19), which is what keeps the 5kHz stream inside what the ST-LINK VCP will
-# actually carry -- see the AdcStreamFrame_t comment in Core/Inc/main.h.
+# Batching amortises the 11 bytes of framing over 8 samples (7.4 B/sample), see
+# the AdcStreamFrame_t comment in Core/Inc/main.h.
 STREAM_BATCH_SAMPLES = 8
 
 # '<' little-endian (Cortex-M4 and x86/x64 both are), matches:
 #   uint8_t sync0, sync1; uint32_t seq, timestamp_ms;
-#   struct { float voltage, error; } samples[STREAM_BATCH_SAMPLES]; uint8_t checksum;
-FRAME_FORMAT = "<BBII" + "ff" * STREAM_BATCH_SAMPLES + "B"
-FRAME_SIZE = struct.calcsize(FRAME_FORMAT)  # 75
+#   struct { int16_t voltage, reference, error; } samples[STREAM_BATCH_SAMPLES];
+#   uint8_t checksum;
+FRAME_FORMAT = "<BBII" + "hhh" * STREAM_BATCH_SAMPLES + "B"
+FRAME_SIZE = struct.calcsize(FRAME_FORMAT)  # 59
+
+# Fixed-point scales of the int16 sample fields. Must match STREAM_VOLT_SCALE and
+# STREAM_PU_SCALE in Core/Src/main.c.
+STREAM_VOLT_SCALE = 16.0    # voltage counts per volt
+STREAM_PU_SCALE = 2048.0    # reference/error counts per p.u.
+
+# Volts per p.u. of the reference: the firmware forms error = r - v/V_PEAK_NOM.
+# Must match V_PEAK_NOM in Core/Src/main.c.
+V_PEAK_NOM = 200.0
 
 # Single-byte host -> device commands (see Core/Src/main.c, HandleStreamCommand)
 CMD_START = b"S"
@@ -99,13 +108,14 @@ CAL_STATUS_TEXT = {
 # must be at least this large or the device runs out of channel slots.
 MAX_HARMONIC_ORDER = 50
 
-# Must match ADC_STREAM_DECIMATION in Core/Src/main.c (40kHz / 8 = 5kHz).
-# Nyquist is therefore 2.5kHz, which is what bounds the FFT view's frequency axis.
-STREAM_RATE_HZ = 5000.0
+# The device streams every sample of its 40kHz control loop. Nyquist is
+# therefore 20kHz, which is what bounds the FFT view's frequency axis.
+STREAM_RATE_HZ = 40000.0
 
-SIGNAL_NAMES = ("voltage", "error")
+SIGNAL_NAMES = ("voltage", "reference", "error")
 SIGNAL_LABELS = {
     "voltage": "Voltage (V)",
+    "reference": "HCA Reference (p.u.)",
     "error": "HCA Error (p.u.)",
 }
 
@@ -160,8 +170,9 @@ class AdcFrame(NamedTuple):
     sample-oriented."""
     seq: int            # per-sample index: batch seq * STREAM_BATCH_SAMPLES + position
     timestamp_ms: float # device clock, interpolated within the batch
-    voltage: float
-    error: float
+    voltage: float      # V
+    reference: float    # p.u.
+    error: float        # p.u.
 
 
 def checksum8(payload: bytes) -> int:
@@ -190,9 +201,15 @@ def parse_frame(buf: bytes):
 
     sample_interval_ms = 1000.0 / STREAM_RATE_HZ
     base = seq * STREAM_BATCH_SAMPLES
-    pairs = fields[4:-1]
+    triples = fields[4:-1]
     return [
-        AdcFrame(base + i, ts + i * sample_interval_ms, pairs[2 * i], pairs[2 * i + 1])
+        AdcFrame(
+            base + i,
+            ts + i * sample_interval_ms,
+            triples[3 * i] / STREAM_VOLT_SCALE,
+            triples[3 * i + 1] / STREAM_PU_SCALE,
+            triples[3 * i + 2] / STREAM_PU_SCALE,
+        )
         for i in range(STREAM_BATCH_SAMPLES)
     ]
 

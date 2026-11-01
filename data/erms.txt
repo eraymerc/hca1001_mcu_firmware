@@ -1,0 +1,149 @@
+HCA Error RMS (Erms) - ekran görüntülerinden sayısallaştırılmış değerler
+=======================================================================
+
+Sınıflandırma (makale Fig. 9-12 osiloskop görüntüleriyle karşılaştırıldı)
+------------------------------------------------------------------------
+lineer/          Temiz sinüs, THD ~%0.5, Fig. 9/10 ile uyumlu.
+nlineer/         kapali_cevrim.png: tek harmonik imzası (5:1.3, 7:1.4, 9:1.1,
+                 11:0.7 % of V1), diyot doğrultucu yükü gibi; genlik Fig. 12
+                 ile aynı (~155 V tepe).
+belirsiz/        acik_cevrim_kal_sonrasi_*.png (eski after_cal1/2): açık çevrim
+                 olduğu kesin (hata temel frekansta sinüs), ama yük belirsiz.
+                 Fig. 11'deki doğrultucu imzası yok (5-13. harmonikler ~0,
+                 THD ~%1, Fig. 11'de %6.8). Referansı (~113 V tepe) lineer
+                 deneylerle aynı. Lineer yükle kalibrasyon sonrası alınmış
+                 olabilir; doğrulanana kadar hiçbir yüke atanmadı.
+
+Elde nlineer açık çevrim ölçümü YOK; bu yüzden nlineer için açık/kapalı
+iyileşme oranı hesaplanamıyor.
+
+
+1) Makaledeki tanımla Erms (%)  [makale.pdf, denklem (10)]
+-----------------------------------------------------------
+  Erms(%) = RMS(vref - vout) / RMS(vref) x 100
+
+Firmware'de e = r - v/200 (main.c, V_PEAK_NOM = 200 V), yani
+Erms(%) = RMS(e) / RMS(r) x 100. Referans r görsellerden geri elde edildi:
+r = e + v/200 (gerilim ve hata panelleri aynı zaman ekseninde), üzerine
+50 Hz sinüs uyduruldu, RMS(r) = r_tepe / sqrt(2).
+
+Erms     : makale tanımı, DC dahil
+Erms_ac  : DC ofset çıkarılmış hata ile aynı oran
+
+Deney                     Görsel                                     vref tepe   Erms     Erms_ac
+------------------------  -----------------------------------------  ----------  -------  -------
+Lineer, açık çevrim       lineer/acik_cevrim.png                     ~114 V      16.96%   14.50%
+Lineer, HCA               lineer/kapali_cevrim.png                   ~116 V       8.68%    0.56%
+Nlineer, HCA              nlineer/kapali_cevrim.png                  ~158 V       6.19%    2.88%
+Belirsiz yük, açık çevrim belirsiz/acik_cevrim_kal_sonrasi_40ms.png  ~113 V      22.90%   21.58%
+
+İyileşme (1 - HCA/açık):
+  Lineer  : Erms %48.8   Erms_ac %96.1
+  Nlineer : hesaplanamıyor (açık çevrim ölçümü yok)
+
+Makale Tablo III ile karşılaştırma
+----------------------------------
+                          Makale (simülasyon)   Bu ölçümler (deney)
+                          Erms                  Erms     Erms_ac
+Lineer,  açık çevrim      5.54%                 16.96%   14.50%
+Lineer,  HCA              0.37%                  8.68%    0.56%
+Lineer,  iyileşme         93.3%                 48.8%    96.1%
+Nlineer, açık çevrim      7.77%                 -        -
+Nlineer, HCA              0.51%                  6.19%    2.88%
+Nlineer, iyileşme         93.4%                 -        -
+
+- Makalede deneysel Erms YOK (Tablo III'te "-", dipnot a: "Erms was not
+  measured in the experimental studies"). Karşılaştırılabilecek tek değerler
+  simülasyon değerleri. Makaledeki sayılar kendi içinde tutarlı
+  (ör. 1 - 0.37/5.54 = %93.3).
+- Bu görsellerdeki deney koşulları makaledekiyle aynı değil: makalede
+  vref = 167.5 V tepe, burada lineer deneyler ~115 V, nlineer HCA ~158 V
+  tepe referansla yapılmış. Bu değerler Tablo III'ün deney sütununa
+  doğrudan konamaz.
+- Toplam Erms, ölçülen gerilimdeki ~±7 V'luk (±0.035 p.u.) DC ofset
+  yüzünden makaledekinden çok yüksek çıkıyor. DC çıkarıldığında lineer HCA
+  (%0.56) makaledeki simülasyona (%0.37) yakın.
+- Açık çevrimde hata çoğunlukla temel bileşen (çıkış genliği referanstan
+  düşük, hata gerilimle aynı fazda sinüs). Makalede de açık çevrim Erms
+  (%5.54) THD'den (%0.41) çok yüksek; aynı karakter.
+- Makalede Erms son bir temel periyotta hesaplanıyor; burada görüntülenen
+  pencerenin tamamı kullanıldı (lineer 0.5 s, nlineer HCA 0.2 s,
+  belirsiz 0.04 s = 2 periyot).
+- Doğrulama: geri elde edilen referansın DC'si ~0 (|r_dc| <= 0.0065 p.u.)
+  ve frekansı ~50 Hz, yani gerilim/hata panelleri doğru hizalanmış.
+
+
+1b) THD ile tutarlılık
+----------------------
+vref saf sinüs (DDS) olduğu için e'deki her harmonik vout'un harmoniğidir:
+  Erms_harmonik(%) = THD x V1/Vref     ve    Erms >= THD x V1/Vref
+Erms, DC + temel (genlik/faz hatası) + harmonik + kalan olarak ayrıştırıldı
+(% of RMS(vref), kareler toplamı Erms^2'yi veriyor):
+
+Deney                       Erms     DC      temel    harmonik  kalan   THD(ölçüm)  THD(makale deney)
+Lineer, açık çevrim         16.96%   8.83%   14.49%   0.35%     0.30%   ~0.4%       2.1%
+Lineer, HCA                  8.68%   8.66%    0.02%   0.49%     0.26%   0.49%       0.3%
+Nlineer, HCA                 6.19%   5.48%    0.57%   2.61%     1.04%   2.59%       0.6%
+Belirsiz yük, açık çevrim   22.90%   7.60%   21.31%   0.69%     0.22%   ~0.9%       -
+
+- THD hata panelinden hesaplandı (kapalı çevrimde çözünürlük ~0.01 V).
+  Gerilim panelinden bağımsız hesap, gürültü tabanının üstünde kalan tek
+  durumda (Nlineer HCA) aynı sonucu veriyor: %2.58 / %2.59. Açık çevrim
+  değerleri gürültü tabanına yakın, yaklaşık okunmalı.
+- Kendi içinde tutarlı: açık çevrimde Erms'yi temel bileşen hatası belirliyor
+  (çıkış genliği referansın lineerde %86.5'i), harmonik katkı THD'nin
+  öngördüğü kadar küçük. HCA'da temel hata ~0, Erms'yi DC ofset belirliyor.
+- Makalenin deneysel THD'leriyle TUTARLI DEĞİL: lineer açık çevrim THD'si
+  makaledekinden çok düşük, Nlineer HCA THD'si ise (%2.6) makaledekinin
+  (%0.6) ~4 katı. Bu görseller makaledeki deneylerle aynı koşulda değil
+  (farklı vref genliği, Temmuz sonu firmware'i; kalibrasyon ve tuner
+  commit'leri 27 Ağustos). Nlineer HCA'da 3-5-7-9-11. harmonikler
+  %0.7-1.4 düzeyinde kalmış, yani o tarihte harmonikler tam
+  bastırılamıyormuş.
+- Simülasyon->deney geçişi THD ve Erms için aynı oranda mı?
+  Simülasyonda Erms'nin harmonik dışı kısmı = sqrt(Erms^2 - THD^2). Bu kısım
+  deneyde aynı kalıp sadece THD makaledeki deney değerine çıkarsa beklenen
+  deney Erms'si:
+
+  Deney                 THD sim->deney     Erms sim   beklenen   ölçülen Erms_ac (Erms)
+  Lineer, açık          0.41 -> 2.1 (5.1x)   5.54%     5.91%     14.50%  (16.96%)
+  Lineer, HCA           0.25 -> 0.3 (1.2x)   0.37%     0.40%      0.56%  ( 8.68%)
+  Nlineer, açık         7.55 -> 6.8 (0.9x)   7.77%     7.04%     -       (ölçüm yok)
+  Nlineer, HCA          0.43 -> 0.6 (1.4x)   0.51%     0.66%      2.88%  ( 6.19%)
+
+  Sadece Lineer HCA (DC hariç) tutarlı (0.40 beklenen / 0.56 ölçülen).
+  Lineer açık çevrimde fark harmoniklerden değil temel bileşenden geliyor:
+  simülasyonda temel hata ~%5.5, ölçümde %14.5. Dead-time ve anahtar
+  iletim düşümü (simülasyonda modellenmemiş) çıkış genliğini düşürür; yön
+  olarak beklenen bir fark ama büyüklüğü THD artışıyla açıklanamaz.
+  Nlineer HCA'da fark, görseldeki THD'nin (%2.6) makaledeki deneyden
+  (%0.6) yüksek olmasından geliyor. Toplam Erms'deki %5-9'luk DC ise
+  simülasyonda yok; THD analizörü DC'yi saymadığı için THD tarafında da
+  görünmüyor.
+- Makalenin kendi simülasyon değerleri bu sınırla tutarlı: her durumda
+  Erms >= THD (5.54>=0.41, 0.37>=0.25, 7.77>=7.55, 0.51>=0.43). Lineer
+  açık çevrimde de makalede Erms'yi temel bileşen hatası belirliyor
+  (~%5.5), bizdekiyle aynı karakter.
+
+
+2) p.u. cinsinden ham değerler (taban 200 V)
+--------------------------------------------
+Erms     : toplam RMS, sqrt(mean(e^2))
+Erms_ac  : DC (ortalama) çıkarılmış RMS, sqrt(Erms^2 - ort^2)
+
+Deney                      Görsel                                     Pencere   ort        Erms      Erms_ac   pk-pk
+-------------------------  -----------------------------------------  --------  ---------  --------  --------  -------
+Lineer, açık çevrim        lineer/acik_cevrim.png                      0.5 s    +0.0355    0.0683    0.0584    0.169
+Lineer, kapalı çevrim      lineer/kapali_cevrim.png                    0.5 s    +0.0357    0.0358    0.0023    0.0146
+Lineer, kapalı çevrim      lineer/kapali_cevrim_hata.png               0.5 s    +0.0359    0.0360    0.0023    0.0183
+Nlineer, kapalı çevrim     nlineer/kapali_cevrim.png                   0.2 s    -0.0306    0.0346    0.0161    0.134
+Belirsiz yük, açık çevrim  belirsiz/acik_cevrim_kal_sonrasi_40ms.png   0.04 s   -0.0306    0.0912    0.0859    0.242
+
+Notlar:
+- Ham veri kaydedilmediği için değerler görsellerdeki çizgiden piksel piksel
+  okunarak hesaplandı. GUI'nin gösterdiği ortalama ve pk-pk değerleri ile
+  fark %1'in altında (ör. lineer açık: ort 0.03547 / GUI 0.03561,
+  pk-pk 0.1694 / GUI 0.1686).
+- lineer/acik_cevrim_gerilim.png ve acik_cevrim_hata.png, acik_cevrim.png ile
+  aynı ölçüm, tabloda tekrar edilmedi.
+- belirsiz/acik_cevrim_kal_sonrasi_5s.png çok sıkışık olduğu için kullanılmadı.

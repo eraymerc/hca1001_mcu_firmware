@@ -53,7 +53,7 @@ from protocol import (
     parse_ref_frame,
 )
 
-BAUDRATE = 2097000  # must match hlpuart1.Init.BaudRate in Core/Src/main.c
+BAUDRATE = 8000000  # must match hlpuart1.Init.BaudRate in Core/Src/main.c
 READ_CHUNK = 4096
 WRITE_TIMEOUT_S = 1.0  # bound worst-case write() blocking time, belt-and-braces
 
@@ -71,7 +71,7 @@ class SerialWorker(QThread):
         self._running = False
         self._streaming = False
         self._cmd_queue: "queue.Queue[bytes]" = queue.Queue()
-        self._frame_queue: "queue.Queue" = queue.Queue()  # AdcFrame items, GUI-thread pulls
+        self._frame_queue: "queue.Queue" = queue.Queue()  # lists of AdcFrame, GUI-thread pulls
         self._coeff_queue: "queue.Queue" = queue.Queue()  # CoeffFrame items, likewise
         self._ref_queue: "queue.Queue" = queue.Queue()    # RefFrame items, likewise
         self._cal_queue: "queue.Queue" = queue.Queue()    # CalFrame items, likewise
@@ -138,7 +138,7 @@ class SerialWorker(QThread):
     def drain_frames(self):
         """Non-blocking pull of every AdcFrame parsed since the last call.
         Call this from a GUI-thread timer, not from run()."""
-        return self._drain(self._frame_queue)
+        return [sample for batch in self._drain(self._frame_queue) for sample in batch]
 
     def stats(self):
         """(bytes read, frames accepted, frames rejected) since connect. Lets the
@@ -251,20 +251,20 @@ class SerialWorker(QThread):
                     if buf[1] == SYNC1:
                         # A sample frame parses to a list (it carries a batch);
                         # a coefficient frame to a single record.
-                        size, parse, sink, batched = (
-                            FRAME_SIZE, parse_frame, self._frame_queue, True
+                        size, parse, sink = (
+                            FRAME_SIZE, parse_frame, self._frame_queue
                         )
                     elif buf[1] == COEFF_SYNC1:
-                        size, parse, sink, batched = (
-                            COEFF_FRAME_SIZE, parse_coeff_frame, self._coeff_queue, False
+                        size, parse, sink = (
+                            COEFF_FRAME_SIZE, parse_coeff_frame, self._coeff_queue
                         )
                     elif buf[1] == REF_SYNC1:
-                        size, parse, sink, batched = (
-                            REF_FRAME_SIZE, parse_ref_frame, self._ref_queue, False
+                        size, parse, sink = (
+                            REF_FRAME_SIZE, parse_ref_frame, self._ref_queue
                         )
                     elif buf[1] == CAL_SYNC1:
-                        size, parse, sink, batched = (
-                            CAL_FRAME_SIZE, parse_cal_frame, self._cal_queue, False
+                        size, parse, sink = (
+                            CAL_FRAME_SIZE, parse_cal_frame, self._cal_queue
                         )
                     else:
                         del buf[:1]  # 0xA5 that starts no frame
@@ -281,8 +281,7 @@ class SerialWorker(QThread):
 
                     self._frames_ok += 1
                     del buf[:size]
-                    if batched:
-                        for sample in frame:
-                            sink.put(sample)
-                    else:
-                        sink.put(frame)
+                    # A batch goes in whole (drain_frames flattens it): at
+                    # 40kHz one queue operation per sample is 40,000 lock
+                    # round-trips a second fighting the GUI thread for the GIL.
+                    sink.put(frame)

@@ -63,8 +63,8 @@ def thd(voltage: np.ndarray, sample_rate: float, fundamental_hz: float = 50.0,
 
     The window is trimmed to a whole number of fundamental periods before the
     transform, keeping the *newest* ones. That is what puts every harmonic
-    exactly on a bin: with 5kHz samples and a 50Hz fundamental there are exactly
-    100 samples per period, so harmonic h lands on bin h*cycles and no window
+    exactly on a bin: with 40kHz samples and a 50Hz fundamental there are exactly
+    800 samples per period, so harmonic h lands on bin h*cycles and no window
     function or interpolation is needed. A partial period would smear the
     fundamental across neighbouring bins and inflate the result -- which the
     optimizer would then happily minimise by changing nothing real.

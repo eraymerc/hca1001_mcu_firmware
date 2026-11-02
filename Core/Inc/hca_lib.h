@@ -82,6 +82,29 @@
  */
 #define HCA_DELAY_COMPENSATION_MULTIPLIER 0.0f
 
+/**
+ * @brief Fixed-point PI integrator format.
+ *
+ * The integrator is held in int64 with HCA_INTEG_FRAC_BITS fractional bits,
+ * LSB = 2^-40 ~ 9.1e-13. A float integrator sitting near 1.0 has an ulp of
+ * ~6e-8, so any per-sample increment Ki*e*Ts below ~3e-8 was rounded away and
+ * the integrator stalled -- a dead band whose exact resting point depended on
+ * how the compiler fused the multiply-adds. Integer addition is exact, so the
+ * integrator now keeps every increment and gives the same result with any
+ * compiler or flag set.
+ *
+ * Limits that follow from the format:
+ *  - one increment |Ki*e*Ts| must stay under 2^31 LSB = 2^-9 ~ 1.95e-3
+ *    (at Ts = 25us that is |Ki*e| < 78); anything larger saturates;
+ *  - |output_limit| must stay under 2^(31 + OUT_SHIFT - FRAC_BITS) = 128,
+ *    because the integrator is read back through an int32 after
+ *    >> HCA_INTEG_OUT_SHIFT. HCA_Init clamps it.
+ * The read-back resolution is 2^-24 ~ 6e-8, far below one PWM count
+ * (1/4250 ~ 2.4e-4), so nothing is lost on the way out.
+ */
+#define HCA_INTEG_FRAC_BITS 40
+#define HCA_INTEG_OUT_SHIFT 16
+
 
 /* ============================================================================
  * TYPE DEFINITIONS
@@ -182,6 +205,13 @@ typedef struct {
     /** Current Value */
     Complex_t current_val;
 
+    /**
+     * Kahan compensation for current_val: the low-order part that rounding
+     * dropped from the last addition, fed back into the next one. Keeps the
+     * never-decaying sliding-DFT sum from drifting by accumulated rounding error.
+     */
+    Complex_t current_val_comp;
+
     /* ---------------- CONTROL PARAMETERS ---------------- */
 
     /** Complex proportional gain (Kp) */
@@ -190,8 +220,16 @@ typedef struct {
     /** Complex integral gain (Ki) */
     Complex_t Ki;
 
-    /** Integrator state of the complex PI controller */
+    /**
+     * Integrator state of the complex PI controller, as float. Read-only view
+     * of integ_fx_real/imag, refreshed every sample -- watch this one in the
+     * debugger; writing it has no effect on the controller.
+     */
     Complex_t integrator_state;
+
+    /** Fixed-point integrator, see HCA_INTEG_FRAC_BITS. This is the real state. */
+    int64_t integ_fx_real;
+    int64_t integ_fx_imag;
 
     /* ---------------- DDS PHASE TRACKING ---------------- */
 
@@ -226,6 +264,12 @@ typedef struct {
 
     /** Output saturation limit (symmetric) */
     float output_limit;
+
+    /** Ts * 2^HCA_INTEG_FRAC_BITS: turns Ki*e straight into an integrator increment */
+    float integ_step_scale;
+
+    /** Integrator anti-windup limit (= output_limit) in fixed-point units */
+    int64_t integ_limit_fx;
 
     /* ---------------- DISPERSER BLOCK ----------------
      *

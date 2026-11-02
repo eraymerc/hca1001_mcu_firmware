@@ -94,6 +94,97 @@ static inline Complex_t Complex_Scale(Complex_t a, float scalar) {
 }
 
 // ============================================================
+// Fixed-point integrator helpers (format: see HCA_INTEG_FRAC_BITS)
+// ============================================================
+
+_Static_assert(31 + HCA_INTEG_OUT_SHIFT - HCA_INTEG_FRAC_BITS >= 1,
+               "integrator read-back word cannot hold +-1.0");
+
+/** 1.0 in integrator units; a power of two, so exact as a float */
+#define HCA_INTEG_ONE        ((float)(1ULL << HCA_INTEG_FRAC_BITS))
+
+/** Weight of one LSB of the int32 read-back word */
+#define HCA_INTEG_OUT_LSB    (1.0f / (float)(1UL << (HCA_INTEG_FRAC_BITS - HCA_INTEG_OUT_SHIFT)))
+
+/** Largest |output_limit| whose fixed-point value still fits the read-back word */
+#define HCA_INTEG_LIMIT_MAX  ((float)(1UL << (31 + HCA_INTEG_OUT_SHIFT - HCA_INTEG_FRAC_BITS)) - 1.0f)
+
+/** Largest float below 2^31, the bound for a defined float -> int32 cast */
+#define HCA_INT32_MAX_F      2147483520.0f
+
+/**
+ * @brief Float increment (already in integrator units) -> int32.
+ *
+ * Saturates first, since an out-of-range float -> int cast is undefined in C.
+ * The cast truncates toward zero; the resulting bias is at most one LSB
+ * (9e-13) per sample, i.e. ~4e-8 per second at 40kHz -- negligible.
+ */
+static inline int32_t Integ_Increment(float x) {
+    if (x >  HCA_INT32_MAX_F) return  INT32_MAX;
+    if (x < -HCA_INT32_MAX_F) return -INT32_MAX;
+    return (int32_t)x;
+}
+
+static inline int64_t Integ_Clamp(int64_t v, int64_t limit) {
+    if (v >  limit) return  limit;
+    if (v < -limit) return -limit;
+    return v;
+}
+
+/**
+ * @brief Fixed-point integrator -> float.
+ *
+ * Goes through an int32 so the conversion is a single VCVT instead of a
+ * soft-float int64 library call. |v| <= integ_limit_fx < 2^47, so the shifted
+ * value always fits. Right-shifting a negative int64 is arithmetic on GCC.
+ */
+static inline float Integ_ToFloat(int64_t v) {
+    return (float)(int32_t)(v >> HCA_INTEG_OUT_SHIFT) * HCA_INTEG_OUT_LSB;
+}
+
+static inline void Integ_Reset(HCA_Channel_t *ch) {
+    ch->integ_fx_real = 0;
+    ch->integ_fx_imag = 0;
+    ch->integrator_state.real = 0.0f;
+    ch->integrator_state.imag = 0.0f;
+}
+
+// ============================================================
+// Kahan (compensated) summation for the disperser sum
+// ============================================================
+
+/*
+ * Kahan summation only works if the compiler evaluates (t - s) - y literally.
+ * -ffast-math / -Ofast let it "simplify" that to 0, which silently turns this
+ * back into a plain float sum, so refuse to build that way.
+ * FMA contraction (-ffp-contract=fast) is harmless here: it can only fuse the
+ * product feeding x into y = x - comp, and y is then used consistently.
+ */
+#ifdef __FAST_MATH__
+#error "hca_lib.c: Kahan summation is broken by -ffast-math / -Ofast"
+#endif
+
+/**
+ * @brief *sum += x, carrying the rounding loss in *comp to the next call.
+ *
+ * The error of the running sum stays at a few ulp no matter how many terms
+ * are added, instead of growing with the number of samples.
+ */
+static inline void Kahan_Add(float *sum, float *comp, float x) {
+    float y = x - *comp;        // new term, plus what the last addition lost
+    float t = *sum + y;         // rounded sum
+    *comp = (t - *sum) - y;     // (what was really added) - (what we wanted)
+    *sum = t;
+}
+
+static inline void Disperser_Reset(HCA_Channel_t *ch) {
+    ch->current_val.real = 0.0f;
+    ch->current_val.imag = 0.0f;
+    ch->current_val_comp.real = 0.0f;
+    ch->current_val_comp.imag = 0.0f;
+}
+
+// ============================================================
 // Lookup table generation
 // ============================================================
 
@@ -164,7 +255,14 @@ void HCA_Init(HCA_Handle_t *hca,
 
     hca->active_channel_count = 0;
     hca->output_limit = out_limit;
-    
+
+    // Fixed-point integrator scaling, computed once here (the float -> int64
+    // cast is a library call, fine at init, avoided in the ISR)
+    hca->integ_step_scale = hca->sampling_time * HCA_INTEG_ONE;
+    float integ_limit = fabsf(out_limit);
+    if (integ_limit > HCA_INTEG_LIMIT_MAX) integ_limit = HCA_INTEG_LIMIT_MAX;
+    hca->integ_limit_fx = (int64_t)(integ_limit * HCA_INTEG_ONE);
+
     // Disperser
     float N = loop_freq / fund_freq; // N = T/T_s = f_s / f 
     hca->window_len = N;
@@ -179,12 +277,10 @@ void HCA_Init(HCA_Handle_t *hca,
 
         hca->channels[i].harmonic_order = 0;
 
-        hca->channels[i].current_val.real = 0.0f;
-        hca->channels[i].current_val.imag = 0.0f;
+        Disperser_Reset(&hca->channels[i]);
 
         // PI integrator reset
-        hca->channels[i].integrator_state.real = 0.0f;
-        hca->channels[i].integrator_state.imag = 0.0f;
+        Integ_Reset(&hca->channels[i]);
     }
 }
 
@@ -224,8 +320,7 @@ void HCA_Add_Channel(HCA_Handle_t *hca,
     if (Ns > MAX_WINDOW_SIZE) Ns = MAX_WINDOW_SIZE;
 
     // Reset PI integrator
-    ch->integrator_state.real = 0.0f;
-    ch->integrator_state.imag = 0.0f;
+    Integ_Reset(ch);
 
     hca->active_channel_count++;
 }
@@ -273,7 +368,10 @@ float HCA_Process(HCA_Handle_t *hca, float input_signal) {
         modulated_val.real = harmonic_step * rot_pos.real;
         modulated_val.imag = harmonic_step * (-rot_pos.imag);
 
-        ch->current_val = Complex_Add(ch->current_val, modulated_val);
+        // 2. Sliding-window sum, Kahan-compensated: the sum never decays,
+        //    so plain float addition would let rounding error pile up.
+        Kahan_Add(&ch->current_val.real, &ch->current_val_comp.real, modulated_val.real);
+        Kahan_Add(&ch->current_val.imag, &ch->current_val_comp.imag, modulated_val.imag);
 
         // ====================================================
         // COMPLEX PI CONTROLLER
@@ -285,24 +383,24 @@ float HCA_Process(HCA_Handle_t *hca, float input_signal) {
         // Proportional term
         Complex_t prop_term = Complex_Mult(ch->Kp, error_dq);
 
-        // Integral term
+        // Integral term, fixed point: integrator += Ki*e*Ts
+        // Ki*e*Ts is formed directly in integrator units (Ts*2^40 folded into
+        // integ_step_scale) and accumulated in int64, where the sum is exact.
         Complex_t ki_term = Complex_Mult(ch->Ki, error_dq);
-        Complex_t ki_step =
-            Complex_Scale(ki_term, hca->sampling_time);
+        float step_scale = hca->integ_step_scale;
+        int64_t limit_fx = hca->integ_limit_fx;
 
-        ch->integrator_state =
-            Complex_Add(ch->integrator_state, ki_step);
+        // Anti-windup saturation. No overflow possible before the clamp:
+        // |state| <= 2^47 and |increment| < 2^31.
+        ch->integ_fx_real = Integ_Clamp(
+            ch->integ_fx_real + Integ_Increment(ki_term.real * step_scale),
+            limit_fx);
+        ch->integ_fx_imag = Integ_Clamp(
+            ch->integ_fx_imag + Integ_Increment(ki_term.imag * step_scale),
+            limit_fx);
 
-        // Anti-windup saturation
-        float limit = hca->output_limit;
-        if (ch->integrator_state.real > limit)
-            ch->integrator_state.real = limit;
-        if (ch->integrator_state.real < -limit)
-            ch->integrator_state.real = -limit;
-        if (ch->integrator_state.imag > limit)
-            ch->integrator_state.imag = limit;
-        if (ch->integrator_state.imag < -limit)
-            ch->integrator_state.imag = -limit;
+        ch->integrator_state.real = Integ_ToFloat(ch->integ_fx_real);
+        ch->integrator_state.imag = Integ_ToFloat(ch->integ_fx_imag);
 
         Complex_t output_dq =
             Complex_Add(prop_term, ch->integrator_state);
@@ -371,12 +469,10 @@ void HCA_reset_accumulators(HCA_Handle_t* hca) {
         HCA_Channel_t* ch = &hca->channels[i];
         
         // 1. Reset Integrators
-        ch->integrator_state.real = 0.0f;
-        ch->integrator_state.imag = 0.0f;
+        Integ_Reset(ch);
         
         // 2. Reset Disperser State (Full Clear)
-        ch->current_val.real = 0.0f;
-        ch->current_val.imag = 0.0f;
+        Disperser_Reset(ch);
 
         //ch->current_angle = (uint32_t)0;
     }
@@ -390,14 +486,12 @@ void HCA_reset_accumulators_fast(HCA_Handle_t* hca) {
         HCA_Channel_t* ch = &hca->channels[i];
         
         // 1. Reset Integrators
-        ch->integrator_state.real = 0.0f;
-        ch->integrator_state.imag = 0.0f;
+        Integ_Reset(ch);
 
         // 2. Reset Disperser Sum and Head
         // We reset the sum and head, but leave the buffer data as-is.
         // It will be overwritten as the head advances.
-        ch->current_val.real = 0.0f;
-        ch->current_val.imag = 0.0f;
+        Disperser_Reset(ch);
 
         //ch->current_angle = (uint32_t)0;
 

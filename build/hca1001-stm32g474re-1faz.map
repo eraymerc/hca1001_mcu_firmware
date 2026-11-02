@@ -1925,14 +1925,14 @@ LOAD /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/crtn.o
                 0x08000328       0x78 build/main.o
                 0x08000328                SystemClock_Config
  .text.startup.main
-                0x080003a0      0x748 build/main.o
+                0x080003a0      0x74c build/main.o
                 0x080003a0                main
  .text.HAL_RCC_CSSCallback
-                0x08000ae8       0x54 build/main.o
-                0x08000ae8                HAL_RCC_CSSCallback
+                0x08000aec       0x54 build/main.o
+                0x08000aec                HAL_RCC_CSSCallback
  .text.HAL_ADC_ConvCpltCallback
-                0x08000b3c      0x31c build/main.o
-                0x08000b3c                HAL_ADC_ConvCpltCallback
+                0x08000b40      0x318 build/main.o
+                0x08000b40                HAL_ADC_ConvCpltCallback
  .text.Error_Handler
                 0x08000e58        0x4 build/main.o
                 0x08000e58                Error_Handler
@@ -2701,32 +2701,32 @@ LOAD /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/libgcc.a
  .comment       0x0000003c        0x0 /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/libgcc.a(_udivmoddi4.o)
                                  0x1f (size before relaxing)
 
-.debug_info     0x00000000    0x23807
- .debug_info    0x00000000     0x3d50 build/main.o
- .debug_info    0x00003d50      0xbc6 build/hca_lib.o
- .debug_info    0x00004916      0x351 build/unipolar_spwm_controller.o
- .debug_info    0x00004c67      0x5dd build/stm32g4xx_it.o
- .debug_info    0x00005244     0x1c63 build/stm32g4xx_hal_msp.o
- .debug_info    0x00006ea7     0x395d build/stm32g4xx_hal_adc.o
- .debug_info    0x0000a804     0x3107 build/stm32g4xx_hal_adc_ex.o
- .debug_info    0x0000d90b      0xe06 build/stm32g4xx_hal.o
- .debug_info    0x0000e711     0x1108 build/stm32g4xx_hal_rcc.o
- .debug_info    0x0000f819      0xfea build/stm32g4xx_hal_rcc_ex.o
- .debug_info    0x00010803      0x943 build/stm32g4xx_hal_gpio.o
- .debug_info    0x00011146      0xb32 build/stm32g4xx_hal_dma.o
- .debug_info    0x00011c78      0xb04 build/stm32g4xx_hal_pwr_ex.o
- .debug_info    0x0001277c     0x127b build/stm32g4xx_hal_cortex.o
- .debug_info    0x000139f7     0x4e9b build/stm32g4xx_hal_tim.o
- .debug_info    0x00018892     0x2892 build/stm32g4xx_hal_tim_ex.o
- .debug_info    0x0001b124     0x1412 build/stm32g4xx_hal_uart_ex.o
- .debug_info    0x0001c536     0x6307 build/stm32g4xx_hal_uart.o
- .debug_info    0x0002283d      0x649 build/system_stm32g4xx.o
- .debug_info    0x00022e86       0x30 build/startup_stm32g474xx.o
- .debug_info    0x00022eb6       0xe5 /usr/lib/gcc/arm-none-eabi/16.2.0/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-memset.o)
- .debug_info    0x00022f9b      0x110 /usr/lib/gcc/arm-none-eabi/16.2.0/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-init.o)
- .debug_info    0x000230ab       0x24 /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/libgcc.a(_aeabi_uldivmod.o)
- .debug_info    0x000230cf      0x6fc /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/libgcc.a(_udivmoddi4.o)
- .debug_info    0x000237cb       0x3c /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/libgcc.a(_dvmd_tls.o)
+.debug_info     0x00000000    0x2380b
+ .debug_info    0x00000000     0x3d54 build/main.o
+ .debug_info    0x00003d54      0xbc6 build/hca_lib.o
+ .debug_info    0x0000491a      0x351 build/unipolar_spwm_controller.o
+ .debug_info    0x00004c6b      0x5dd build/stm32g4xx_it.o
+ .debug_info    0x00005248     0x1c63 build/stm32g4xx_hal_msp.o
+ .debug_info    0x00006eab     0x395d build/stm32g4xx_hal_adc.o
+ .debug_info    0x0000a808     0x3107 build/stm32g4xx_hal_adc_ex.o
+ .debug_info    0x0000d90f      0xe06 build/stm32g4xx_hal.o
+ .debug_info    0x0000e715     0x1108 build/stm32g4xx_hal_rcc.o
+ .debug_info    0x0000f81d      0xfea build/stm32g4xx_hal_rcc_ex.o
+ .debug_info    0x00010807      0x943 build/stm32g4xx_hal_gpio.o
+ .debug_info    0x0001114a      0xb32 build/stm32g4xx_hal_dma.o
+ .debug_info    0x00011c7c      0xb04 build/stm32g4xx_hal_pwr_ex.o
+ .debug_info    0x00012780     0x127b build/stm32g4xx_hal_cortex.o
+ .debug_info    0x000139fb     0x4e9b build/stm32g4xx_hal_tim.o
+ .debug_info    0x00018896     0x2892 build/stm32g4xx_hal_tim_ex.o
+ .debug_info    0x0001b128     0x1412 build/stm32g4xx_hal_uart_ex.o
+ .debug_info    0x0001c53a     0x6307 build/stm32g4xx_hal_uart.o
+ .debug_info    0x00022841      0x649 build/system_stm32g4xx.o
+ .debug_info    0x00022e8a       0x30 build/startup_stm32g474xx.o
+ .debug_info    0x00022eba       0xe5 /usr/lib/gcc/arm-none-eabi/16.2.0/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-memset.o)
+ .debug_info    0x00022f9f      0x110 /usr/lib/gcc/arm-none-eabi/16.2.0/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-init.o)
+ .debug_info    0x000230af       0x24 /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/libgcc.a(_aeabi_uldivmod.o)
+ .debug_info    0x000230d3      0x6fc /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/libgcc.a(_udivmoddi4.o)
+ .debug_info    0x000237cf       0x3c /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/libgcc.a(_dvmd_tls.o)
 
 .debug_abbrev   0x00000000     0x3fd9
  .debug_abbrev  0x00000000      0x5bc build/main.o
@@ -2755,26 +2755,26 @@ LOAD /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/libgcc.a
  .debug_abbrev  0x00003e43      0x170 /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/libgcc.a(_udivmoddi4.o)
  .debug_abbrev  0x00003fb3       0x26 /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/libgcc.a(_dvmd_tls.o)
 
-.debug_loc      0x00000000    0x1ccbf
- .debug_loc     0x00000000      0xce7 build/main.o
- .debug_loc     0x00000ce7      0xe10 build/hca_lib.o
- .debug_loc     0x00001af7       0xf2 build/unipolar_spwm_controller.o
- .debug_loc     0x00001be9       0x20 build/stm32g4xx_it.o
- .debug_loc     0x00001c09      0x29d build/stm32g4xx_hal_msp.o
- .debug_loc     0x00001ea6     0x303d build/stm32g4xx_hal_adc.o
- .debug_loc     0x00004ee3     0x2a31 build/stm32g4xx_hal_adc_ex.o
- .debug_loc     0x00007914      0x350 build/stm32g4xx_hal.o
- .debug_loc     0x00007c64      0x9f5 build/stm32g4xx_hal_rcc.o
- .debug_loc     0x00008659      0xd28 build/stm32g4xx_hal_rcc_ex.o
- .debug_loc     0x00009381      0x4a3 build/stm32g4xx_hal_gpio.o
- .debug_loc     0x00009824      0xb98 build/stm32g4xx_hal_dma.o
- .debug_loc     0x0000a3bc      0x9d7 build/stm32g4xx_hal_pwr_ex.o
- .debug_loc     0x0000ad93      0xa18 build/stm32g4xx_hal_cortex.o
- .debug_loc     0x0000b7ab     0x78c6 build/stm32g4xx_hal_tim.o
- .debug_loc     0x00013071     0x2e47 build/stm32g4xx_hal_tim_ex.o
- .debug_loc     0x00015eb8      0xf25 build/stm32g4xx_hal_uart_ex.o
- .debug_loc     0x00016ddd     0x5e36 build/stm32g4xx_hal_uart.o
- .debug_loc     0x0001cc13       0xac build/system_stm32g4xx.o
+.debug_loc      0x00000000    0x1cce3
+ .debug_loc     0x00000000      0xd0b build/main.o
+ .debug_loc     0x00000d0b      0xe10 build/hca_lib.o
+ .debug_loc     0x00001b1b       0xf2 build/unipolar_spwm_controller.o
+ .debug_loc     0x00001c0d       0x20 build/stm32g4xx_it.o
+ .debug_loc     0x00001c2d      0x29d build/stm32g4xx_hal_msp.o
+ .debug_loc     0x00001eca     0x303d build/stm32g4xx_hal_adc.o
+ .debug_loc     0x00004f07     0x2a31 build/stm32g4xx_hal_adc_ex.o
+ .debug_loc     0x00007938      0x350 build/stm32g4xx_hal.o
+ .debug_loc     0x00007c88      0x9f5 build/stm32g4xx_hal_rcc.o
+ .debug_loc     0x0000867d      0xd28 build/stm32g4xx_hal_rcc_ex.o
+ .debug_loc     0x000093a5      0x4a3 build/stm32g4xx_hal_gpio.o
+ .debug_loc     0x00009848      0xb98 build/stm32g4xx_hal_dma.o
+ .debug_loc     0x0000a3e0      0x9d7 build/stm32g4xx_hal_pwr_ex.o
+ .debug_loc     0x0000adb7      0xa18 build/stm32g4xx_hal_cortex.o
+ .debug_loc     0x0000b7cf     0x78c6 build/stm32g4xx_hal_tim.o
+ .debug_loc     0x00013095     0x2e47 build/stm32g4xx_hal_tim_ex.o
+ .debug_loc     0x00015edc      0xf25 build/stm32g4xx_hal_uart_ex.o
+ .debug_loc     0x00016e01     0x5e36 build/stm32g4xx_hal_uart.o
+ .debug_loc     0x0001cc37       0xac build/system_stm32g4xx.o
 
 .debug_aranges  0x00000000     0x12c0
  .debug_aranges
@@ -2828,54 +2828,54 @@ LOAD /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/libgcc.a
  .debug_aranges
                 0x000012a0       0x20 /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/libgcc.a(_dvmd_tls.o)
 
-.debug_ranges   0x00000000     0x2f88
- .debug_ranges  0x00000000      0x390 build/main.o
- .debug_ranges  0x00000390      0x1e0 build/hca_lib.o
- .debug_ranges  0x00000570       0x10 build/unipolar_spwm_controller.o
- .debug_ranges  0x00000580       0x68 build/stm32g4xx_it.o
- .debug_ranges  0x000005e8      0x108 build/stm32g4xx_hal_msp.o
- .debug_ranges  0x000006f0      0x828 build/stm32g4xx_hal_adc.o
- .debug_ranges  0x00000f18      0x710 build/stm32g4xx_hal_adc_ex.o
- .debug_ranges  0x00001628      0x138 build/stm32g4xx_hal.o
- .debug_ranges  0x00001760       0xf8 build/stm32g4xx_hal_rcc.o
- .debug_ranges  0x00001858      0x100 build/stm32g4xx_hal_rcc_ex.o
- .debug_ranges  0x00001958       0x48 build/stm32g4xx_hal_gpio.o
- .debug_ranges  0x000019a0       0xe0 build/stm32g4xx_hal_dma.o
- .debug_ranges  0x00001a80      0x130 build/stm32g4xx_hal_pwr_ex.o
- .debug_ranges  0x00001bb0      0x170 build/stm32g4xx_hal_cortex.o
- .debug_ranges  0x00001d20      0x6d0 build/stm32g4xx_hal_tim.o
- .debug_ranges  0x000023f0      0x2f0 build/stm32g4xx_hal_tim_ex.o
- .debug_ranges  0x000026e0       0x90 build/stm32g4xx_hal_uart_ex.o
- .debug_ranges  0x00002770      0x7e0 build/stm32g4xx_hal_uart.o
- .debug_ranges  0x00002f50       0x18 build/system_stm32g4xx.o
- .debug_ranges  0x00002f68       0x20 build/startup_stm32g474xx.o
+.debug_ranges   0x00000000     0x2f70
+ .debug_ranges  0x00000000      0x378 build/main.o
+ .debug_ranges  0x00000378      0x1e0 build/hca_lib.o
+ .debug_ranges  0x00000558       0x10 build/unipolar_spwm_controller.o
+ .debug_ranges  0x00000568       0x68 build/stm32g4xx_it.o
+ .debug_ranges  0x000005d0      0x108 build/stm32g4xx_hal_msp.o
+ .debug_ranges  0x000006d8      0x828 build/stm32g4xx_hal_adc.o
+ .debug_ranges  0x00000f00      0x710 build/stm32g4xx_hal_adc_ex.o
+ .debug_ranges  0x00001610      0x138 build/stm32g4xx_hal.o
+ .debug_ranges  0x00001748       0xf8 build/stm32g4xx_hal_rcc.o
+ .debug_ranges  0x00001840      0x100 build/stm32g4xx_hal_rcc_ex.o
+ .debug_ranges  0x00001940       0x48 build/stm32g4xx_hal_gpio.o
+ .debug_ranges  0x00001988       0xe0 build/stm32g4xx_hal_dma.o
+ .debug_ranges  0x00001a68      0x130 build/stm32g4xx_hal_pwr_ex.o
+ .debug_ranges  0x00001b98      0x170 build/stm32g4xx_hal_cortex.o
+ .debug_ranges  0x00001d08      0x6d0 build/stm32g4xx_hal_tim.o
+ .debug_ranges  0x000023d8      0x2f0 build/stm32g4xx_hal_tim_ex.o
+ .debug_ranges  0x000026c8       0x90 build/stm32g4xx_hal_uart_ex.o
+ .debug_ranges  0x00002758      0x7e0 build/stm32g4xx_hal_uart.o
+ .debug_ranges  0x00002f38       0x18 build/system_stm32g4xx.o
+ .debug_ranges  0x00002f50       0x20 build/startup_stm32g474xx.o
 
-.debug_line     0x00000000    0x19aa5
- .debug_line    0x00000000     0x1234 build/main.o
- .debug_line    0x00001234      0x81b build/hca_lib.o
- .debug_line    0x00001a4f      0x13e build/unipolar_spwm_controller.o
- .debug_line    0x00001b8d      0x26d build/stm32g4xx_it.o
- .debug_line    0x00001dfa      0x592 build/stm32g4xx_hal_msp.o
- .debug_line    0x0000238c     0x2b73 build/stm32g4xx_hal_adc.o
- .debug_line    0x00004eff     0x2444 build/stm32g4xx_hal_adc_ex.o
- .debug_line    0x00007343      0x708 build/stm32g4xx_hal.o
- .debug_line    0x00007a4b     0x1014 build/stm32g4xx_hal_rcc.o
- .debug_line    0x00008a5f     0x105d build/stm32g4xx_hal_rcc_ex.o
- .debug_line    0x00009abc      0x6b4 build/stm32g4xx_hal_gpio.o
- .debug_line    0x0000a170      0xd32 build/stm32g4xx_hal_dma.o
- .debug_line    0x0000aea2      0x9f1 build/stm32g4xx_hal_pwr_ex.o
- .debug_line    0x0000b893      0x7e7 build/stm32g4xx_hal_cortex.o
- .debug_line    0x0000c07a     0x53c5 build/stm32g4xx_hal_tim.o
- .debug_line    0x0001143f     0x20bb build/stm32g4xx_hal_tim_ex.o
- .debug_line    0x000134fa      0xa69 build/stm32g4xx_hal_uart_ex.o
- .debug_line    0x00013f63     0x50bd build/stm32g4xx_hal_uart.o
- .debug_line    0x00019020      0x1de build/system_stm32g4xx.o
- .debug_line    0x000191fe       0x74 build/startup_stm32g474xx.o
- .debug_line    0x00019272      0x12e /usr/lib/gcc/arm-none-eabi/16.2.0/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-memset.o)
- .debug_line    0x000193a0      0x117 /usr/lib/gcc/arm-none-eabi/16.2.0/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-init.o)
- .debug_line    0x000194b7       0x4e /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/libgcc.a(_aeabi_uldivmod.o)
- .debug_line    0x00019505      0x556 /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/libgcc.a(_udivmoddi4.o)
- .debug_line    0x00019a5b       0x4a /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/libgcc.a(_dvmd_tls.o)
+.debug_line     0x00000000    0x19aa2
+ .debug_line    0x00000000     0x1231 build/main.o
+ .debug_line    0x00001231      0x81b build/hca_lib.o
+ .debug_line    0x00001a4c      0x13e build/unipolar_spwm_controller.o
+ .debug_line    0x00001b8a      0x26d build/stm32g4xx_it.o
+ .debug_line    0x00001df7      0x592 build/stm32g4xx_hal_msp.o
+ .debug_line    0x00002389     0x2b73 build/stm32g4xx_hal_adc.o
+ .debug_line    0x00004efc     0x2444 build/stm32g4xx_hal_adc_ex.o
+ .debug_line    0x00007340      0x708 build/stm32g4xx_hal.o
+ .debug_line    0x00007a48     0x1014 build/stm32g4xx_hal_rcc.o
+ .debug_line    0x00008a5c     0x105d build/stm32g4xx_hal_rcc_ex.o
+ .debug_line    0x00009ab9      0x6b4 build/stm32g4xx_hal_gpio.o
+ .debug_line    0x0000a16d      0xd32 build/stm32g4xx_hal_dma.o
+ .debug_line    0x0000ae9f      0x9f1 build/stm32g4xx_hal_pwr_ex.o
+ .debug_line    0x0000b890      0x7e7 build/stm32g4xx_hal_cortex.o
+ .debug_line    0x0000c077     0x53c5 build/stm32g4xx_hal_tim.o
+ .debug_line    0x0001143c     0x20bb build/stm32g4xx_hal_tim_ex.o
+ .debug_line    0x000134f7      0xa69 build/stm32g4xx_hal_uart_ex.o
+ .debug_line    0x00013f60     0x50bd build/stm32g4xx_hal_uart.o
+ .debug_line    0x0001901d      0x1de build/system_stm32g4xx.o
+ .debug_line    0x000191fb       0x74 build/startup_stm32g474xx.o
+ .debug_line    0x0001926f      0x12e /usr/lib/gcc/arm-none-eabi/16.2.0/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-memset.o)
+ .debug_line    0x0001939d      0x117 /usr/lib/gcc/arm-none-eabi/16.2.0/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc_nano.a(libc_a-init.o)
+ .debug_line    0x000194b4       0x4e /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/libgcc.a(_aeabi_uldivmod.o)
+ .debug_line    0x00019502      0x556 /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/libgcc.a(_udivmoddi4.o)
+ .debug_line    0x00019a58       0x4a /usr/lib/gcc/arm-none-eabi/16.2.0/thumb/v7e-m+fp/hard/libgcc.a(_dvmd_tls.o)
 
 .debug_str      0x00000000     0x7656
  .debug_str     0x00000000     0x7656 build/main.o

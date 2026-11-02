@@ -71,7 +71,7 @@
 #define UART_RX_DMA_MASK (UART_RX_DMA_LEN - 1U)
 #define MODULATION_INDEX 0.85f
 
-#define IS_OPENLOOP 1 
+#define IS_OPENLOOP 0
 
 /** Ceiling on reference_multiplier when running open loop. The reference is
  *  fed straight to the modulator there, so it may exceed MODULATION_INDEX --

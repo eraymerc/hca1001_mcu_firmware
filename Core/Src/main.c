@@ -196,16 +196,21 @@ int main(void)
   Complex_t kp19 = {0.001f, 0.01f}; //real, complex
   Complex_t ki19 = HCA_POLAR_RAD_C(0.18502, 2.80559); //mag, phase (rad)
 
+  Complex_t kp21 = {0.001f, 0.01f}; //real, complex
+  Complex_t ki21 = HCA_POLAR_RAD_C(0.18502, 2.80559); //mag, phase (rad)
+
   HCA_Add_Channel(&hca, 1, kp1, ki1);  // Fundamental
   HCA_Add_Channel(&hca, 3, kp3, ki3);  
   HCA_Add_Channel(&hca, 5, kp5, ki5);  
   HCA_Add_Channel(&hca, 7, kp7, ki7);  
-  HCA_Add_Channel(&hca, 9, kp9, ki9);  
-  HCA_Add_Channel(&hca, 11, kp11, ki11);  
-  HCA_Add_Channel(&hca, 13, kp13, ki13);
-  HCA_Add_Channel(&hca, 15, kp15, ki15);
-  HCA_Add_Channel(&hca, 17, kp17, ki17);
-  HCA_Add_Channel(&hca, 19, kp19, ki19);    
+  //HCA_Add_Channel(&hca, 9, kp9, ki9);  
+  //HCA_Add_Channel(&hca, 11, kp11, ki11);  
+  //HCA_Add_Channel(&hca, 13, kp13, ki13);
+  //HCA_Add_Channel(&hca, 15, kp15, ki15);
+  //HCA_Add_Channel(&hca, 17, kp17, ki17);
+  //HCA_Add_Channel(&hca, 19, kp19, ki19);
+  //HCA_Add_Channel(&hca, 21, kp21, ki21);    
+    
     
   
   /* USER CODE END Init */

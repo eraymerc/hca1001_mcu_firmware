@@ -22,7 +22,7 @@ TARGET = hca1001-stm32g474re-1faz
 # debug build?
 DEBUG = 1
 # optimization
-OPT = -O2
+OPT = -O2 -ffp-contract=off
 
 
 #######################################

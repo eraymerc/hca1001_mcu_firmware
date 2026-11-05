@@ -31,7 +31,7 @@ build/main.o: Core/Src/main.c Core/Inc/main.h \
  Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart_ex.h \
  Drivers/BSP/STM32G4xx_Nucleo/stm32g4xx_nucleo.h \
  Drivers/BSP/STM32G4xx_Nucleo/stm32g4xx_nucleo_errno.h \
- Core/Inc/stm32g4xx_nucleo_conf.h Core/Inc/hca_lib.h \
+ Core/Inc/stm32g4xx_nucleo_conf.h Core/Inc/hca_lib.h Core/Inc/pr_lib.h \
  Core/Inc/unipolar_spwm_controller.h
 Core/Inc/main.h:
 Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal.h:
@@ -70,4 +70,5 @@ Drivers/BSP/STM32G4xx_Nucleo/stm32g4xx_nucleo.h:
 Drivers/BSP/STM32G4xx_Nucleo/stm32g4xx_nucleo_errno.h:
 Core/Inc/stm32g4xx_nucleo_conf.h:
 Core/Inc/hca_lib.h:
+Core/Inc/pr_lib.h:
 Core/Inc/unipolar_spwm_controller.h:

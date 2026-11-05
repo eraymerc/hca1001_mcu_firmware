@@ -111,7 +111,7 @@ _Static_assert(sizeof(HcaCoeffFrame_t) == 22, "HcaCoeffFrame_t must stay 22 byte
  *
  * Sent in reply to STREAM_CMD_GET_REF and as an echo of a STREAM_CMD_SET_REF,
  * carrying the value the device *actually* runs after clamping -- the host
- * cannot know the limit on its own because it depends on IS_OPENLOOP, so it
+ * cannot know the limit on its own because it depends on CONTROL_TYPE, so it
  * displays what comes back here rather than what it asked for.
  *
  * Third sync byte variant (REF_SYNC1), demultiplexed the same way as

@@ -24,6 +24,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "hca_lib.h"
+#include "pr_lib.h"
 #include "unipolar_spwm_controller.h"
 /* USER CODE END Includes */
 
@@ -71,7 +72,17 @@
 #define UART_RX_DMA_MASK (UART_RX_DMA_LEN - 1U)
 #define MODULATION_INDEX 0.85f
 
-#define IS_OPENLOOP 0
+#define CONTROL_TYPE_OPENLOOP 0
+#define CONTROL_TYPE_HCA      1
+#define CONTROL_TYPE_PR       2
+
+/** Compile-time control method selection. */
+#define CONTROL_TYPE CONTROL_TYPE_HCA  /* 0 = Open loop, 1 = HCA, 2 = PR */
+
+#if (CONTROL_TYPE != CONTROL_TYPE_OPENLOOP) && (CONTROL_TYPE != CONTROL_TYPE_HCA) \
+    && (CONTROL_TYPE != CONTROL_TYPE_PR)
+#error "CONTROL_TYPE must be 0 (Open loop), 1 (HCA) or 2 (PR)"
+#endif
 
 /** Ceiling on reference_multiplier when running open loop. The reference is
  *  fed straight to the modulator there, so it may exceed MODULATION_INDEX --
@@ -99,7 +110,11 @@ TIM_HandleTypeDef htim8;
 
 /* USER CODE BEGIN PV */
 volatile uint16_t adc1_raw;  // voltage (single ADC channel)
+#if CONTROL_TYPE == CONTROL_TYPE_HCA
 volatile HCA_Handle_t hca;   // HCA Handler type
+#elif CONTROL_TYPE == CONTROL_TYPE_PR
+volatile PR_Handle_t  pr;    // PR Handler type
+#endif
 
 /** Set/cleared by 'S'/'X' commands received over LPUART1 (see HandleStreamCommand) */
 volatile uint8_t streaming_enabled = 0;
@@ -155,11 +170,14 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+#if CONTROL_TYPE != CONTROL_TYPE_OPENLOOP
   const float fundamental_freq = 50.0f;     // your output AC frequency, Hz
   const float switching_freq   = SWITCH_RATE;
   const uint8_t oversample_ratio = 2;       // 20kHz * 2 = 40kHz control loop (center-aligned TRGO fires twice/period)
   const float output_limit = 1.0f;          // matches USPWM's ±1.0 saturation
+#endif
 
+#if CONTROL_TYPE == CONTROL_TYPE_HCA
   HCA_Init(&hca,
           fundamental_freq,
           switching_freq,
@@ -203,14 +221,46 @@ int main(void)
   HCA_Add_Channel(&hca, 3, kp3, ki3);  
   HCA_Add_Channel(&hca, 5, kp5, ki5);  
   HCA_Add_Channel(&hca, 7, kp7, ki7);  
-  //HCA_Add_Channel(&hca, 9, kp9, ki9);  
-  //HCA_Add_Channel(&hca, 11, kp11, ki11);  
-  //HCA_Add_Channel(&hca, 13, kp13, ki13);
-  //HCA_Add_Channel(&hca, 15, kp15, ki15);
-  //HCA_Add_Channel(&hca, 17, kp17, ki17);
-  //HCA_Add_Channel(&hca, 19, kp19, ki19);
-  //HCA_Add_Channel(&hca, 21, kp21, ki21);    
-    
+  HCA_Add_Channel(&hca, 9, kp9, ki9);  
+  HCA_Add_Channel(&hca, 11, kp11, ki11);  
+  HCA_Add_Channel(&hca, 13, kp13, ki13);
+  HCA_Add_Channel(&hca, 15, kp15, ki15);
+  HCA_Add_Channel(&hca, 17, kp17, ki17);
+  HCA_Add_Channel(&hca, 19, kp19, ki19);
+  HCA_Add_Channel(&hca, 21, kp21, ki21);
+#else
+  /* HCA_Init normally builds the sine LUT NextReference reads; without it the
+   * LUT has to be built here, so every CONTROL_TYPE sees the same reference. */
+  HCA_CreateLUTs();
+#endif
+
+#if CONTROL_TYPE == CONTROL_TYPE_PR
+  /* Starting gains, NOT tuned: carried over from the HCA Ki set as
+   * Ki_pr = 2*|Ki_hca|, phi = angle(Ki_hca) (see pr_lib.h). Kp is broadband
+   * here, unlike HCA's per-channel Kp, so it starts at 0. */
+  const float pr_kp = 0.0f;
+
+  PR_Init((PR_Handle_t*)&pr,
+          fundamental_freq,
+          switching_freq,
+          oversample_ratio,
+          pr_kp,
+          output_limit);
+
+  //                               order  Ki_h        phi_h (rad)
+  PR_Add_Channel((PR_Handle_t*)&pr,  1,   1.4252f,    0.0438412f);  // Fundamental
+  PR_Add_Channel((PR_Handle_t*)&pr,  3,   1.359496f,  0.138029f);
+  PR_Add_Channel((PR_Handle_t*)&pr,  5,   1.189194f, -0.167159f);
+  PR_Add_Channel((PR_Handle_t*)&pr,  7,   0.982374f,  0.3601f);
+  PR_Add_Channel((PR_Handle_t*)&pr,  9,   0.3778f,    0.5541f);
+  PR_Add_Channel((PR_Handle_t*)&pr, 11,   0.2356f,    0.9764f);
+  PR_Add_Channel((PR_Handle_t*)&pr, 13,   0.222932f,  2.12544f);
+  PR_Add_Channel((PR_Handle_t*)&pr, 15,   0.37004f,   2.80559f);
+  PR_Add_Channel((PR_Handle_t*)&pr, 17,   0.37004f,   2.80559f);
+  PR_Add_Channel((PR_Handle_t*)&pr, 19,   0.37004f,   2.80559f);
+  PR_Add_Channel((PR_Handle_t*)&pr, 21,   0.37004f,   2.80559f);
+#endif
+
     
   
   /* USER CODE END Init */
@@ -639,18 +689,18 @@ static inline float normaliseVoltage(int16_t adc_signed){
  *  on Cortex-M4, so the ISR never sees a half-updated value. */
 static volatile float reference_multiplier = 0.85f;
 
-/** Largest reference multiplier this build accepts, see IS_OPENLOOP above. */
+/** Largest reference multiplier this build accepts, see CONTROL_TYPE above. */
 static inline float ReferenceMultiplierLimit(void)
 {
-#if IS_OPENLOOP
+#if CONTROL_TYPE == CONTROL_TYPE_OPENLOOP
     return REF_MULT_OPENLOOP_MAX;
 #else
     return MODULATION_INDEX;
 #endif
 }
 
-/** Range-check happens here, on the way in -- Execute_HCA_Control stays a pure
- *  hot path and just uses whatever value is standing.
+/** Range-check happens here, on the way in -- the Execute_*_Control functions
+ *  stay a pure hot path and just use whatever value is standing.
  *  @return the value actually applied, which is the request clamped to range. */
 static float SetReferenceMultiplier(float value)
 {
@@ -663,30 +713,71 @@ static float SetReferenceMultiplier(float value)
     return value;
 }
 
-static inline float Execute_HCA_Control(int16_t adc_signed, uint8_t update, float *ref_out)
+/** 50Hz sine reference, scaled by reference_multiplier. Advances the phase by
+ *  one sample on every call, so call it exactly once per ISR. */
+static inline float NextReference(void)
 {
     static uint32_t step_fundamental = (uint32_t)((50.0f / (2.0f*SWITCH_RATE)) * 4294967296.0f);
     static uint32_t angle_fundamental = 0;
 
-    uint32_t theta = angle_fundamental;
-    float r_t = HCA_fastSin(theta)*reference_multiplier;
-
-    float error = r_t - (float)normaliseVoltage(adc_signed);
-    float hca_out = HCA_Process(&hca, error);
-
+    float r_t = HCA_fastSin(angle_fundamental)*reference_multiplier;
     angle_fundamental += step_fundamental;
+    return r_t;
+}
+
+/* ---- Control methods ------------------------------------------------------
+ * One per CONTROL_TYPE, all with the same signature so the ADC ISR just picks
+ * one at compile time. Each returns the tracking error and writes the
+ * reference it used to *ref_out, for the telemetry stream. */
+
+#if CONTROL_TYPE == CONTROL_TYPE_OPENLOOP
+/** CONTROL_TYPE_OPENLOOP: reference goes straight to the modulator. The error
+ *  is still computed so the stream shows how far off the output is. */
+static inline float Execute_OpenLoop_Control(int16_t adc_signed, uint8_t update, float *ref_out)
+{
+    float r_t = NextReference();
+    float error = r_t - (float)normaliseVoltage(adc_signed);
 
     if ((update & 0x1) == 0) {
-#if IS_OPENLOOP
-      USPWM(htim8.Instance, r_t, ARR_VAL, MODULATION_INDEX);  // modulation_index=1.0, already applied above
-#else
-      USPWM(htim8.Instance, hca_out, ARR_VAL, MODULATION_INDEX);
-#endif
+      USPWM(htim8.Instance, r_t, ARR_VAL, MODULATION_INDEX);
     }
 
     *ref_out = r_t;
     return error;
 }
+
+#elif CONTROL_TYPE == CONTROL_TYPE_HCA
+/** CONTROL_TYPE_HCA */
+static inline float Execute_HCA_Control(int16_t adc_signed, uint8_t update, float *ref_out)
+{
+    float r_t = NextReference();
+    float error = r_t - (float)normaliseVoltage(adc_signed);
+    float hca_out = HCA_Process((HCA_Handle_t*)&hca, error);
+
+    if ((update & 0x1) == 0) {
+      USPWM(htim8.Instance, hca_out, ARR_VAL, MODULATION_INDEX);
+    }
+
+    *ref_out = r_t;
+    return error;
+}
+
+#elif CONTROL_TYPE == CONTROL_TYPE_PR
+/** CONTROL_TYPE_PR: multi-resonant PR, see pr_lib.h */
+static inline float Execute_PR_Control(int16_t adc_signed, uint8_t update, float *ref_out)
+{
+    float r_t = NextReference();
+    float error = r_t - (float)normaliseVoltage(adc_signed);
+    float pr_out = PR_Process((PR_Handle_t*)&pr, error);
+
+    if ((update & 0x1) == 0) {
+      USPWM(htim8.Instance, pr_out, ARR_VAL, MODULATION_INDEX);
+    }
+
+    *ref_out = r_t;
+    return error;
+}
+#endif
 
 /** Round to the nearest count and saturate, so an out-of-range value pins at
  *  the rail instead of wrapping to the opposite sign. */
@@ -755,7 +846,7 @@ static inline void PushStreamFrame(float voltage, float reference, float error)
     stream_fifo_head = next_head;
 }
 
-// Manages the HCA loop and the telemetry stream, both at the 40kHz sample rate
+// Manages the control loop and the telemetry stream, both at the 40kHz sample rate
 volatile uint32_t tick_counter = 0;
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
@@ -766,7 +857,13 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
         tick_counter++;
 
         float reference;
+#if CONTROL_TYPE == CONTROL_TYPE_OPENLOOP
+        float error = Execute_OpenLoop_Control(v_adc_signed, tick_counter, &reference);
+#elif CONTROL_TYPE == CONTROL_TYPE_HCA
         float error = Execute_HCA_Control(v_adc_signed, tick_counter, &reference);
+#elif CONTROL_TYPE == CONTROL_TYPE_PR
+        float error = Execute_PR_Control(v_adc_signed, tick_counter, &reference);
+#endif
 
         if (streaming_enabled)
         {
@@ -825,6 +922,7 @@ static uint8_t CoeffChecksum(const uint8_t *p, uint16_t len)
     return sum;
 }
 
+#if CONTROL_TYPE == CONTROL_TYPE_HCA
 /** Emit one channel's gains. Blocking, but only ~105us at 2,097,000 baud. */
 static void SendCoeffFrame(uint8_t index, uint8_t count, const HCA_Channel_t *ch)
 {
@@ -845,6 +943,7 @@ static void SendCoeffFrame(uint8_t index, uint8_t count, const HCA_Channel_t *ch
     StreamTxWaitIdle();
     HAL_UART_Transmit(&hlpuart1, (uint8_t*)&f, (uint16_t)sizeof(f), 10);
 }
+#endif /* CONTROL_TYPE_HCA */
 
 /** Emit the reference multiplier in force, plus the limit this build enforces. */
 static void SendRefFrame(void)
@@ -853,7 +952,7 @@ static void SendRefFrame(void)
     f.sync0     = STREAM_SYNC0;
     f.sync1     = REF_SYNC1;
     f.value     = reference_multiplier;
-    f.open_loop = IS_OPENLOOP ? 1U : 0U;
+    f.open_loop = (CONTROL_TYPE == CONTROL_TYPE_OPENLOOP) ? 1U : 0U;
     f.limit     = ReferenceMultiplierLimit();
     /* Covers value..limit: everything but the two sync bytes and itself. */
     f.checksum  = CoeffChecksum((const uint8_t*)&f.value,
@@ -863,6 +962,7 @@ static void SendRefFrame(void)
     HAL_UART_Transmit(&hlpuart1, (uint8_t*)&f, (uint16_t)sizeof(f), 10);
 }
 
+#if CONTROL_TYPE == CONTROL_TYPE_HCA
 static void SendAllCoeffFrames(void)
 {
     HCA_Handle_t *h = (HCA_Handle_t*)&hca;
@@ -906,6 +1006,7 @@ static void ApplyCoeffCommand(void)
         }
     }
 }
+#endif /* CONTROL_TYPE_HCA */
 
 /** Validate a fully received SET_REF payload and apply it. */
 static void ApplyRefCommand(void)
@@ -943,7 +1044,12 @@ static void HandleStreamCommand(uint8_t cmd)
                 coeff_rx_active = 0;
                 coeff_rx_len = 0;
                 if (pending == STREAM_CMD_SET_COEFF) {
+#if CONTROL_TYPE == CONTROL_TYPE_HCA
                     ApplyCoeffCommand();
+#endif
+                    /* Other builds have no HCA gains: the payload is still
+                     * swallowed so its bytes are not read as commands, and the
+                     * missing echo tells the host it did not land. */
                 } else {
                     ApplyRefCommand();
                 }
@@ -955,7 +1061,9 @@ static void HandleStreamCommand(uint8_t cmd)
     switch (cmd)
     {
         case STREAM_CMD_GET_COEFF:
+#if CONTROL_TYPE == CONTROL_TYPE_HCA
             SendAllCoeffFrames();
+#endif
             break;
 
         case STREAM_CMD_RESET_INT:
@@ -967,8 +1075,12 @@ static void HandleStreamCommand(uint8_t cmd)
              * 40kHz ISR period.
              *
              * Gains are untouched, so echoing them back doubles as the ack. */
+#if CONTROL_TYPE == CONTROL_TYPE_HCA
             HCA_reset_accumulators((HCA_Handle_t*)&hca);
             SendAllCoeffFrames();
+#elif CONTROL_TYPE == CONTROL_TYPE_PR
+            PR_Reset((PR_Handle_t*)&pr);  /* resonator states, gains kept; no ack frame */
+#endif
             break;
 
         case STREAM_CMD_SET_COEFF:

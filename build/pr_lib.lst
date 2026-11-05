@@ -1,0 +1,1525 @@
+ARM GAS  /tmp/ccgK6QC6.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 2
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"pr_lib.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.file 1 "Core/Src/pr_lib.c"
+  20              		.section	.text.PR_ComputeCoeffs.isra.0,"ax",%progbits
+  21              		.align	1
+  22              		.p2align 2,,3
+  23              		.syntax unified
+  24              		.thumb
+  25              		.thumb_func
+  27              	PR_ComputeCoeffs.isra.0:
+  28              	.LVL0:
+  29              	.LFB8:
+   1:Core/Src/pr_lib.c **** /**
+   2:Core/Src/pr_lib.c ****  * @file pr_lib.c
+   3:Core/Src/pr_lib.c ****  *
+   4:Core/Src/pr_lib.c ****  * @brief Multi-resonant Proportional-Resonant (PR) controller with
+   5:Core/Src/pr_lib.c ****  *        impulse-invariant, phase-compensated resonators.
+   6:Core/Src/pr_lib.c ****  *
+   7:Core/Src/pr_lib.c ****  * @details
+   8:Core/Src/pr_lib.c ****  * See pr_lib.h for the transfer function, the discretization, the reasoning
+   9:Core/Src/pr_lib.c ****  * behind the delta-form realization and the literature it follows
+  10:Core/Src/pr_lib.c ****  * (Zmood & Holmes 2003; Teodorescu et al. 2006; Yepes et al. 2010).
+  11:Core/Src/pr_lib.c ****  *
+  12:Core/Src/pr_lib.c ****  * @author
+  13:Core/Src/pr_lib.c ****  * Eray Mercan
+  14:Core/Src/pr_lib.c ****  *
+  15:Core/Src/pr_lib.c ****  * ---
+  16:Core/Src/pr_lib.c ****  * License:
+  17:Core/Src/pr_lib.c ****  *
+  18:Core/Src/pr_lib.c ****  * This project is licensed under the MIT License.
+  19:Core/Src/pr_lib.c ****  * See the LICENSE file in the repository root for full license text.
+  20:Core/Src/pr_lib.c ****  */
+  21:Core/Src/pr_lib.c **** 
+  22:Core/Src/pr_lib.c **** #include "pr_lib.h"
+  23:Core/Src/pr_lib.c **** #include <string.h>
+  24:Core/Src/pr_lib.c **** #include <math.h>
+  25:Core/Src/pr_lib.c **** 
+  26:Core/Src/pr_lib.c **** #ifndef M_PI
+  27:Core/Src/pr_lib.c **** #define M_PI 3.14159265358979323846
+  28:Core/Src/pr_lib.c **** #endif
+  29:Core/Src/pr_lib.c **** 
+ARM GAS  /tmp/ccgK6QC6.s 			page 2
+
+
+  30:Core/Src/pr_lib.c **** // ============================================================
+  31:Core/Src/pr_lib.c **** // Internal helpers
+  32:Core/Src/pr_lib.c **** // ============================================================
+  33:Core/Src/pr_lib.c **** 
+  34:Core/Src/pr_lib.c **** /**
+  35:Core/Src/pr_lib.c ****  * @brief Discrete coefficients of one resonator, computed in double.
+  36:Core/Src/pr_lib.c ****  *
+  37:Core/Src/pr_lib.c ****  * Done once per (order, Ki, phi) from the main loop, never from the ISR:
+  38:Core/Src/pr_lib.c ****  * the Cortex-M4 FPU is single precision, so these are soft-float calls.
+  39:Core/Src/pr_lib.c ****  */
+  40:Core/Src/pr_lib.c **** typedef struct {
+  41:Core/Src/pr_lib.c ****     float b0, db, eps, inv_sin2;
+  42:Core/Src/pr_lib.c **** } PR_Coeffs_t;
+  43:Core/Src/pr_lib.c **** 
+  44:Core/Src/pr_lib.c **** static PR_Coeffs_t PR_ComputeCoeffs(const PR_Handle_t *pr,
+  30              		.loc 1 44 20 view -0
+  31              		.cfi_startproc
+  32              		@ args = 0, pretend = 0, frame = 48
+  33              		@ frame_needed = 0, uses_anonymous_args = 0
+  45:Core/Src/pr_lib.c ****                                     uint8_t order, float ki, float phi)
+  46:Core/Src/pr_lib.c **** {
+  47:Core/Src/pr_lib.c ****     PR_Coeffs_t c;
+  34              		.loc 1 47 5 view .LVU1
+  48:Core/Src/pr_lib.c ****     const double ts = (double)pr->sampling_time;
+  35              		.loc 1 48 5 view .LVU2
+  49:Core/Src/pr_lib.c **** 
+  50:Core/Src/pr_lib.c ****     if (order == 0) {
+  36              		.loc 1 50 5 view .LVU3
+  37              		.loc 1 50 8 is_stmt 0 view .LVU4
+  38 0000 0028     		cmp	r0, #0
+  39 0002 00F0A680 		beq	.L8
+  44:Core/Src/pr_lib.c ****                                     uint8_t order, float ki, float phi)
+  40              		.loc 1 44 20 view .LVU5
+  41 0006 2DE9F04F 		push	{r4, r5, r6, r7, r8, r9, r10, fp, lr}
+  42              	.LCFI0:
+  43              		.cfi_def_cfa_offset 36
+  44              		.cfi_offset 4, -36
+  45              		.cfi_offset 5, -32
+  46              		.cfi_offset 6, -28
+  47              		.cfi_offset 7, -24
+  48              		.cfi_offset 8, -20
+  49              		.cfi_offset 9, -16
+  50              		.cfi_offset 10, -12
+  51              		.cfi_offset 11, -8
+  52              		.cfi_offset 14, -4
+  53 000a 2DED028B 		vpush.64	{d8}
+  54              	.LCFI1:
+  55              		.cfi_def_cfa_offset 44
+  56              		.cfi_offset 80, -44
+  57              		.cfi_offset 81, -40
+  58 000e 0646     		mov	r6, r0
+  59 0010 8DB0     		sub	sp, sp, #52
+  60              	.LCFI2:
+  61              		.cfi_def_cfa_offset 96
+  48:Core/Src/pr_lib.c ****     const double ts = (double)pr->sampling_time;
+  62              		.loc 1 48 18 view .LVU6
+  63 0012 10EE900A 		vmov	r0, s1
+ARM GAS  /tmp/ccgK6QC6.s 			page 3
+
+
+  64              	.LVL1:
+  48:Core/Src/pr_lib.c ****     const double ts = (double)pr->sampling_time;
+  65              		.loc 1 48 18 view .LVU7
+  66 0016 11EE909A 		vmov	r9, s3
+  67 001a 8DED021A 		vstr.32	s2, [sp, #8]
+  68 001e 10EE108A 		vmov	r8, s0
+  69 0022 FFF7FEFF 		bl	__aeabi_f2d
+  70              	.LVL2:
+  51:Core/Src/pr_lib.c ****         /* DC: R(s) = Ki/s, impulse invariant -> Ts*Ki / (1 - z^-1).
+  52:Core/Src/pr_lib.c ****          * Handled as a plain integrator in PR_Process; phi has no meaning. */
+  53:Core/Src/pr_lib.c ****         c.b0       = (float)(ts * (double)ki);
+  54:Core/Src/pr_lib.c ****         c.db       = 0.0f;
+  55:Core/Src/pr_lib.c ****         c.eps      = 0.0f;
+  56:Core/Src/pr_lib.c ****         c.inv_sin2 = 0.0f;
+  57:Core/Src/pr_lib.c ****         return c;
+  58:Core/Src/pr_lib.c ****     }
+  59:Core/Src/pr_lib.c **** 
+  60:Core/Src/pr_lib.c ****     const double wts = 2.0 * M_PI * (double)order * (double)pr->fundamental_freq * ts;
+  71              		.loc 1 60 5 is_stmt 1 view .LVU8
+  48:Core/Src/pr_lib.c **** 
+  72              		.loc 1 48 18 is_stmt 0 view .LVU9
+  73 0026 0446     		mov	r4, r0
+  74              		.loc 1 60 37 view .LVU10
+  75 0028 3046     		mov	r0, r6
+  48:Core/Src/pr_lib.c **** 
+  76              		.loc 1 48 18 view .LVU11
+  77 002a 0D46     		mov	r5, r1
+  78              		.loc 1 60 37 view .LVU12
+  79 002c FFF7FEFF 		bl	__aeabi_ui2d
+  80              	.LVL3:
+  81              		.loc 1 60 35 view .LVU13
+  82 0030 53A3     		adr	r3, .L9+16
+  83 0032 D3E90023 		ldrd	r2, [r3]
+  84 0036 FFF7FEFF 		bl	__aeabi_dmul
+  85              	.LVL4:
+  86 003a 0646     		mov	r6, r0
+  87              	.LVL5:
+  88              		.loc 1 60 53 view .LVU14
+  89 003c 4046     		mov	r0, r8	@ float
+  90              		.loc 1 60 35 view .LVU15
+  91 003e 0F46     		mov	r7, r1
+  92              		.loc 1 60 53 view .LVU16
+  93 0040 FFF7FEFF 		bl	__aeabi_f2d
+  94              	.LVL6:
+  95 0044 0246     		mov	r2, r0
+  96 0046 0B46     		mov	r3, r1
+  97              		.loc 1 60 51 view .LVU17
+  98 0048 3046     		mov	r0, r6
+  99 004a 3946     		mov	r1, r7
+ 100 004c FFF7FEFF 		bl	__aeabi_dmul
+ 101              	.LVL7:
+ 102              		.loc 1 60 18 view .LVU18
+ 103 0050 2246     		mov	r2, r4
+ 104 0052 2B46     		mov	r3, r5
+ 105 0054 CDE90045 		strd	r4, [sp]
+ 106 0058 FFF7FEFF 		bl	__aeabi_dmul
+ 107              	.LVL8:
+ARM GAS  /tmp/ccgK6QC6.s 			page 4
+
+
+ 108 005c 0646     		mov	r6, r0
+  61:Core/Src/pr_lib.c ****     const double p   = (double)phi;
+ 109              		.loc 1 61 18 view .LVU19
+ 110 005e 4846     		mov	r0, r9	@ float
+  60:Core/Src/pr_lib.c ****     const double p   = (double)phi;
+ 111              		.loc 1 60 18 view .LVU20
+ 112 0060 0F46     		mov	r7, r1
+ 113              	.LVL9:
+ 114              		.loc 1 61 5 is_stmt 1 view .LVU21
+ 115              		.loc 1 61 18 is_stmt 0 view .LVU22
+ 116 0062 FFF7FEFF 		bl	__aeabi_f2d
+ 117              	.LVL10:
+  62:Core/Src/pr_lib.c ****     const double s_half = sin(0.5 * wts);
+ 118              		.loc 1 62 27 view .LVU23
+ 119 0066 424B     		ldr	r3, .L9
+ 120 0068 0022     		movs	r2, #0
+  61:Core/Src/pr_lib.c ****     const double p   = (double)phi;
+ 121              		.loc 1 61 18 view .LVU24
+ 122 006a 8046     		mov	r8, r0
+ 123 006c 8946     		mov	r9, r1
+ 124              	.LVL11:
+ 125              		.loc 1 62 5 is_stmt 1 view .LVU25
+ 126              		.loc 1 62 27 is_stmt 0 view .LVU26
+ 127 006e 3046     		mov	r0, r6
+ 128 0070 3946     		mov	r1, r7
+ 129 0072 FFF7FEFF 		bl	__aeabi_dmul
+ 130              	.LVL12:
+ 131 0076 8246     		mov	r10, r0
+ 132 0078 8B46     		mov	fp, r1
+ 133 007a 4BEC10AB 		vmov	d0, r10, fp
+ 134 007e FFF7FEFF 		bl	sin
+ 135              	.LVL13:
+ 136 0082 55EC104B 		vmov	r4, r5, d0
+ 137              	.LVL14:
+  63:Core/Src/pr_lib.c ****     const double s_full = sin(wts);
+ 138              		.loc 1 63 5 is_stmt 1 view .LVU27
+ 139              		.loc 1 63 27 is_stmt 0 view .LVU28
+ 140 0086 47EC106B 		vmov	d0, r6, r7
+ 141 008a FFF7FEFF 		bl	sin
+ 142              	.LVL15:
+  64:Core/Src/pr_lib.c **** 
+  65:Core/Src/pr_lib.c ****     c.b0  = (float)(ts * (double)ki * cos(p));
+ 143              		.loc 1 65 26 view .LVU29
+ 144 008e 0298     		ldr	r0, [sp, #8]	@ float
+  63:Core/Src/pr_lib.c ****     const double s_full = sin(wts);
+ 145              		.loc 1 63 27 view .LVU30
+ 146 0090 B0EE408A 		vmov.f32	s16, s0
+ 147 0094 F0EE608A 		vmov.f32	s17, s1
+ 148              	.LVL16:
+ 149              		.loc 1 65 5 is_stmt 1 view .LVU31
+ 150              		.loc 1 65 26 is_stmt 0 view .LVU32
+ 151 0098 FFF7FEFF 		bl	__aeabi_f2d
+ 152              	.LVL17:
+ 153              		.loc 1 65 24 view .LVU33
+ 154 009c DDE90023 		ldrd	r2, [sp]
+ 155 00a0 FFF7FEFF 		bl	__aeabi_dmul
+ 156              	.LVL18:
+ARM GAS  /tmp/ccgK6QC6.s 			page 5
+
+
+ 157              		.loc 1 65 39 view .LVU34
+ 158 00a4 49EC108B 		vmov	d0, r8, r9
+ 159              		.loc 1 65 24 view .LVU35
+ 160 00a8 0646     		mov	r6, r0
+ 161              	.LVL19:
+ 162              		.loc 1 65 24 view .LVU36
+ 163 00aa 0F46     		mov	r7, r1
+ 164              		.loc 1 65 39 view .LVU37
+ 165 00ac FFF7FEFF 		bl	cos
+ 166              	.LVL20:
+ 167              		.loc 1 65 37 discriminator 1 view .LVU38
+ 168 00b0 3046     		mov	r0, r6
+ 169              		.loc 1 65 39 view .LVU39
+ 170 00b2 53EC102B 		vmov	r2, r3, d0
+ 171              		.loc 1 65 37 discriminator 1 view .LVU40
+ 172 00b6 3946     		mov	r1, r7
+ 173 00b8 FFF7FEFF 		bl	__aeabi_dmul
+ 174              	.LVL21:
+ 175              		.loc 1 65 13 discriminator 1 view .LVU41
+ 176 00bc FFF7FEFF 		bl	__aeabi_d2f
+ 177              	.LVL22:
+  66:Core/Src/pr_lib.c ****     /* cos(phi) - cos(phi - wTs) = -2*sin(phi - wTs/2)*sin(wTs/2): no
+  67:Core/Src/pr_lib.c ****      * cancellation even when wTs is tiny. */
+  68:Core/Src/pr_lib.c ****     c.db  = (float)(ts * (double)ki * (-2.0 * sin(p - 0.5 * wts) * s_half));
+ 178              		.loc 1 68 47 view .LVU42
+ 179 00c0 5246     		mov	r2, r10
+ 180 00c2 5B46     		mov	r3, fp
+  65:Core/Src/pr_lib.c ****     /* cos(phi) - cos(phi - wTs) = -2*sin(phi - wTs/2)*sin(wTs/2): no
+ 181              		.loc 1 65 13 discriminator 1 view .LVU43
+ 182 00c4 0390     		str	r0, [sp, #12]
+ 183              	.LVL23:
+ 184              		.loc 1 68 5 is_stmt 1 view .LVU44
+ 185              		.loc 1 68 47 is_stmt 0 view .LVU45
+ 186 00c6 4946     		mov	r1, r9
+ 187 00c8 4046     		mov	r0, r8
+ 188 00ca FFF7FEFF 		bl	__aeabi_dsub
+ 189              	.LVL24:
+ 190 00ce 41EC100B 		vmov	d0, r0, r1
+ 191 00d2 FFF7FEFF 		bl	sin
+ 192              	.LVL25:
+ 193              		.loc 1 68 45 discriminator 1 view .LVU46
+ 194 00d6 0022     		movs	r2, #0
+ 195              		.loc 1 68 47 view .LVU47
+ 196 00d8 51EC100B 		vmov	r0, r1, d0
+ 197              		.loc 1 68 45 discriminator 1 view .LVU48
+ 198 00dc 4FF04043 		mov	r3, #-1073741824
+ 199 00e0 FFF7FEFF 		bl	__aeabi_dmul
+ 200              	.LVL26:
+ 201              		.loc 1 68 66 discriminator 1 view .LVU49
+ 202 00e4 2246     		mov	r2, r4
+ 203 00e6 2B46     		mov	r3, r5
+ 204 00e8 FFF7FEFF 		bl	__aeabi_dmul
+ 205              	.LVL27:
+ 206              		.loc 1 68 37 discriminator 1 view .LVU50
+ 207 00ec 3246     		mov	r2, r6
+ 208 00ee 3B46     		mov	r3, r7
+ 209 00f0 FFF7FEFF 		bl	__aeabi_dmul
+ARM GAS  /tmp/ccgK6QC6.s 			page 6
+
+
+ 210              	.LVL28:
+ 211              		.loc 1 68 13 discriminator 1 view .LVU51
+ 212 00f4 FFF7FEFF 		bl	__aeabi_d2f
+ 213              	.LVL29:
+  69:Core/Src/pr_lib.c ****     /* 2 - 2*cos(wTs), kept in full relative precision */
+  70:Core/Src/pr_lib.c ****     c.eps = (float)(4.0 * s_half * s_half);
+ 214              		.loc 1 70 25 view .LVU52
+ 215 00f8 1E4B     		ldr	r3, .L9+4
+  68:Core/Src/pr_lib.c ****     /* 2 - 2*cos(wTs), kept in full relative precision */
+ 216              		.loc 1 68 13 discriminator 1 view .LVU53
+ 217 00fa 0290     		str	r0, [sp, #8]
+ 218              	.LVL30:
+ 219              		.loc 1 70 5 is_stmt 1 view .LVU54
+ 220              		.loc 1 70 25 is_stmt 0 view .LVU55
+ 221 00fc 0022     		movs	r2, #0
+ 222 00fe 2046     		mov	r0, r4
+ 223 0100 2946     		mov	r1, r5
+ 224 0102 FFF7FEFF 		bl	__aeabi_dmul
+ 225              	.LVL31:
+ 226              		.loc 1 70 34 view .LVU56
+ 227 0106 2246     		mov	r2, r4
+ 228 0108 2B46     		mov	r3, r5
+ 229 010a FFF7FEFF 		bl	__aeabi_dmul
+ 230              	.LVL32:
+ 231              		.loc 1 70 13 view .LVU57
+ 232 010e FFF7FEFF 		bl	__aeabi_d2f
+ 233              	.LVL33:
+  71:Core/Src/pr_lib.c ****     c.inv_sin2 = (float)(1.0 / (s_full * s_full));
+ 234              		.loc 1 71 40 view .LVU58
+ 235 0112 53EC182B 		vmov	r2, r3, d8
+  70:Core/Src/pr_lib.c ****     c.inv_sin2 = (float)(1.0 / (s_full * s_full));
+ 236              		.loc 1 70 13 view .LVU59
+ 237 0116 0090     		str	r0, [sp]
+ 238              		.loc 1 71 40 view .LVU60
+ 239 0118 1946     		mov	r1, r3
+ 240              	.LVL34:
+ 241              		.loc 1 71 5 is_stmt 1 view .LVU61
+ 242              		.loc 1 71 40 is_stmt 0 view .LVU62
+ 243 011a 1046     		mov	r0, r2
+ 244 011c FFF7FEFF 		bl	__aeabi_dmul
+ 245              	.LVL35:
+ 246 0120 0246     		mov	r2, r0
+ 247 0122 0B46     		mov	r3, r1
+ 248              		.loc 1 71 30 view .LVU63
+ 249 0124 0020     		movs	r0, #0
+ 250 0126 1449     		ldr	r1, .L9+8
+ 251 0128 FFF7FEFF 		bl	__aeabi_ddiv
+ 252              	.LVL36:
+ 253              		.loc 1 71 18 view .LVU64
+ 254 012c FFF7FEFF 		bl	__aeabi_d2f
+ 255              	.LVL37:
+ 256 0130 DDED037A 		vldr.32	s15, [sp, #12]	@ int
+ 257 0134 9DED027A 		vldr.32	s14, [sp, #8]	@ int
+ 258 0138 9DED001A 		vldr.32	s2, [sp]	@ int
+ 259 013c 01EE900A 		vmov	s3, r0
+ 260              	.LVL38:
+  72:Core/Src/pr_lib.c ****     return c;
+ARM GAS  /tmp/ccgK6QC6.s 			page 7
+
+
+ 261              		.loc 1 72 5 is_stmt 1 view .LVU65
+  73:Core/Src/pr_lib.c **** }
+ 262              		.loc 1 73 1 is_stmt 0 view .LVU66
+ 263 0140 F0EE470A 		vmov.f32	s1, s14
+ 264 0144 B0EE670A 		vmov.f32	s0, s15
+ 265 0148 0DB0     		add	sp, sp, #52
+ 266              	.LCFI3:
+ 267              		.cfi_def_cfa_offset 44
+ 268              		@ sp needed
+ 269 014a BDEC028B 		vldm	sp!, {d8}
+ 270              	.LCFI4:
+ 271              		.cfi_restore 80
+ 272              		.cfi_restore 81
+ 273              		.cfi_def_cfa_offset 36
+ 274              	.LVL39:
+ 275              		.loc 1 73 1 view .LVU67
+ 276 014e BDE8F08F 		pop	{r4, r5, r6, r7, r8, r9, r10, fp, pc}
+ 277              	.LVL40:
+ 278              	.L8:
+ 279              	.LCFI5:
+ 280              		.cfi_def_cfa_offset 0
+ 281              		.cfi_restore 4
+ 282              		.cfi_restore 5
+ 283              		.cfi_restore 6
+ 284              		.cfi_restore 7
+ 285              		.cfi_restore 8
+ 286              		.cfi_restore 9
+ 287              		.cfi_restore 10
+ 288              		.cfi_restore 11
+ 289              		.cfi_restore 14
+  53:Core/Src/pr_lib.c ****         c.db       = 0.0f;
+ 290              		.loc 1 53 9 is_stmt 1 view .LVU68
+  57:Core/Src/pr_lib.c ****     }
+ 291              		.loc 1 57 16 is_stmt 0 view .LVU69
+ 292 0152 9FED0A7A 		vldr.32	s14, .L9+12
+  53:Core/Src/pr_lib.c ****         c.db       = 0.0f;
+ 293              		.loc 1 53 22 view .LVU70
+ 294 0156 61EE207A 		vmul.f32	s15, s2, s1
+ 295              	.LVL41:
+  54:Core/Src/pr_lib.c ****         c.eps      = 0.0f;
+ 296              		.loc 1 54 9 is_stmt 1 view .LVU71
+  55:Core/Src/pr_lib.c ****         c.inv_sin2 = 0.0f;
+ 297              		.loc 1 55 9 view .LVU72
+  56:Core/Src/pr_lib.c ****         return c;
+ 298              		.loc 1 56 9 view .LVU73
+  57:Core/Src/pr_lib.c ****     }
+ 299              		.loc 1 57 9 view .LVU74
+  57:Core/Src/pr_lib.c ****     }
+ 300              		.loc 1 57 16 is_stmt 0 view .LVU75
+ 301 015a F0EE471A 		vmov.f32	s3, s14
+ 302              	.LVL42:
+  57:Core/Src/pr_lib.c ****     }
+ 303              		.loc 1 57 16 view .LVU76
+ 304 015e B0EE471A 		vmov.f32	s2, s14
+ 305              	.LVL43:
+ 306              		.loc 1 73 1 view .LVU77
+ 307 0162 F0EE470A 		vmov.f32	s1, s14
+ARM GAS  /tmp/ccgK6QC6.s 			page 8
+
+
+ 308              	.LVL44:
+ 309              		.loc 1 73 1 view .LVU78
+ 310 0166 B0EE670A 		vmov.f32	s0, s15
+ 311 016a 7047     		bx	lr
+ 312              	.L10:
+ 313 016c AFF30080 		.align	3
+ 314              	.L9:
+ 315 0170 0000E03F 		.word	1071644672
+ 316 0174 00001040 		.word	1074790400
+ 317 0178 0000F03F 		.word	1072693248
+ 318 017c 00000000 		.word	0
+ 319 0180 182D4454 		.word	1413754136
+ 320 0184 FB211940 		.word	1075388923
+ 321              		.cfi_endproc
+ 322              	.LFE8:
+ 324              		.section	.text.PR_Init,"ax",%progbits
+ 325              		.align	1
+ 326              		.p2align 2,,3
+ 327              		.global	PR_Init
+ 328              		.syntax unified
+ 329              		.thumb
+ 330              		.thumb_func
+ 332              	PR_Init:
+ 333              	.LVL45:
+ 334              	.LFB2:
+  74:Core/Src/pr_lib.c **** 
+  75:Core/Src/pr_lib.c **** static inline void Channel_ResetState(PR_Channel_t *ch)
+  76:Core/Src/pr_lib.c **** {
+  77:Core/Src/pr_lib.c ****     ch->d = 0.0f;
+  78:Core/Src/pr_lib.c ****     ch->y = 0.0f;
+  79:Core/Src/pr_lib.c **** }
+  80:Core/Src/pr_lib.c **** 
+  81:Core/Src/pr_lib.c **** // ============================================================
+  82:Core/Src/pr_lib.c **** // PR core functions
+  83:Core/Src/pr_lib.c **** // ============================================================
+  84:Core/Src/pr_lib.c **** 
+  85:Core/Src/pr_lib.c **** void PR_Init(PR_Handle_t *pr,
+  86:Core/Src/pr_lib.c ****              float fund_freq,
+  87:Core/Src/pr_lib.c ****              float switch_freq,
+  88:Core/Src/pr_lib.c ****              uint8_t oversample_ratio,
+  89:Core/Src/pr_lib.c ****              float kp,
+  90:Core/Src/pr_lib.c ****              float out_limit)
+  91:Core/Src/pr_lib.c **** {
+ 335              		.loc 1 91 1 is_stmt 1 view -0
+ 336              		.cfi_startproc
+ 337              		@ args = 0, pretend = 0, frame = 16
+ 338              		@ frame_needed = 0, uses_anonymous_args = 0
+  92:Core/Src/pr_lib.c ****     if (oversample_ratio < 1) oversample_ratio = 1;
+ 339              		.loc 1 92 5 view .LVU80
+  91:Core/Src/pr_lib.c ****     if (oversample_ratio < 1) oversample_ratio = 1;
+ 340              		.loc 1 91 1 is_stmt 0 view .LVU81
+ 341 0000 10B5     		push	{r4, lr}
+ 342              	.LCFI6:
+ 343              		.cfi_def_cfa_offset 8
+ 344              		.cfi_offset 4, -8
+ 345              		.cfi_offset 14, -4
+  93:Core/Src/pr_lib.c **** 
+ARM GAS  /tmp/ccgK6QC6.s 			page 9
+
+
+  94:Core/Src/pr_lib.c ****     memset(pr, 0, sizeof(*pr));
+ 346              		.loc 1 94 5 view .LVU82
+ 347 0002 4FF4E462 		mov	r2, #1824
+  91:Core/Src/pr_lib.c ****     if (oversample_ratio < 1) oversample_ratio = 1;
+ 348              		.loc 1 91 1 view .LVU83
+ 349 0006 84B0     		sub	sp, sp, #16
+ 350              	.LCFI7:
+ 351              		.cfi_def_cfa_offset 24
+  91:Core/Src/pr_lib.c ****     if (oversample_ratio < 1) oversample_ratio = 1;
+ 352              		.loc 1 91 1 view .LVU84
+ 353 0008 0C46     		mov	r4, r1
+ 354              	.LVL46:
+ 355              		.loc 1 94 5 is_stmt 1 view .LVU85
+ 356 000a 0021     		movs	r1, #0
+  91:Core/Src/pr_lib.c ****     if (oversample_ratio < 1) oversample_ratio = 1;
+ 357              		.loc 1 91 1 is_stmt 0 view .LVU86
+ 358 000c 8DED030A 		vstr.32	s0, [sp, #12]	@ int
+ 359 0010 CDED020A 		vstr.32	s1, [sp, #8]	@ int
+ 360 0014 8DED011A 		vstr.32	s2, [sp, #4]	@ int
+ 361 0018 CDED001A 		vstr.32	s3, [sp]	@ int
+ 362              		.loc 1 94 5 view .LVU87
+ 363 001c FFF7FEFF 		bl	memset
+ 364              	.LVL47:
+  95:Core/Src/pr_lib.c **** 
+  96:Core/Src/pr_lib.c ****     pr->fundamental_freq = fund_freq;
+  97:Core/Src/pr_lib.c ****     pr->sampling_time    = 1.0f / (switch_freq * (float)oversample_ratio);
+ 365              		.loc 1 97 50 view .LVU88
+ 366 0020 012C     		cmp	r4, #1
+ 367 0022 2246     		mov	r2, r4
+ 368 0024 38BF     		it	cc
+ 369 0026 0122     		movcc	r2, #1
+ 370 0028 07EE902A 		vmov	s15, r2	@ int
+ 371              		.loc 1 97 48 view .LVU89
+ 372 002c DDED020A 		vldr.32	s1, [sp, #8]	@ int
+  98:Core/Src/pr_lib.c ****     pr->Kp               = kp;
+  99:Core/Src/pr_lib.c ****     pr->output_limit     = fabsf(out_limit);
+ 373              		.loc 1 99 28 view .LVU90
+ 374 0030 DDED001A 		vldr.32	s3, [sp]	@ int
+  96:Core/Src/pr_lib.c ****     pr->sampling_time    = 1.0f / (switch_freq * (float)oversample_ratio);
+ 375              		.loc 1 96 26 view .LVU91
+ 376 0034 9DED030A 		vldr.32	s0, [sp, #12]	@ int
+  98:Core/Src/pr_lib.c ****     pr->Kp               = kp;
+ 377              		.loc 1 98 26 view .LVU92
+ 378 0038 9DED011A 		vldr.32	s2, [sp, #4]	@ int
+  97:Core/Src/pr_lib.c ****     pr->Kp               = kp;
+ 379              		.loc 1 97 50 view .LVU93
+ 380 003c F8EE677A 		vcvt.f32.u32	s15, s15
+  97:Core/Src/pr_lib.c ****     pr->Kp               = kp;
+ 381              		.loc 1 97 33 view .LVU94
+ 382 0040 F7EE006A 		vmov.f32	s13, #1.0e+0
+  97:Core/Src/pr_lib.c ****     pr->Kp               = kp;
+ 383              		.loc 1 97 48 view .LVU95
+ 384 0044 67EEA07A 		vmul.f32	s15, s15, s1
+  94:Core/Src/pr_lib.c **** 
+ 385              		.loc 1 94 5 view .LVU96
+ 386 0048 0346     		mov	r3, r0
+  96:Core/Src/pr_lib.c ****     pr->sampling_time    = 1.0f / (switch_freq * (float)oversample_ratio);
+ARM GAS  /tmp/ccgK6QC6.s 			page 10
+
+
+ 387              		.loc 1 96 5 is_stmt 1 view .LVU97
+  97:Core/Src/pr_lib.c ****     pr->Kp               = kp;
+ 388              		.loc 1 97 33 is_stmt 0 view .LVU98
+ 389 004a 86EEA77A 		vdiv.f32	s14, s13, s15
+  97:Core/Src/pr_lib.c ****     pr->Kp               = kp;
+ 390              		.loc 1 97 26 view .LVU99
+ 391 004e 03F21471 		addw	r1, r3, #1812
+  98:Core/Src/pr_lib.c ****     pr->output_limit     = fabsf(out_limit);
+ 392              		.loc 1 98 26 view .LVU100
+ 393 0052 03F20C72 		addw	r2, r3, #1804
+  96:Core/Src/pr_lib.c ****     pr->sampling_time    = 1.0f / (switch_freq * (float)oversample_ratio);
+ 394              		.loc 1 96 26 view .LVU101
+ 395 0056 00F5E260 		add	r0, r0, #1808
+ 396              		.loc 1 99 26 view .LVU102
+ 397 005a 03F5E363 		add	r3, r3, #1816
+ 398              		.loc 1 99 28 view .LVU103
+ 399 005e F0EEE11A 		vabs.f32	s3, s3
+  96:Core/Src/pr_lib.c ****     pr->sampling_time    = 1.0f / (switch_freq * (float)oversample_ratio);
+ 400              		.loc 1 96 26 view .LVU104
+ 401 0062 80ED000A 		vstr.32	s0, [r0]
+  97:Core/Src/pr_lib.c ****     pr->Kp               = kp;
+ 402              		.loc 1 97 5 is_stmt 1 view .LVU105
+  97:Core/Src/pr_lib.c ****     pr->Kp               = kp;
+ 403              		.loc 1 97 26 is_stmt 0 view .LVU106
+ 404 0066 81ED007A 		vstr.32	s14, [r1]
+  98:Core/Src/pr_lib.c ****     pr->output_limit     = fabsf(out_limit);
+ 405              		.loc 1 98 5 is_stmt 1 view .LVU107
+  98:Core/Src/pr_lib.c ****     pr->output_limit     = fabsf(out_limit);
+ 406              		.loc 1 98 26 is_stmt 0 view .LVU108
+ 407 006a 82ED001A 		vstr.32	s2, [r2]
+ 408              		.loc 1 99 5 is_stmt 1 view .LVU109
+ 409              		.loc 1 99 26 is_stmt 0 view .LVU110
+ 410 006e C3ED001A 		vstr.32	s3, [r3]
+ 100:Core/Src/pr_lib.c ****     pr->prev_error       = 0.0f;
+ 411              		.loc 1 100 5 is_stmt 1 view .LVU111
+ 101:Core/Src/pr_lib.c ****     pr->active_channel_count = 0;
+ 412              		.loc 1 101 5 view .LVU112
+ 102:Core/Src/pr_lib.c **** }
+ 413              		.loc 1 102 1 is_stmt 0 view .LVU113
+ 414 0072 04B0     		add	sp, sp, #16
+ 415              	.LCFI8:
+ 416              		.cfi_def_cfa_offset 8
+ 417              		@ sp needed
+ 418 0074 10BD     		pop	{r4, pc}
+ 419              		.loc 1 102 1 view .LVU114
+ 420              		.cfi_endproc
+ 421              	.LFE2:
+ 423 0076 00BF     		.section	.text.PR_Add_Channel,"ax",%progbits
+ 424              		.align	1
+ 425              		.p2align 2,,3
+ 426              		.global	PR_Add_Channel
+ 427              		.syntax unified
+ 428              		.thumb
+ 429              		.thumb_func
+ 431              	PR_Add_Channel:
+ 432              	.LVL48:
+ 433              	.LFB3:
+ARM GAS  /tmp/ccgK6QC6.s 			page 11
+
+
+ 103:Core/Src/pr_lib.c **** 
+ 104:Core/Src/pr_lib.c **** void PR_Add_Channel(PR_Handle_t *pr,
+ 105:Core/Src/pr_lib.c ****                     uint8_t order,
+ 106:Core/Src/pr_lib.c ****                     float ki,
+ 107:Core/Src/pr_lib.c ****                     float phi)
+ 108:Core/Src/pr_lib.c **** {
+ 434              		.loc 1 108 1 is_stmt 1 view -0
+ 435              		.cfi_startproc
+ 436              		@ args = 0, pretend = 0, frame = 32
+ 437              		@ frame_needed = 0, uses_anonymous_args = 0
+ 109:Core/Src/pr_lib.c ****     if (pr->active_channel_count >= PR_MAX_HARMONICS) return;
+ 438              		.loc 1 109 5 view .LVU116
+ 108:Core/Src/pr_lib.c ****     if (pr->active_channel_count >= PR_MAX_HARMONICS) return;
+ 439              		.loc 1 108 1 is_stmt 0 view .LVU117
+ 440 0000 10B5     		push	{r4, lr}
+ 441              	.LCFI9:
+ 442              		.cfi_def_cfa_offset 8
+ 443              		.cfi_offset 4, -8
+ 444              		.cfi_offset 14, -4
+ 445              		.loc 1 109 11 view .LVU118
+ 446 0002 90F80847 		ldrb	r4, [r0, #1800]	@ zero_extendqisi2
+ 447              		.loc 1 109 8 view .LVU119
+ 448 0006 312C     		cmp	r4, #49
+ 108:Core/Src/pr_lib.c ****     if (pr->active_channel_count >= PR_MAX_HARMONICS) return;
+ 449              		.loc 1 108 1 view .LVU120
+ 450 0008 88B0     		sub	sp, sp, #32
+ 451              	.LCFI10:
+ 452              		.cfi_def_cfa_offset 40
+ 453              		.loc 1 109 8 view .LVU121
+ 454 000a 34D8     		bhi	.L13
+ 110:Core/Src/pr_lib.c **** 
+ 111:Core/Src/pr_lib.c ****     PR_Channel_t *ch = &pr->channels[pr->active_channel_count];
+ 455              		.loc 1 111 5 is_stmt 1 view .LVU122
+ 456              	.LVL49:
+ 112:Core/Src/pr_lib.c ****     PR_Coeffs_t c = PR_ComputeCoeffs(pr, order, ki, phi);
+ 457              		.loc 1 112 5 view .LVU123
+ 458              		.loc 1 112 21 is_stmt 0 view .LVU124
+ 459 000c 00F21472 		addw	r2, r0, #1812
+ 460 0010 F0EE607A 		vmov.f32	s15, s1
+ 461 0014 D2ED000A 		vldr.32	s1, [r2]
+ 462              	.LVL50:
+ 463              		.loc 1 112 21 view .LVU125
+ 464 0018 0390     		str	r0, [sp, #12]
+ 465 001a 00F5E262 		add	r2, r0, #1808
+ 466 001e F0EE671A 		vmov.f32	s3, s15
+ 467 0022 B0EE401A 		vmov.f32	s2, s0
+ 468 0026 0846     		mov	r0, r1
+ 469              	.LVL51:
+ 470              		.loc 1 112 21 view .LVU126
+ 471 0028 8DED010A 		vstr.32	s0, [sp, #4]	@ int
+ 472 002c 92ED000A 		vldr.32	s0, [r2]
+ 473              	.LVL52:
+ 474              		.loc 1 112 21 view .LVU127
+ 475 0030 CDED027A 		vstr.32	s15, [sp, #8]	@ int
+ 476 0034 0091     		str	r1, [sp]
+ 477 0036 FFF7FEFF 		bl	PR_ComputeCoeffs.isra.0
+ 478              	.LVL53:
+ARM GAS  /tmp/ccgK6QC6.s 			page 12
+
+
+ 113:Core/Src/pr_lib.c **** 
+ 114:Core/Src/pr_lib.c ****     ch->harmonic_order = order;
+ 479              		.loc 1 114 5 is_stmt 1 view .LVU128
+ 480 003a 039B     		ldr	r3, [sp, #12]
+ 481              		.loc 1 114 24 is_stmt 0 view .LVU129
+ 482 003c 0099     		ldr	r1, [sp]
+ 115:Core/Src/pr_lib.c ****     ch->Ki       = ki;
+ 483              		.loc 1 115 18 view .LVU130
+ 484 003e 9DED017A 		vldr.32	s14, [sp, #4]	@ int
+ 116:Core/Src/pr_lib.c ****     ch->phi      = phi;
+ 485              		.loc 1 116 18 view .LVU131
+ 486 0042 DDED027A 		vldr.32	s15, [sp, #8]	@ int
+ 487 0046 04EBC400 		add	r0, r4, r4, lsl #3
+ 488 004a 03EB8002 		add	r2, r3, r0, lsl #2
+ 114:Core/Src/pr_lib.c ****     ch->Ki       = ki;
+ 489              		.loc 1 114 24 view .LVU132
+ 490 004e 03F82010 		strb	r1, [r3, r0, lsl #2]
+ 115:Core/Src/pr_lib.c ****     ch->Ki       = ki;
+ 491              		.loc 1 115 5 is_stmt 1 view .LVU133
+ 117:Core/Src/pr_lib.c ****     ch->b0       = c.b0;
+ 118:Core/Src/pr_lib.c ****     ch->db       = c.db;
+ 119:Core/Src/pr_lib.c ****     ch->eps      = c.eps;
+ 120:Core/Src/pr_lib.c ****     ch->inv_sin2 = c.inv_sin2;
+ 121:Core/Src/pr_lib.c ****     Channel_ResetState(ch);
+ 122:Core/Src/pr_lib.c **** 
+ 123:Core/Src/pr_lib.c ****     pr->active_channel_count++;
+ 492              		.loc 1 123 29 is_stmt 0 view .LVU134
+ 493 0052 0134     		adds	r4, r4, #1
+ 494              	.LVL54:
+ 495              	.LBB7:
+ 496              	.LBB8:
+  77:Core/Src/pr_lib.c ****     ch->y = 0.0f;
+ 497              		.loc 1 77 11 view .LVU135
+ 498 0054 0021     		movs	r1, #0
+ 499              	.LBE8:
+ 500              	.LBE7:
+ 115:Core/Src/pr_lib.c ****     ch->phi      = phi;
+ 501              		.loc 1 115 18 view .LVU136
+ 502 0056 82ED017A 		vstr.32	s14, [r2, #4]
+ 116:Core/Src/pr_lib.c ****     ch->b0       = c.b0;
+ 503              		.loc 1 116 5 is_stmt 1 view .LVU137
+ 116:Core/Src/pr_lib.c ****     ch->b0       = c.b0;
+ 504              		.loc 1 116 18 is_stmt 0 view .LVU138
+ 505 005a C2ED027A 		vstr.32	s15, [r2, #8]
+ 117:Core/Src/pr_lib.c ****     ch->db       = c.db;
+ 506              		.loc 1 117 5 is_stmt 1 view .LVU139
+ 117:Core/Src/pr_lib.c ****     ch->db       = c.db;
+ 507              		.loc 1 117 18 is_stmt 0 view .LVU140
+ 508 005e 82ED030A 		vstr.32	s0, [r2, #12]
+ 118:Core/Src/pr_lib.c ****     ch->eps      = c.eps;
+ 509              		.loc 1 118 5 is_stmt 1 view .LVU141
+ 118:Core/Src/pr_lib.c ****     ch->eps      = c.eps;
+ 510              		.loc 1 118 18 is_stmt 0 view .LVU142
+ 511 0062 C2ED040A 		vstr.32	s1, [r2, #16]
+ 119:Core/Src/pr_lib.c ****     ch->inv_sin2 = c.inv_sin2;
+ 512              		.loc 1 119 5 is_stmt 1 view .LVU143
+ 119:Core/Src/pr_lib.c ****     ch->inv_sin2 = c.inv_sin2;
+ARM GAS  /tmp/ccgK6QC6.s 			page 13
+
+
+ 513              		.loc 1 119 18 is_stmt 0 view .LVU144
+ 514 0066 82ED051A 		vstr.32	s2, [r2, #20]
+ 120:Core/Src/pr_lib.c ****     Channel_ResetState(ch);
+ 515              		.loc 1 120 5 is_stmt 1 view .LVU145
+ 120:Core/Src/pr_lib.c ****     Channel_ResetState(ch);
+ 516              		.loc 1 120 18 is_stmt 0 view .LVU146
+ 517 006a C2ED061A 		vstr.32	s3, [r2, #24]
+ 121:Core/Src/pr_lib.c **** 
+ 518              		.loc 1 121 5 is_stmt 1 view .LVU147
+ 519              	.LVL55:
+ 520              	.LBB10:
+ 521              	.LBI7:
+  75:Core/Src/pr_lib.c **** {
+ 522              		.loc 1 75 20 view .LVU148
+ 523              	.LBB9:
+  77:Core/Src/pr_lib.c ****     ch->y = 0.0f;
+ 524              		.loc 1 77 5 view .LVU149
+  77:Core/Src/pr_lib.c ****     ch->y = 0.0f;
+ 525              		.loc 1 77 11 is_stmt 0 view .LVU150
+ 526 006e D161     		str	r1, [r2, #28]	@ float
+  78:Core/Src/pr_lib.c **** }
+ 527              		.loc 1 78 5 is_stmt 1 view .LVU151
+  78:Core/Src/pr_lib.c **** }
+ 528              		.loc 1 78 11 is_stmt 0 view .LVU152
+ 529 0070 1162     		str	r1, [r2, #32]	@ float
+ 530              	.LVL56:
+  78:Core/Src/pr_lib.c **** }
+ 531              		.loc 1 78 11 view .LVU153
+ 532              	.LBE9:
+ 533              	.LBE10:
+ 534              		.loc 1 123 5 is_stmt 1 view .LVU154
+ 535              		.loc 1 123 29 is_stmt 0 view .LVU155
+ 536 0072 83F80847 		strb	r4, [r3, #1800]
+ 537              	.LVL57:
+ 538              	.L13:
+ 124:Core/Src/pr_lib.c **** }
+ 539              		.loc 1 124 1 view .LVU156
+ 540 0076 08B0     		add	sp, sp, #32
+ 541              	.LCFI11:
+ 542              		.cfi_def_cfa_offset 8
+ 543              		@ sp needed
+ 544 0078 10BD     		pop	{r4, pc}
+ 545              		.cfi_endproc
+ 546              	.LFE3:
+ 548 007a 00BF     		.section	.text.PR_Process,"ax",%progbits
+ 549              		.align	1
+ 550              		.p2align 2,,3
+ 551              		.global	PR_Process
+ 552              		.syntax unified
+ 553              		.thumb
+ 554              		.thumb_func
+ 556              	PR_Process:
+ 557              	.LVL58:
+ 558              	.LFB4:
+ 125:Core/Src/pr_lib.c **** 
+ 126:Core/Src/pr_lib.c **** float PR_Process(PR_Handle_t *pr, float error)
+ 127:Core/Src/pr_lib.c **** {
+ARM GAS  /tmp/ccgK6QC6.s 			page 14
+
+
+ 559              		.loc 1 127 1 is_stmt 1 view -0
+ 560              		.cfi_startproc
+ 561              		@ args = 0, pretend = 0, frame = 0
+ 562              		@ frame_needed = 0, uses_anonymous_args = 0
+ 563              		@ link register save eliminated.
+ 128:Core/Src/pr_lib.c ****     const float e_prev = pr->prev_error;
+ 564              		.loc 1 128 5 view .LVU158
+ 565              		.loc 1 128 17 is_stmt 0 view .LVU159
+ 566 0000 00F21C73 		addw	r3, r0, #1820
+ 129:Core/Src/pr_lib.c ****     const float de     = error - e_prev;
+ 130:Core/Src/pr_lib.c ****     const float limit  = pr->output_limit;
+ 567              		.loc 1 130 17 view .LVU160
+ 568 0004 00F5E362 		add	r2, r0, #1816
+ 569 0008 D2ED004A 		vldr.32	s9, [r2]
+ 128:Core/Src/pr_lib.c ****     const float e_prev = pr->prev_error;
+ 570              		.loc 1 128 17 view .LVU161
+ 571 000c 93ED003A 		vldr.32	s6, [r3]
+ 572              	.LVL59:
+ 129:Core/Src/pr_lib.c ****     const float de     = error - e_prev;
+ 573              		.loc 1 129 5 is_stmt 1 view .LVU162
+ 574              		.loc 1 130 5 view .LVU163
+ 131:Core/Src/pr_lib.c ****     const float limit2 = limit * limit;
+ 575              		.loc 1 131 5 view .LVU164
+ 132:Core/Src/pr_lib.c **** 
+ 133:Core/Src/pr_lib.c ****     pr->prev_error = error;
+ 576              		.loc 1 133 5 view .LVU165
+ 577              		.loc 1 133 20 is_stmt 0 view .LVU166
+ 578 0010 83ED000A 		vstr.32	s0, [r3]
+ 134:Core/Src/pr_lib.c **** 
+ 135:Core/Src/pr_lib.c ****     float total = pr->Kp * error;
+ 579              		.loc 1 135 5 is_stmt 1 view .LVU167
+ 580              		.loc 1 135 21 is_stmt 0 view .LVU168
+ 581 0014 00F20C72 		addw	r2, r0, #1804
+ 582              		.loc 1 135 11 view .LVU169
+ 583 0018 D2ED005A 		vldr.32	s11, [r2]
+ 584              	.LBB11:
+ 136:Core/Src/pr_lib.c **** 
+ 137:Core/Src/pr_lib.c ****     for (int i = 0; i < pr->active_channel_count; i++) {
+ 585              		.loc 1 137 27 discriminator 2 view .LVU170
+ 586 001c 90F80827 		ldrb	r2, [r0, #1800]	@ zero_extendqisi2
+ 587              	.LBE11:
+ 135:Core/Src/pr_lib.c **** 
+ 588              		.loc 1 135 11 view .LVU171
+ 589 0020 60EE255A 		vmul.f32	s11, s0, s11
+ 590              		.loc 1 137 5 is_stmt 1 view .LVU172
+ 591              	.LBB24:
+ 592              		.loc 1 137 10 view .LVU173
+ 593              	.LVL60:
+ 594              		.loc 1 137 23 discriminator 2 view .LVU174
+ 595              	.LBE24:
+ 138:Core/Src/pr_lib.c **** 
+ 139:Core/Src/pr_lib.c ****         PR_Channel_t *ch = &pr->channels[i];
+ 140:Core/Src/pr_lib.c **** 
+ 141:Core/Src/pr_lib.c ****         if (ch->harmonic_order == 0) {
+ 142:Core/Src/pr_lib.c ****             // ------------------------------------------------
+ 143:Core/Src/pr_lib.c ****             // DC integrator: y += Ts*Ki*e, clamped (anti-windup)
+ 144:Core/Src/pr_lib.c ****             // ------------------------------------------------
+ARM GAS  /tmp/ccgK6QC6.s 			page 15
+
+
+ 145:Core/Src/pr_lib.c ****             float y = ch->y + ch->b0 * error;
+ 146:Core/Src/pr_lib.c ****             if (y >  limit) y =  limit;
+ 147:Core/Src/pr_lib.c ****             if (y < -limit) y = -limit;
+ 148:Core/Src/pr_lib.c ****             ch->y = y;
+ 149:Core/Src/pr_lib.c ****             total += y;
+ 150:Core/Src/pr_lib.c ****             continue;
+ 151:Core/Src/pr_lib.c ****         }
+ 152:Core/Src/pr_lib.c **** 
+ 153:Core/Src/pr_lib.c ****         // ----------------------------------------------------
+ 154:Core/Src/pr_lib.c ****         // Numerator: u = Ts*Ki*(cos(phi)*e[n] - cos(phi - wTs)*e[n-1])
+ 155:Core/Src/pr_lib.c ****         // ----------------------------------------------------
+ 156:Core/Src/pr_lib.c ****         float u = ch->b0 * de + ch->db * e_prev;
+ 157:Core/Src/pr_lib.c **** 
+ 158:Core/Src/pr_lib.c ****         // ----------------------------------------------------
+ 159:Core/Src/pr_lib.c ****         // Denominator, delta form: y[n] = (2-eps)y[n-1] - y[n-2] + u[n]
+ 160:Core/Src/pr_lib.c ****         // ----------------------------------------------------
+ 161:Core/Src/pr_lib.c ****         float y_prev = ch->y;
+ 162:Core/Src/pr_lib.c ****         float d = ch->d - ch->eps * y_prev + u;
+ 163:Core/Src/pr_lib.c ****         float y = y_prev + d;
+ 164:Core/Src/pr_lib.c **** 
+ 165:Core/Src/pr_lib.c ****         // ----------------------------------------------------
+ 166:Core/Src/pr_lib.c ****         // Anti-windup: cap the resonator's amplitude at output_limit.
+ 167:Core/Src/pr_lib.c ****         // A^2 = (d^2 + eps*y*(y - d)) / sin^2(wTs). Scaling d and y together
+ 168:Core/Src/pr_lib.c ****         // shrinks the oscillation without touching its frequency or phase.
+ 169:Core/Src/pr_lib.c ****         // Only costs a sqrt on the samples where it actually clamps.
+ 170:Core/Src/pr_lib.c ****         // ----------------------------------------------------
+ 171:Core/Src/pr_lib.c ****         float amp2 = (d * d + ch->eps * y * (y - d)) * ch->inv_sin2;
+ 172:Core/Src/pr_lib.c ****         if (amp2 > limit2) {
+ 173:Core/Src/pr_lib.c ****             float k = sqrtf(limit2 / amp2);
+ 174:Core/Src/pr_lib.c ****             d *= k;
+ 175:Core/Src/pr_lib.c ****             y *= k;
+ 176:Core/Src/pr_lib.c ****         }
+ 177:Core/Src/pr_lib.c **** 
+ 178:Core/Src/pr_lib.c ****         ch->d = d;
+ 179:Core/Src/pr_lib.c ****         ch->y = y;
+ 180:Core/Src/pr_lib.c **** 
+ 181:Core/Src/pr_lib.c ****         total += y;
+ 182:Core/Src/pr_lib.c ****     }
+ 183:Core/Src/pr_lib.c **** 
+ 184:Core/Src/pr_lib.c ****     // Output saturation
+ 185:Core/Src/pr_lib.c ****     if (total >  limit) total =  limit;
+ 186:Core/Src/pr_lib.c ****     if (total < -limit) total = -limit;
+ 596              		.loc 1 186 17 is_stmt 0 view .LVU175
+ 597 0024 B1EE644A 		vneg.f32	s8, s9
+ 598              	.LBB25:
+ 137:Core/Src/pr_lib.c **** 
+ 599              		.loc 1 137 23 discriminator 2 view .LVU176
+ 600 0028 002A     		cmp	r2, #0
+ 601 002a 50D0     		beq	.L17
+ 602 002c 02EBC202 		add	r2, r2, r2, lsl #3
+ 603              	.LBE25:
+ 129:Core/Src/pr_lib.c ****     const float limit  = pr->output_limit;
+ 604              		.loc 1 129 17 view .LVU177
+ 605 0030 70EE432A 		vsub.f32	s5, s0, s6
+ 606              	.LVL61:
+ 131:Core/Src/pr_lib.c **** 
+ 607              		.loc 1 131 17 view .LVU178
+ARM GAS  /tmp/ccgK6QC6.s 			page 16
+
+
+ 608 0034 64EEA43A 		vmul.f32	s7, s9, s9
+ 609              	.LVL62:
+ 131:Core/Src/pr_lib.c **** 
+ 610              		.loc 1 131 17 view .LVU179
+ 611 0038 00EB8202 		add	r2, r0, r2, lsl #2
+ 612 003c 29E0     		b	.L22
+ 613              	.LVL63:
+ 614              	.L18:
+ 615              	.LBB26:
+ 616              	.LBB12:
+ 156:Core/Src/pr_lib.c **** 
+ 617              		.loc 1 156 40 view .LVU180
+ 618 003e 90ED046A 		vldr.32	s12, [r0, #16]
+ 162:Core/Src/pr_lib.c ****         float y = y_prev + d;
+ 619              		.loc 1 162 29 view .LVU181
+ 620 0042 90ED057A 		vldr.32	s14, [r0, #20]
+ 162:Core/Src/pr_lib.c ****         float y = y_prev + d;
+ 621              		.loc 1 162 15 view .LVU182
+ 622 0046 D0ED076A 		vldr.32	s13, [r0, #28]
+ 156:Core/Src/pr_lib.c **** 
+ 623              		.loc 1 156 40 view .LVU183
+ 624 004a 23EE066A 		vmul.f32	s12, s6, s12
+ 162:Core/Src/pr_lib.c ****         float y = y_prev + d;
+ 625              		.loc 1 162 15 view .LVU184
+ 626 004e E7EE676A 		vfms.f32	s13, s14, s15
+ 156:Core/Src/pr_lib.c **** 
+ 627              		.loc 1 156 15 view .LVU185
+ 628 0052 A2EE856A 		vfma.f32	s12, s5, s10
+ 629              	.LVL64:
+ 161:Core/Src/pr_lib.c ****         float d = ch->d - ch->eps * y_prev + u;
+ 630              		.loc 1 161 9 is_stmt 1 view .LVU186
+ 162:Core/Src/pr_lib.c ****         float y = y_prev + d;
+ 631              		.loc 1 162 9 view .LVU187
+ 171:Core/Src/pr_lib.c ****         if (amp2 > limit2) {
+ 632              		.loc 1 171 15 is_stmt 0 view .LVU188
+ 633 0056 90ED065A 		vldr.32	s10, [r0, #24]
+ 162:Core/Src/pr_lib.c ****         float y = y_prev + d;
+ 634              		.loc 1 162 15 view .LVU189
+ 635 005a 76EE866A 		vadd.f32	s13, s13, s12
+ 636              	.LVL65:
+ 163:Core/Src/pr_lib.c **** 
+ 637              		.loc 1 163 9 is_stmt 1 view .LVU190
+ 163:Core/Src/pr_lib.c **** 
+ 638              		.loc 1 163 15 is_stmt 0 view .LVU191
+ 639 005e 77EEA67A 		vadd.f32	s15, s15, s13
+ 640              	.LVL66:
+ 171:Core/Src/pr_lib.c ****         if (amp2 > limit2) {
+ 641              		.loc 1 171 9 is_stmt 1 view .LVU192
+ 171:Core/Src/pr_lib.c ****         if (amp2 > limit2) {
+ 642              		.loc 1 171 48 is_stmt 0 view .LVU193
+ 643 0062 37EEE66A 		vsub.f32	s12, s15, s13
+ 644              	.LVL67:
+ 171:Core/Src/pr_lib.c ****         if (amp2 > limit2) {
+ 645              		.loc 1 171 39 view .LVU194
+ 646 0066 27EE277A 		vmul.f32	s14, s14, s15
+ 171:Core/Src/pr_lib.c ****         if (amp2 > limit2) {
+ 647              		.loc 1 171 43 view .LVU195
+ARM GAS  /tmp/ccgK6QC6.s 			page 17
+
+
+ 648 006a 27EE067A 		vmul.f32	s14, s14, s12
+ 171:Core/Src/pr_lib.c ****         if (amp2 > limit2) {
+ 649              		.loc 1 171 15 view .LVU196
+ 650 006e A6EEA67A 		vfma.f32	s14, s13, s13
+ 651 0072 27EE057A 		vmul.f32	s14, s14, s10
+ 652              	.LVL68:
+ 172:Core/Src/pr_lib.c ****             float k = sqrtf(limit2 / amp2);
+ 653              		.loc 1 172 9 is_stmt 1 view .LVU197
+ 172:Core/Src/pr_lib.c ****             float k = sqrtf(limit2 / amp2);
+ 654              		.loc 1 172 12 is_stmt 0 view .LVU198
+ 655 0076 F4EEC73A 		vcmpe.f32	s7, s14
+ 656 007a F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 657 007e 37D4     		bmi	.L28
+ 658              	.LVL69:
+ 659              	.L20:
+ 178:Core/Src/pr_lib.c ****         ch->y = y;
+ 660              		.loc 1 178 9 is_stmt 1 view .LVU199
+ 178:Core/Src/pr_lib.c ****         ch->y = y;
+ 661              		.loc 1 178 15 is_stmt 0 view .LVU200
+ 662 0080 C0ED076A 		vstr.32	s13, [r0, #28]
+ 663              	.LVL70:
+ 179:Core/Src/pr_lib.c **** 
+ 664              		.loc 1 179 9 is_stmt 1 view .LVU201
+ 181:Core/Src/pr_lib.c ****     }
+ 665              		.loc 1 181 9 view .LVU202
+ 666              	.LBB13:
+ 148:Core/Src/pr_lib.c ****             total += y;
+ 667              		.loc 1 148 19 is_stmt 0 view .LVU203
+ 668 0084 C0ED087A 		vstr.32	s15, [r0, #32]
+ 148:Core/Src/pr_lib.c ****             total += y;
+ 669              		.loc 1 148 19 view .LVU204
+ 670              	.LBE13:
+ 671              	.LBE12:
+ 137:Core/Src/pr_lib.c **** 
+ 672              		.loc 1 137 23 discriminator 2 view .LVU205
+ 673 0088 2430     		adds	r0, r0, #36
+ 674              	.LVL71:
+ 137:Core/Src/pr_lib.c **** 
+ 675              		.loc 1 137 23 discriminator 2 view .LVU206
+ 676 008a 9042     		cmp	r0, r2
+ 677              	.LBB19:
+ 181:Core/Src/pr_lib.c ****     }
+ 678              		.loc 1 181 15 view .LVU207
+ 679 008c 75EEA75A 		vadd.f32	s11, s11, s15
+ 680              	.LVL72:
+ 181:Core/Src/pr_lib.c ****     }
+ 681              		.loc 1 181 15 view .LVU208
+ 682              	.LBE19:
+ 137:Core/Src/pr_lib.c **** 
+ 683              		.loc 1 137 52 is_stmt 1 discriminator 1 view .LVU209
+ 137:Core/Src/pr_lib.c **** 
+ 684              		.loc 1 137 23 discriminator 2 view .LVU210
+ 685 0090 1DD0     		beq	.L17
+ 686              	.LVL73:
+ 687              	.L22:
+ 688              	.LBB20:
+ 139:Core/Src/pr_lib.c **** 
+ARM GAS  /tmp/ccgK6QC6.s 			page 18
+
+
+ 689              		.loc 1 139 9 view .LVU211
+ 141:Core/Src/pr_lib.c ****             // ------------------------------------------------
+ 690              		.loc 1 141 9 view .LVU212
+ 156:Core/Src/pr_lib.c **** 
+ 691              		.loc 1 156 9 view .LVU213
+ 141:Core/Src/pr_lib.c ****             // ------------------------------------------------
+ 692              		.loc 1 141 12 is_stmt 0 view .LVU214
+ 693 0092 0378     		ldrb	r3, [r0]	@ zero_extendqisi2
+ 694              	.LBB14:
+ 145:Core/Src/pr_lib.c ****             if (y >  limit) y =  limit;
+ 695              		.loc 1 145 25 view .LVU215
+ 696 0094 D0ED087A 		vldr.32	s15, [r0, #32]
+ 145:Core/Src/pr_lib.c ****             if (y >  limit) y =  limit;
+ 697              		.loc 1 145 33 view .LVU216
+ 698 0098 90ED035A 		vldr.32	s10, [r0, #12]
+ 699              	.LBE14:
+ 141:Core/Src/pr_lib.c ****             // ------------------------------------------------
+ 700              		.loc 1 141 12 view .LVU217
+ 701 009c 002B     		cmp	r3, #0
+ 702 009e CED1     		bne	.L18
+ 703              	.LBB15:
+ 145:Core/Src/pr_lib.c ****             if (y >  limit) y =  limit;
+ 704              		.loc 1 145 13 is_stmt 1 view .LVU218
+ 145:Core/Src/pr_lib.c ****             if (y >  limit) y =  limit;
+ 705              		.loc 1 145 19 is_stmt 0 view .LVU219
+ 706 00a0 E0EE057A 		vfma.f32	s15, s0, s10
+ 707              	.LVL74:
+ 146:Core/Src/pr_lib.c ****             if (y < -limit) y = -limit;
+ 708              		.loc 1 146 13 is_stmt 1 view .LVU220
+ 709              	.LBE15:
+ 710              	.LBE20:
+ 137:Core/Src/pr_lib.c **** 
+ 711              		.loc 1 137 23 is_stmt 0 discriminator 2 view .LVU221
+ 712 00a4 2430     		adds	r0, r0, #36
+ 713 00a6 F4EEE47A 		vcmpe.f32	s15, s9
+ 714 00aa F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 715 00ae C8BF     		it	gt
+ 716 00b0 F0EE647A 		vmovgt.f32	s15, s9
+ 717              	.LVL75:
+ 718              	.LBB21:
+ 719              	.LBB16:
+ 147:Core/Src/pr_lib.c ****             ch->y = y;
+ 720              		.loc 1 147 13 is_stmt 1 view .LVU222
+ 721 00b4 B4EEE74A 		vcmpe.f32	s8, s15
+ 722 00b8 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 723 00bc C8BF     		it	gt
+ 724 00be F0EE447A 		vmovgt.f32	s15, s8
+ 725              	.LVL76:
+ 148:Core/Src/pr_lib.c ****             total += y;
+ 726              		.loc 1 148 13 view .LVU223
+ 149:Core/Src/pr_lib.c ****             continue;
+ 727              		.loc 1 149 13 view .LVU224
+ 148:Core/Src/pr_lib.c ****             total += y;
+ 728              		.loc 1 148 19 is_stmt 0 view .LVU225
+ 729 00c2 40ED017A 		vstr.32	s15, [r0, #-4]
+ 730              	.LBE16:
+ 731              	.LBE21:
+ARM GAS  /tmp/ccgK6QC6.s 			page 19
+
+
+ 137:Core/Src/pr_lib.c **** 
+ 732              		.loc 1 137 23 discriminator 2 view .LVU226
+ 733 00c6 9042     		cmp	r0, r2
+ 734              	.LBB22:
+ 735              	.LBB17:
+ 149:Core/Src/pr_lib.c ****             continue;
+ 736              		.loc 1 149 19 view .LVU227
+ 737 00c8 75EEA75A 		vadd.f32	s11, s11, s15
+ 738              	.LVL77:
+ 150:Core/Src/pr_lib.c ****         }
+ 739              		.loc 1 150 13 is_stmt 1 view .LVU228
+ 740              	.LBE17:
+ 741              	.LBE22:
+ 137:Core/Src/pr_lib.c **** 
+ 742              		.loc 1 137 52 discriminator 1 view .LVU229
+ 137:Core/Src/pr_lib.c **** 
+ 743              		.loc 1 137 23 discriminator 2 view .LVU230
+ 744 00cc E1D1     		bne	.L22
+ 745              	.LVL78:
+ 746              	.L17:
+ 137:Core/Src/pr_lib.c **** 
+ 747              		.loc 1 137 23 is_stmt 0 discriminator 2 view .LVU231
+ 748              	.LBE26:
+ 185:Core/Src/pr_lib.c ****     if (total < -limit) total = -limit;
+ 749              		.loc 1 185 5 is_stmt 1 view .LVU232
+ 750 00ce F4EEE45A 		vcmpe.f32	s11, s9
+ 751 00d2 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 752 00d6 D8BF     		it	le
+ 753 00d8 F0EE654A 		vmovle.f32	s9, s11
+ 754              	.LVL79:
+ 755              		.loc 1 186 5 view .LVU233
+ 187:Core/Src/pr_lib.c **** 
+ 188:Core/Src/pr_lib.c ****     return total;
+ 756              		.loc 1 188 5 view .LVU234
+ 757              		.loc 1 188 12 is_stmt 0 discriminator 1 view .LVU235
+ 758 00dc B4EEE44A 		vcmpe.f32	s8, s9
+ 759 00e0 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
+ 189:Core/Src/pr_lib.c **** }
+ 760              		.loc 1 189 1 view .LVU236
+ 761 00e4 D4BF     		ite	le
+ 762 00e6 B0EE640A 		vmovle.f32	s0, s9
+ 763 00ea B0EE440A 		vmovgt.f32	s0, s8
+ 764              	.LVL80:
+ 765              		.loc 1 189 1 view .LVU237
+ 766 00ee 7047     		bx	lr
+ 767              	.LVL81:
+ 768              	.L28:
+ 769              	.LBB27:
+ 770              	.LBB23:
+ 771              	.LBB18:
+ 173:Core/Src/pr_lib.c ****             d *= k;
+ 772              		.loc 1 173 13 is_stmt 1 view .LVU238
+ 173:Core/Src/pr_lib.c ****             d *= k;
+ 773              		.loc 1 173 23 is_stmt 0 view .LVU239
+ 774 00f0 83EE876A 		vdiv.f32	s12, s7, s14
+ 775 00f4 B1EEC67A 		vsqrt.f32	s14, s12
+ 776              	.LVL82:
+ARM GAS  /tmp/ccgK6QC6.s 			page 20
+
+
+ 174:Core/Src/pr_lib.c ****             y *= k;
+ 777              		.loc 1 174 13 is_stmt 1 view .LVU240
+ 175:Core/Src/pr_lib.c ****         }
+ 778              		.loc 1 175 15 is_stmt 0 view .LVU241
+ 779 00f8 67EE877A 		vmul.f32	s15, s15, s14
+ 780              	.LVL83:
+ 174:Core/Src/pr_lib.c ****             y *= k;
+ 781              		.loc 1 174 15 view .LVU242
+ 782 00fc 66EE876A 		vmul.f32	s13, s13, s14
+ 783              	.LVL84:
+ 175:Core/Src/pr_lib.c ****         }
+ 784              		.loc 1 175 13 is_stmt 1 view .LVU243
+ 785 0100 BEE7     		b	.L20
+ 786              	.LBE18:
+ 787              	.LBE23:
+ 788              	.LBE27:
+ 789              		.cfi_endproc
+ 790              	.LFE4:
+ 792 0102 00BF     		.section	.text.PR_UpdateChannel,"ax",%progbits
+ 793              		.align	1
+ 794              		.p2align 2,,3
+ 795              		.global	PR_UpdateChannel
+ 796              		.syntax unified
+ 797              		.thumb
+ 798              		.thumb_func
+ 800              	PR_UpdateChannel:
+ 801              	.LVL85:
+ 802              	.LFB5:
+ 190:Core/Src/pr_lib.c **** 
+ 191:Core/Src/pr_lib.c **** uint8_t PR_UpdateChannel(PR_Handle_t *pr,
+ 192:Core/Src/pr_lib.c ****                          uint8_t order,
+ 193:Core/Src/pr_lib.c ****                          float ki,
+ 194:Core/Src/pr_lib.c ****                          float phi)
+ 195:Core/Src/pr_lib.c **** {
+ 803              		.loc 1 195 1 view -0
+ 804              		.cfi_startproc
+ 805              		@ args = 0, pretend = 0, frame = 32
+ 806              		@ frame_needed = 0, uses_anonymous_args = 0
+ 196:Core/Src/pr_lib.c ****     for (int i = 0; i < pr->active_channel_count; i++) {
+ 807              		.loc 1 196 5 view .LVU245
+ 808              	.LBB28:
+ 809              		.loc 1 196 10 view .LVU246
+ 810              		.loc 1 196 23 discriminator 2 view .LVU247
+ 811              	.LBE28:
+ 195:Core/Src/pr_lib.c ****     for (int i = 0; i < pr->active_channel_count; i++) {
+ 812              		.loc 1 195 1 is_stmt 0 view .LVU248
+ 813 0000 0346     		mov	r3, r0
+ 814              	.LBB33:
+ 815              		.loc 1 196 27 discriminator 2 view .LVU249
+ 816 0002 90F80807 		ldrb	r0, [r0, #1800]	@ zero_extendqisi2
+ 817              	.LVL86:
+ 818              		.loc 1 196 23 discriminator 2 view .LVU250
+ 819 0006 0028     		cmp	r0, #0
+ 820 0008 3CD0     		beq	.L38
+ 821              	.LBE33:
+ 195:Core/Src/pr_lib.c ****     for (int i = 0; i < pr->active_channel_count; i++) {
+ 822              		.loc 1 195 1 view .LVU251
+ARM GAS  /tmp/ccgK6QC6.s 			page 21
+
+
+ 823 000a 00B5     		push	{lr}
+ 824              	.LCFI12:
+ 825              		.cfi_def_cfa_offset 4
+ 826              		.cfi_offset 14, -4
+ 827 000c 9C46     		mov	ip, r3
+ 828 000e 89B0     		sub	sp, sp, #36
+ 829              	.LCFI13:
+ 830              		.cfi_def_cfa_offset 40
+ 831              	.LBB34:
+ 832              		.loc 1 196 14 view .LVU252
+ 833 0010 0022     		movs	r2, #0
+ 834              	.LVL87:
+ 835              	.L32:
+ 836              	.LBB29:
+ 197:Core/Src/pr_lib.c ****         PR_Channel_t *ch = &pr->channels[i];
+ 837              		.loc 1 197 9 is_stmt 1 view .LVU253
+ 198:Core/Src/pr_lib.c ****         if (ch->harmonic_order != order) continue;
+ 838              		.loc 1 198 9 view .LVU254
+ 839              		.loc 1 198 42 discriminator 1 view .LVU255
+ 840              	.LBE29:
+ 196:Core/Src/pr_lib.c ****         PR_Channel_t *ch = &pr->channels[i];
+ 841              		.loc 1 196 52 discriminator 1 view .LVU256
+ 842              	.LBB30:
+ 843              		.loc 1 198 12 is_stmt 0 view .LVU257
+ 844 0012 9CF800E0 		ldrb	lr, [ip]	@ zero_extendqisi2
+ 845 0016 8E45     		cmp	lr, r1
+ 846              	.LBE30:
+ 196:Core/Src/pr_lib.c ****         PR_Channel_t *ch = &pr->channels[i];
+ 847              		.loc 1 196 23 discriminator 2 view .LVU258
+ 848 0018 0CF1240C 		add	ip, ip, #36
+ 849              	.LBB31:
+ 850              		.loc 1 198 12 view .LVU259
+ 851 001c 04D0     		beq	.L31
+ 852              	.LBE31:
+ 196:Core/Src/pr_lib.c ****         PR_Channel_t *ch = &pr->channels[i];
+ 853              		.loc 1 196 52 discriminator 1 view .LVU260
+ 854 001e 0132     		adds	r2, r2, #1
+ 855              	.LVL88:
+ 196:Core/Src/pr_lib.c ****         PR_Channel_t *ch = &pr->channels[i];
+ 856              		.loc 1 196 23 is_stmt 1 discriminator 2 view .LVU261
+ 857 0020 8242     		cmp	r2, r0
+ 858 0022 F6D1     		bne	.L32
+ 859              	.LBE34:
+ 199:Core/Src/pr_lib.c **** 
+ 200:Core/Src/pr_lib.c ****         /* Slow part first, so the ISR-visible writes below are back to back. */
+ 201:Core/Src/pr_lib.c ****         PR_Coeffs_t c = PR_ComputeCoeffs(pr, order, ki, phi);
+ 202:Core/Src/pr_lib.c **** 
+ 203:Core/Src/pr_lib.c ****         ch->Ki       = ki;
+ 204:Core/Src/pr_lib.c ****         ch->phi      = phi;
+ 205:Core/Src/pr_lib.c ****         ch->b0       = c.b0;
+ 206:Core/Src/pr_lib.c ****         ch->db       = c.db;
+ 207:Core/Src/pr_lib.c ****         ch->eps      = c.eps;
+ 208:Core/Src/pr_lib.c ****         ch->inv_sin2 = c.inv_sin2;
+ 209:Core/Src/pr_lib.c ****         return 1;
+ 210:Core/Src/pr_lib.c ****     }
+ 211:Core/Src/pr_lib.c ****     return 0;
+ 860              		.loc 1 211 12 is_stmt 0 view .LVU262
+ARM GAS  /tmp/ccgK6QC6.s 			page 22
+
+
+ 861 0024 0020     		movs	r0, #0
+ 862 0026 2BE0     		b	.L30
+ 863              	.L31:
+ 864              	.LBB35:
+ 865              	.LBB32:
+ 201:Core/Src/pr_lib.c **** 
+ 866              		.loc 1 201 9 is_stmt 1 view .LVU263
+ 867 0028 0846     		mov	r0, r1
+ 201:Core/Src/pr_lib.c **** 
+ 868              		.loc 1 201 25 is_stmt 0 view .LVU264
+ 869 002a 03F2147C 		addw	ip, r3, #1812
+ 870 002e 03F5E261 		add	r1, r3, #1808
+ 871              	.LVL89:
+ 201:Core/Src/pr_lib.c **** 
+ 872              		.loc 1 201 25 view .LVU265
+ 873 0032 F0EE601A 		vmov.f32	s3, s1
+ 874 0036 B0EE401A 		vmov.f32	s2, s0
+ 875 003a CDED010A 		vstr.32	s1, [sp, #4]	@ int
+ 876 003e 8DED000A 		vstr.32	s0, [sp]	@ int
+ 877 0042 DCED000A 		vldr.32	s1, [ip]
+ 878              	.LVL90:
+ 201:Core/Src/pr_lib.c **** 
+ 879              		.loc 1 201 25 view .LVU266
+ 880 0046 91ED000A 		vldr.32	s0, [r1]
+ 881              	.LVL91:
+ 201:Core/Src/pr_lib.c **** 
+ 882              		.loc 1 201 25 view .LVU267
+ 883 004a 0392     		str	r2, [sp, #12]
+ 884 004c 0293     		str	r3, [sp, #8]
+ 885 004e FFF7FEFF 		bl	PR_ComputeCoeffs.isra.0
+ 886              	.LVL92:
+ 203:Core/Src/pr_lib.c ****         ch->phi      = phi;
+ 887              		.loc 1 203 9 is_stmt 1 view .LVU268
+ 203:Core/Src/pr_lib.c ****         ch->phi      = phi;
+ 888              		.loc 1 203 22 is_stmt 0 view .LVU269
+ 889 0052 039A     		ldr	r2, [sp, #12]
+ 890 0054 029B     		ldr	r3, [sp, #8]
+ 891 0056 9DED007A 		vldr.32	s14, [sp]	@ int
+ 204:Core/Src/pr_lib.c ****         ch->b0       = c.b0;
+ 892              		.loc 1 204 22 view .LVU270
+ 893 005a DDED017A 		vldr.32	s15, [sp, #4]	@ int
+ 203:Core/Src/pr_lib.c ****         ch->phi      = phi;
+ 894              		.loc 1 203 22 view .LVU271
+ 895 005e 02EBC202 		add	r2, r2, r2, lsl #3
+ 896 0062 03EB8200 		add	r0, r3, r2, lsl #2
+ 897 0066 80ED017A 		vstr.32	s14, [r0, #4]
+ 204:Core/Src/pr_lib.c ****         ch->b0       = c.b0;
+ 898              		.loc 1 204 9 is_stmt 1 view .LVU272
+ 204:Core/Src/pr_lib.c ****         ch->b0       = c.b0;
+ 899              		.loc 1 204 22 is_stmt 0 view .LVU273
+ 900 006a C0ED027A 		vstr.32	s15, [r0, #8]
+ 205:Core/Src/pr_lib.c ****         ch->db       = c.db;
+ 901              		.loc 1 205 9 is_stmt 1 view .LVU274
+ 205:Core/Src/pr_lib.c ****         ch->db       = c.db;
+ 902              		.loc 1 205 22 is_stmt 0 view .LVU275
+ 903 006e 80ED030A 		vstr.32	s0, [r0, #12]
+ 206:Core/Src/pr_lib.c ****         ch->eps      = c.eps;
+ARM GAS  /tmp/ccgK6QC6.s 			page 23
+
+
+ 904              		.loc 1 206 9 is_stmt 1 view .LVU276
+ 206:Core/Src/pr_lib.c ****         ch->eps      = c.eps;
+ 905              		.loc 1 206 22 is_stmt 0 view .LVU277
+ 906 0072 C0ED040A 		vstr.32	s1, [r0, #16]
+ 207:Core/Src/pr_lib.c ****         ch->inv_sin2 = c.inv_sin2;
+ 907              		.loc 1 207 9 is_stmt 1 view .LVU278
+ 207:Core/Src/pr_lib.c ****         ch->inv_sin2 = c.inv_sin2;
+ 908              		.loc 1 207 22 is_stmt 0 view .LVU279
+ 909 0076 80ED051A 		vstr.32	s2, [r0, #20]
+ 208:Core/Src/pr_lib.c ****         return 1;
+ 910              		.loc 1 208 9 is_stmt 1 view .LVU280
+ 208:Core/Src/pr_lib.c ****         return 1;
+ 911              		.loc 1 208 22 is_stmt 0 view .LVU281
+ 912 007a C0ED061A 		vstr.32	s3, [r0, #24]
+ 209:Core/Src/pr_lib.c ****     }
+ 913              		.loc 1 209 9 is_stmt 1 view .LVU282
+ 209:Core/Src/pr_lib.c ****     }
+ 914              		.loc 1 209 16 is_stmt 0 view .LVU283
+ 915 007e 0120     		movs	r0, #1
+ 916              	.LVL93:
+ 917              	.L30:
+ 209:Core/Src/pr_lib.c ****     }
+ 918              		.loc 1 209 16 view .LVU284
+ 919              	.LBE32:
+ 920              	.LBE35:
+ 212:Core/Src/pr_lib.c **** }
+ 921              		.loc 1 212 1 view .LVU285
+ 922 0080 09B0     		add	sp, sp, #36
+ 923              	.LCFI14:
+ 924              		.cfi_def_cfa_offset 4
+ 925              		@ sp needed
+ 926 0082 00BD     		pop	{pc}
+ 927              	.LVL94:
+ 928              	.L38:
+ 929              	.LCFI15:
+ 930              		.cfi_def_cfa_offset 0
+ 931              		.cfi_restore 14
+ 932              		.loc 1 212 1 view .LVU286
+ 933 0084 7047     		bx	lr
+ 934              		.cfi_endproc
+ 935              	.LFE5:
+ 937 0086 00BF     		.section	.text.PR_SetKp,"ax",%progbits
+ 938              		.align	1
+ 939              		.p2align 2,,3
+ 940              		.global	PR_SetKp
+ 941              		.syntax unified
+ 942              		.thumb
+ 943              		.thumb_func
+ 945              	PR_SetKp:
+ 946              	.LVL95:
+ 947              	.LFB6:
+ 213:Core/Src/pr_lib.c **** 
+ 214:Core/Src/pr_lib.c **** void PR_SetKp(PR_Handle_t *pr, float kp)
+ 215:Core/Src/pr_lib.c **** {
+ 948              		.loc 1 215 1 is_stmt 1 view -0
+ 949              		.cfi_startproc
+ 950              		@ args = 0, pretend = 0, frame = 0
+ARM GAS  /tmp/ccgK6QC6.s 			page 24
+
+
+ 951              		@ frame_needed = 0, uses_anonymous_args = 0
+ 952              		@ link register save eliminated.
+ 216:Core/Src/pr_lib.c ****     pr->Kp = kp;
+ 953              		.loc 1 216 5 view .LVU288
+ 954              		.loc 1 216 12 is_stmt 0 view .LVU289
+ 955 0000 00F20C70 		addw	r0, r0, #1804
+ 956              	.LVL96:
+ 957              		.loc 1 216 12 view .LVU290
+ 958 0004 80ED000A 		vstr.32	s0, [r0]
+ 217:Core/Src/pr_lib.c **** }
+ 959              		.loc 1 217 1 view .LVU291
+ 960 0008 7047     		bx	lr
+ 961              		.cfi_endproc
+ 962              	.LFE6:
+ 964 000a 00BF     		.section	.text.PR_Reset,"ax",%progbits
+ 965              		.align	1
+ 966              		.p2align 2,,3
+ 967              		.global	PR_Reset
+ 968              		.syntax unified
+ 969              		.thumb
+ 970              		.thumb_func
+ 972              	PR_Reset:
+ 973              	.LVL97:
+ 974              	.LFB7:
+ 218:Core/Src/pr_lib.c **** 
+ 219:Core/Src/pr_lib.c **** void PR_Reset(PR_Handle_t *pr)
+ 220:Core/Src/pr_lib.c **** {
+ 975              		.loc 1 220 1 is_stmt 1 view -0
+ 976              		.cfi_startproc
+ 977              		@ args = 0, pretend = 0, frame = 0
+ 978              		@ frame_needed = 0, uses_anonymous_args = 0
+ 979              		@ link register save eliminated.
+ 221:Core/Src/pr_lib.c ****     if (!pr) return;
+ 980              		.loc 1 221 5 view .LVU293
+ 981              		.loc 1 221 8 is_stmt 0 view .LVU294
+ 982 0000 78B1     		cbz	r0, .L42
+ 222:Core/Src/pr_lib.c **** 
+ 223:Core/Src/pr_lib.c ****     pr->prev_error = 0.0f;
+ 983              		.loc 1 223 5 is_stmt 1 view .LVU295
+ 984              		.loc 1 223 20 is_stmt 0 view .LVU296
+ 985 0002 00F21C72 		addw	r2, r0, #1820
+ 986 0006 0023     		movs	r3, #0
+ 987 0008 1360     		str	r3, [r2]	@ float
+ 224:Core/Src/pr_lib.c ****     for (uint8_t i = 0; i < pr->active_channel_count; i++) {
+ 988              		.loc 1 224 5 is_stmt 1 view .LVU297
+ 989              	.LBB36:
+ 990              		.loc 1 224 10 view .LVU298
+ 991              	.LVL98:
+ 992              		.loc 1 224 27 discriminator 2 view .LVU299
+ 993              		.loc 1 224 31 is_stmt 0 discriminator 2 view .LVU300
+ 994 000a 90F80827 		ldrb	r2, [r0, #1800]	@ zero_extendqisi2
+ 995              		.loc 1 224 27 discriminator 2 view .LVU301
+ 996 000e 42B1     		cbz	r2, .L42
+ 997 0010 02EBC202 		add	r2, r2, r2, lsl #3
+ 998 0014 00EB8202 		add	r2, r0, r2, lsl #2
+ 999              	.LVL99:
+ 1000              	.L44:
+ARM GAS  /tmp/ccgK6QC6.s 			page 25
+
+
+ 225:Core/Src/pr_lib.c ****         Channel_ResetState(&pr->channels[i]);
+ 1001              		.loc 1 225 9 is_stmt 1 view .LVU302
+ 1002              	.LBB37:
+ 1003              	.LBI37:
+  75:Core/Src/pr_lib.c **** {
+ 1004              		.loc 1 75 20 view .LVU303
+ 1005              	.LBB38:
+  77:Core/Src/pr_lib.c ****     ch->y = 0.0f;
+ 1006              		.loc 1 77 5 view .LVU304
+  77:Core/Src/pr_lib.c ****     ch->y = 0.0f;
+ 1007              		.loc 1 77 11 is_stmt 0 view .LVU305
+ 1008 0018 C361     		str	r3, [r0, #28]	@ float
+  78:Core/Src/pr_lib.c **** }
+ 1009              		.loc 1 78 5 is_stmt 1 view .LVU306
+  78:Core/Src/pr_lib.c **** }
+ 1010              		.loc 1 78 11 is_stmt 0 view .LVU307
+ 1011 001a 0362     		str	r3, [r0, #32]	@ float
+ 1012              	.LVL100:
+  78:Core/Src/pr_lib.c **** }
+ 1013              		.loc 1 78 11 view .LVU308
+ 1014              	.LBE38:
+ 1015              	.LBE37:
+ 224:Core/Src/pr_lib.c ****         Channel_ResetState(&pr->channels[i]);
+ 1016              		.loc 1 224 56 is_stmt 1 discriminator 1 view .LVU309
+ 224:Core/Src/pr_lib.c ****         Channel_ResetState(&pr->channels[i]);
+ 1017              		.loc 1 224 27 discriminator 2 view .LVU310
+ 1018 001c 2430     		adds	r0, r0, #36
+ 1019              	.LVL101:
+ 224:Core/Src/pr_lib.c ****         Channel_ResetState(&pr->channels[i]);
+ 1020              		.loc 1 224 27 is_stmt 0 discriminator 2 view .LVU311
+ 1021 001e 9042     		cmp	r0, r2
+ 1022 0020 FAD1     		bne	.L44
+ 1023              	.LVL102:
+ 1024              	.L42:
+ 224:Core/Src/pr_lib.c ****         Channel_ResetState(&pr->channels[i]);
+ 1025              		.loc 1 224 27 discriminator 2 view .LVU312
+ 1026              	.LBE36:
+ 226:Core/Src/pr_lib.c ****     }
+ 227:Core/Src/pr_lib.c **** }
+ 1027              		.loc 1 227 1 view .LVU313
+ 1028 0022 7047     		bx	lr
+ 1029              		.cfi_endproc
+ 1030              	.LFE7:
+ 1032              		.text
+ 1033              	.Letext0:
+ 1034              		.file 2 "/usr/arm-none-eabi/include/machine/_default_types.h"
+ 1035              		.file 3 "/usr/arm-none-eabi/include/sys/_stdint.h"
+ 1036              		.file 4 "Core/Inc/pr_lib.h"
+ 1037              		.file 5 "/usr/arm-none-eabi/include/math.h"
+ 1038              		.file 6 "/usr/arm-none-eabi/include/string.h"
+ 1039              		.file 7 "<built-in>"
+ARM GAS  /tmp/ccgK6QC6.s 			page 26
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 pr_lib.c
+     /tmp/ccgK6QC6.s:21     .text.PR_ComputeCoeffs.isra.0:00000000 $t
+     /tmp/ccgK6QC6.s:27     .text.PR_ComputeCoeffs.isra.0:00000000 PR_ComputeCoeffs.isra.0
+     /tmp/ccgK6QC6.s:315    .text.PR_ComputeCoeffs.isra.0:00000170 $d
+     /tmp/ccgK6QC6.s:325    .text.PR_Init:00000000 $t
+     /tmp/ccgK6QC6.s:332    .text.PR_Init:00000000 PR_Init
+     /tmp/ccgK6QC6.s:424    .text.PR_Add_Channel:00000000 $t
+     /tmp/ccgK6QC6.s:431    .text.PR_Add_Channel:00000000 PR_Add_Channel
+     /tmp/ccgK6QC6.s:549    .text.PR_Process:00000000 $t
+     /tmp/ccgK6QC6.s:556    .text.PR_Process:00000000 PR_Process
+     /tmp/ccgK6QC6.s:793    .text.PR_UpdateChannel:00000000 $t
+     /tmp/ccgK6QC6.s:800    .text.PR_UpdateChannel:00000000 PR_UpdateChannel
+     /tmp/ccgK6QC6.s:938    .text.PR_SetKp:00000000 $t
+     /tmp/ccgK6QC6.s:945    .text.PR_SetKp:00000000 PR_SetKp
+     /tmp/ccgK6QC6.s:965    .text.PR_Reset:00000000 $t
+     /tmp/ccgK6QC6.s:972    .text.PR_Reset:00000000 PR_Reset
+
+UNDEFINED SYMBOLS
+__aeabi_f2d
+__aeabi_ui2d
+__aeabi_dmul
+sin
+cos
+__aeabi_d2f
+__aeabi_dsub
+__aeabi_ddiv
+memset

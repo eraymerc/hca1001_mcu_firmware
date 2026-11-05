@@ -257,7 +257,7 @@ int main(void)
   PR_Add_Channel((PR_Handle_t*)&pr, 19,   0.450478335f,  -2.91102076f);
   PR_Add_Channel((PR_Handle_t*)&pr, 21,   0.605274356f,  -2.90357255f);
 
-  /* Alternative set, up to the 7th (use with PR_Init above, swapping pr_kp):
+  /* Alternative set, up to the 11th (use with PR_Init above, swapping pr_kp):
   const float pr_kp = -0.00100594818434869f;
 
   //                               order  Ki_h            phi_h (rad)
@@ -265,6 +265,8 @@ int main(void)
   PR_Add_Channel((PR_Handle_t*)&pr,  3,   0.0969072957f,  0.522075668f);
   PR_Add_Channel((PR_Handle_t*)&pr,  5,   0.194001053f,   0.913779932f);
   PR_Add_Channel((PR_Handle_t*)&pr,  7,   0.0916342252f,  0.97929593f);
+  //PR_Add_Channel((PR_Handle_t*)&pr,  9,   0.082486082f,   1.10963533f);
+  //PR_Add_Channel((PR_Handle_t*)&pr, 11,   0.0977822147f,  1.73045533f);
   */
 #endif
 

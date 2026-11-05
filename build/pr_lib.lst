@@ -1,4 +1,4 @@
-ARM GAS  /tmp/ccgK6QC6.s 			page 1
+ARM GAS  /tmp/ccLfxqrg.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -58,7 +58,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
   27:Core/Src/pr_lib.c **** #define M_PI 3.14159265358979323846
   28:Core/Src/pr_lib.c **** #endif
   29:Core/Src/pr_lib.c **** 
-ARM GAS  /tmp/ccgK6QC6.s 			page 2
+ARM GAS  /tmp/ccLfxqrg.s 			page 2
 
 
   30:Core/Src/pr_lib.c **** // ============================================================
@@ -118,7 +118,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
   48:Core/Src/pr_lib.c ****     const double ts = (double)pr->sampling_time;
   62              		.loc 1 48 18 view .LVU6
   63 0012 10EE900A 		vmov	r0, s1
-ARM GAS  /tmp/ccgK6QC6.s 			page 3
+ARM GAS  /tmp/ccLfxqrg.s 			page 3
 
 
   64              	.LVL1:
@@ -178,7 +178,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  105 0054 CDE90045 		strd	r4, [sp]
  106 0058 FFF7FEFF 		bl	__aeabi_dmul
  107              	.LVL8:
-ARM GAS  /tmp/ccgK6QC6.s 			page 4
+ARM GAS  /tmp/ccLfxqrg.s 			page 4
 
 
  108 005c 0646     		mov	r6, r0
@@ -238,7 +238,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  154 009c DDE90023 		ldrd	r2, [sp]
  155 00a0 FFF7FEFF 		bl	__aeabi_dmul
  156              	.LVL18:
-ARM GAS  /tmp/ccgK6QC6.s 			page 5
+ARM GAS  /tmp/ccLfxqrg.s 			page 5
 
 
  157              		.loc 1 65 39 view .LVU34
@@ -298,7 +298,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  207 00ec 3246     		mov	r2, r6
  208 00ee 3B46     		mov	r3, r7
  209 00f0 FFF7FEFF 		bl	__aeabi_dmul
-ARM GAS  /tmp/ccgK6QC6.s 			page 6
+ARM GAS  /tmp/ccLfxqrg.s 			page 6
 
 
  210              	.LVL28:
@@ -358,7 +358,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  259 013c 01EE900A 		vmov	s3, r0
  260              	.LVL38:
   72:Core/Src/pr_lib.c ****     return c;
-ARM GAS  /tmp/ccgK6QC6.s 			page 7
+ARM GAS  /tmp/ccLfxqrg.s 			page 7
 
 
  261              		.loc 1 72 5 is_stmt 1 view .LVU65
@@ -418,7 +418,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  305              	.LVL43:
  306              		.loc 1 73 1 view .LVU77
  307 0162 F0EE470A 		vmov.f32	s1, s14
-ARM GAS  /tmp/ccgK6QC6.s 			page 8
+ARM GAS  /tmp/ccLfxqrg.s 			page 8
 
 
  308              	.LVL44:
@@ -478,7 +478,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  344              		.cfi_offset 4, -8
  345              		.cfi_offset 14, -4
   93:Core/Src/pr_lib.c **** 
-ARM GAS  /tmp/ccgK6QC6.s 			page 9
+ARM GAS  /tmp/ccLfxqrg.s 			page 9
 
 
   94:Core/Src/pr_lib.c ****     memset(pr, 0, sizeof(*pr));
@@ -538,7 +538,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  385              		.loc 1 94 5 view .LVU96
  386 0048 0346     		mov	r3, r0
   96:Core/Src/pr_lib.c ****     pr->sampling_time    = 1.0f / (switch_freq * (float)oversample_ratio);
-ARM GAS  /tmp/ccgK6QC6.s 			page 10
+ARM GAS  /tmp/ccLfxqrg.s 			page 10
 
 
  387              		.loc 1 96 5 is_stmt 1 view .LVU97
@@ -598,7 +598,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  431              	PR_Add_Channel:
  432              	.LVL48:
  433              	.LFB3:
-ARM GAS  /tmp/ccgK6QC6.s 			page 11
+ARM GAS  /tmp/ccLfxqrg.s 			page 11
 
 
  103:Core/Src/pr_lib.c **** 
@@ -658,7 +658,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  476 0034 0091     		str	r1, [sp]
  477 0036 FFF7FEFF 		bl	PR_ComputeCoeffs.isra.0
  478              	.LVL53:
-ARM GAS  /tmp/ccgK6QC6.s 			page 12
+ARM GAS  /tmp/ccLfxqrg.s 			page 12
 
 
  113:Core/Src/pr_lib.c **** 
@@ -718,7 +718,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  119:Core/Src/pr_lib.c ****     ch->inv_sin2 = c.inv_sin2;
  512              		.loc 1 119 5 is_stmt 1 view .LVU143
  119:Core/Src/pr_lib.c ****     ch->inv_sin2 = c.inv_sin2;
-ARM GAS  /tmp/ccgK6QC6.s 			page 13
+ARM GAS  /tmp/ccLfxqrg.s 			page 13
 
 
  513              		.loc 1 119 18 is_stmt 0 view .LVU144
@@ -778,7 +778,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  125:Core/Src/pr_lib.c **** 
  126:Core/Src/pr_lib.c **** float PR_Process(PR_Handle_t *pr, float error)
  127:Core/Src/pr_lib.c **** {
-ARM GAS  /tmp/ccgK6QC6.s 			page 14
+ARM GAS  /tmp/ccLfxqrg.s 			page 14
 
 
  559              		.loc 1 127 1 is_stmt 1 view -0
@@ -838,7 +838,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  142:Core/Src/pr_lib.c ****             // ------------------------------------------------
  143:Core/Src/pr_lib.c ****             // DC integrator: y += Ts*Ki*e, clamped (anti-windup)
  144:Core/Src/pr_lib.c ****             // ------------------------------------------------
-ARM GAS  /tmp/ccgK6QC6.s 			page 15
+ARM GAS  /tmp/ccLfxqrg.s 			page 15
 
 
  145:Core/Src/pr_lib.c ****             float y = ch->y + ch->b0 * error;
@@ -898,7 +898,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  606              	.LVL61:
  131:Core/Src/pr_lib.c **** 
  607              		.loc 1 131 17 view .LVU178
-ARM GAS  /tmp/ccgK6QC6.s 			page 16
+ARM GAS  /tmp/ccLfxqrg.s 			page 16
 
 
  608 0034 64EEA43A 		vmul.f32	s7, s9, s9
@@ -958,7 +958,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  646 0066 27EE277A 		vmul.f32	s14, s14, s15
  171:Core/Src/pr_lib.c ****         if (amp2 > limit2) {
  647              		.loc 1 171 43 view .LVU195
-ARM GAS  /tmp/ccgK6QC6.s 			page 17
+ARM GAS  /tmp/ccLfxqrg.s 			page 17
 
 
  648 006a 27EE067A 		vmul.f32	s14, s14, s12
@@ -1018,7 +1018,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  687              	.L22:
  688              	.LBB20:
  139:Core/Src/pr_lib.c **** 
-ARM GAS  /tmp/ccgK6QC6.s 			page 18
+ARM GAS  /tmp/ccLfxqrg.s 			page 18
 
 
  689              		.loc 1 139 9 view .LVU211
@@ -1078,7 +1078,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  729 00c2 40ED017A 		vstr.32	s15, [r0, #-4]
  730              	.LBE16:
  731              	.LBE21:
-ARM GAS  /tmp/ccgK6QC6.s 			page 19
+ARM GAS  /tmp/ccLfxqrg.s 			page 19
 
 
  137:Core/Src/pr_lib.c **** 
@@ -1138,7 +1138,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  774 00f0 83EE876A 		vdiv.f32	s12, s7, s14
  775 00f4 B1EEC67A 		vsqrt.f32	s14, s12
  776              	.LVL82:
-ARM GAS  /tmp/ccgK6QC6.s 			page 20
+ARM GAS  /tmp/ccLfxqrg.s 			page 20
 
 
  174:Core/Src/pr_lib.c ****             y *= k;
@@ -1198,7 +1198,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  821              	.LBE33:
  195:Core/Src/pr_lib.c ****     for (int i = 0; i < pr->active_channel_count; i++) {
  822              		.loc 1 195 1 view .LVU251
-ARM GAS  /tmp/ccgK6QC6.s 			page 21
+ARM GAS  /tmp/ccLfxqrg.s 			page 21
 
 
  823 000a 00B5     		push	{lr}
@@ -1258,7 +1258,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  210:Core/Src/pr_lib.c ****     }
  211:Core/Src/pr_lib.c ****     return 0;
  860              		.loc 1 211 12 is_stmt 0 view .LVU262
-ARM GAS  /tmp/ccgK6QC6.s 			page 22
+ARM GAS  /tmp/ccLfxqrg.s 			page 22
 
 
  861 0024 0020     		movs	r0, #0
@@ -1318,7 +1318,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  902              		.loc 1 205 22 is_stmt 0 view .LVU275
  903 006e 80ED030A 		vstr.32	s0, [r0, #12]
  206:Core/Src/pr_lib.c ****         ch->eps      = c.eps;
-ARM GAS  /tmp/ccgK6QC6.s 			page 23
+ARM GAS  /tmp/ccLfxqrg.s 			page 23
 
 
  904              		.loc 1 206 9 is_stmt 1 view .LVU276
@@ -1378,7 +1378,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  948              		.loc 1 215 1 is_stmt 1 view -0
  949              		.cfi_startproc
  950              		@ args = 0, pretend = 0, frame = 0
-ARM GAS  /tmp/ccgK6QC6.s 			page 24
+ARM GAS  /tmp/ccLfxqrg.s 			page 24
 
 
  951              		@ frame_needed = 0, uses_anonymous_args = 0
@@ -1438,7 +1438,7 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  998 0014 00EB8202 		add	r2, r0, r2, lsl #2
  999              	.LVL99:
  1000              	.L44:
-ARM GAS  /tmp/ccgK6QC6.s 			page 25
+ARM GAS  /tmp/ccLfxqrg.s 			page 25
 
 
  225:Core/Src/pr_lib.c ****         Channel_ResetState(&pr->channels[i]);
@@ -1492,26 +1492,26 @@ ARM GAS  /tmp/ccgK6QC6.s 			page 1
  1037              		.file 5 "/usr/arm-none-eabi/include/math.h"
  1038              		.file 6 "/usr/arm-none-eabi/include/string.h"
  1039              		.file 7 "<built-in>"
-ARM GAS  /tmp/ccgK6QC6.s 			page 26
+ARM GAS  /tmp/ccLfxqrg.s 			page 26
 
 
 DEFINED SYMBOLS
                             *ABS*:00000000 pr_lib.c
-     /tmp/ccgK6QC6.s:21     .text.PR_ComputeCoeffs.isra.0:00000000 $t
-     /tmp/ccgK6QC6.s:27     .text.PR_ComputeCoeffs.isra.0:00000000 PR_ComputeCoeffs.isra.0
-     /tmp/ccgK6QC6.s:315    .text.PR_ComputeCoeffs.isra.0:00000170 $d
-     /tmp/ccgK6QC6.s:325    .text.PR_Init:00000000 $t
-     /tmp/ccgK6QC6.s:332    .text.PR_Init:00000000 PR_Init
-     /tmp/ccgK6QC6.s:424    .text.PR_Add_Channel:00000000 $t
-     /tmp/ccgK6QC6.s:431    .text.PR_Add_Channel:00000000 PR_Add_Channel
-     /tmp/ccgK6QC6.s:549    .text.PR_Process:00000000 $t
-     /tmp/ccgK6QC6.s:556    .text.PR_Process:00000000 PR_Process
-     /tmp/ccgK6QC6.s:793    .text.PR_UpdateChannel:00000000 $t
-     /tmp/ccgK6QC6.s:800    .text.PR_UpdateChannel:00000000 PR_UpdateChannel
-     /tmp/ccgK6QC6.s:938    .text.PR_SetKp:00000000 $t
-     /tmp/ccgK6QC6.s:945    .text.PR_SetKp:00000000 PR_SetKp
-     /tmp/ccgK6QC6.s:965    .text.PR_Reset:00000000 $t
-     /tmp/ccgK6QC6.s:972    .text.PR_Reset:00000000 PR_Reset
+     /tmp/ccLfxqrg.s:21     .text.PR_ComputeCoeffs.isra.0:00000000 $t
+     /tmp/ccLfxqrg.s:27     .text.PR_ComputeCoeffs.isra.0:00000000 PR_ComputeCoeffs.isra.0
+     /tmp/ccLfxqrg.s:315    .text.PR_ComputeCoeffs.isra.0:00000170 $d
+     /tmp/ccLfxqrg.s:325    .text.PR_Init:00000000 $t
+     /tmp/ccLfxqrg.s:332    .text.PR_Init:00000000 PR_Init
+     /tmp/ccLfxqrg.s:424    .text.PR_Add_Channel:00000000 $t
+     /tmp/ccLfxqrg.s:431    .text.PR_Add_Channel:00000000 PR_Add_Channel
+     /tmp/ccLfxqrg.s:549    .text.PR_Process:00000000 $t
+     /tmp/ccLfxqrg.s:556    .text.PR_Process:00000000 PR_Process
+     /tmp/ccLfxqrg.s:793    .text.PR_UpdateChannel:00000000 $t
+     /tmp/ccLfxqrg.s:800    .text.PR_UpdateChannel:00000000 PR_UpdateChannel
+     /tmp/ccLfxqrg.s:938    .text.PR_SetKp:00000000 $t
+     /tmp/ccLfxqrg.s:945    .text.PR_SetKp:00000000 PR_SetKp
+     /tmp/ccLfxqrg.s:965    .text.PR_Reset:00000000 $t
+     /tmp/ccLfxqrg.s:972    .text.PR_Reset:00000000 PR_Reset
 
 UNDEFINED SYMBOLS
 __aeabi_f2d

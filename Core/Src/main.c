@@ -77,7 +77,7 @@
 #define CONTROL_TYPE_PR       2
 
 /** Compile-time control method selection. */
-#define CONTROL_TYPE CONTROL_TYPE_HCA  /* 0 = Open loop, 1 = HCA, 2 = PR */
+#define CONTROL_TYPE CONTROL_TYPE_OPENLOOP  /* 0 = Open loop, 1 = HCA, 2 = PR */
 
 #if (CONTROL_TYPE != CONTROL_TYPE_OPENLOOP) && (CONTROL_TYPE != CONTROL_TYPE_HCA) \
     && (CONTROL_TYPE != CONTROL_TYPE_PR)
@@ -235,10 +235,7 @@ int main(void)
 #endif
 
 #if CONTROL_TYPE == CONTROL_TYPE_PR
-  /* Starting gains, NOT tuned: carried over from the HCA Ki set as
-   * Ki_pr = 2*|Ki_hca|, phi = angle(Ki_hca) (see pr_lib.h). Kp is broadband
-   * here, unlike HCA's per-channel Kp, so it starts at 0. */
-  const float pr_kp = 0.0f;
+  const float pr_kp = -0.000602320404924129f;
 
   PR_Init((PR_Handle_t*)&pr,
           fundamental_freq,
@@ -247,18 +244,28 @@ int main(void)
           pr_kp,
           output_limit);
 
-  //                               order  Ki_h        phi_h (rad)
-  PR_Add_Channel((PR_Handle_t*)&pr,  1,   1.4252f,    0.0438412f);  // Fundamental
-  PR_Add_Channel((PR_Handle_t*)&pr,  3,   1.359496f,  0.138029f);
-  PR_Add_Channel((PR_Handle_t*)&pr,  5,   1.189194f, -0.167159f);
-  PR_Add_Channel((PR_Handle_t*)&pr,  7,   0.982374f,  0.3601f);
-  PR_Add_Channel((PR_Handle_t*)&pr,  9,   0.3778f,    0.5541f);
-  PR_Add_Channel((PR_Handle_t*)&pr, 11,   0.2356f,    0.9764f);
-  PR_Add_Channel((PR_Handle_t*)&pr, 13,   0.222932f,  2.12544f);
-  PR_Add_Channel((PR_Handle_t*)&pr, 15,   0.37004f,   2.80559f);
-  PR_Add_Channel((PR_Handle_t*)&pr, 17,   0.37004f,   2.80559f);
-  PR_Add_Channel((PR_Handle_t*)&pr, 19,   0.37004f,   2.80559f);
-  PR_Add_Channel((PR_Handle_t*)&pr, 21,   0.37004f,   2.80559f);
+  //                               order  Ki_h            phi_h (rad)
+  PR_Add_Channel((PR_Handle_t*)&pr,  1,   0.162058227f,   0.0670761979f);  // Fundamental
+  PR_Add_Channel((PR_Handle_t*)&pr,  3,   0.149697332f,   0.323984611f);
+  PR_Add_Channel((PR_Handle_t*)&pr,  5,   0.300412727f,   0.858257016f);
+  PR_Add_Channel((PR_Handle_t*)&pr,  7,   0.116359681f,   0.349989013f);
+  PR_Add_Channel((PR_Handle_t*)&pr,  9,   0.101069833f,   0.852217078f);
+  PR_Add_Channel((PR_Handle_t*)&pr, 11,   0.0735369803f,  1.24863955f);
+  PR_Add_Channel((PR_Handle_t*)&pr, 13,   0.0833844369f,  2.22957063f);
+  PR_Add_Channel((PR_Handle_t*)&pr, 15,   0.211020783f,   3.1395635f);
+  PR_Add_Channel((PR_Handle_t*)&pr, 17,   0.222373002f,   2.90790033f);
+  PR_Add_Channel((PR_Handle_t*)&pr, 19,   0.450478335f,  -2.91102076f);
+  PR_Add_Channel((PR_Handle_t*)&pr, 21,   0.605274356f,  -2.90357255f);
+
+  /* Alternative set, up to the 7th (use with PR_Init above, swapping pr_kp):
+  const float pr_kp = -0.00100594818434869f;
+
+  //                               order  Ki_h            phi_h (rad)
+  PR_Add_Channel((PR_Handle_t*)&pr,  1,   0.0976900561f,  0.189378658f);  // Fundamental
+  PR_Add_Channel((PR_Handle_t*)&pr,  3,   0.0969072957f,  0.522075668f);
+  PR_Add_Channel((PR_Handle_t*)&pr,  5,   0.194001053f,   0.913779932f);
+  PR_Add_Channel((PR_Handle_t*)&pr,  7,   0.0916342252f,  0.97929593f);
+  */
 #endif
 
     
